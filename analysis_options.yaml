@@ -1,0 +1,8 @@
+# 静态检查：沿用 flutter_lints 推荐规则；生成与平台目录不参与分析。
+include: package:flutter_lints/flutter.yaml
+
+analyzer:
+  exclude:
+    - build/**
+    - android/**
+    - ios/**

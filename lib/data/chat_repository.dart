@@ -1,0 +1,678 @@
+import 'dart:convert';
+
+import 'package:drift/drift.dart';
+import 'package:uuid/uuid.dart';
+
+import '../models/json.dart';
+import '../models/types.dart';
+import 'database.dart';
+
+/// 会话、消息、分支与附件的持久化（`data-model.md`）。
+///
+/// 流式回复只在内存中合并，仅在状态迁移时落盘；本类在流式期间不写库。
+class ChatRepository {
+  ChatRepository(this._db, {String Function()? newId, int Function()? clock})
+      : _newId = newId ?? (() => const Uuid().v4()),
+        _clock = clock ?? (() => DateTime.now().millisecondsSinceEpoch);
+
+  final AppDatabase _db;
+  final String Function() _newId;
+  final int Function() _clock;
+
+  // ---------------------------------------------------------------- 会话
+
+  Future<List<SessionSummary>> listSessions() async {
+    final rows = await (_db.select(_db.sessions)
+          ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]))
+        .get();
+    return [
+      for (final row in rows)
+        SessionSummary(
+          id: row.id,
+          title: row.title,
+          createdAt: _date(row.createdAt),
+          updatedAt: _date(row.updatedAt),
+        ),
+    ];
+  }
+
+  Future<Session?> getSession(String id) async {
+    final row = await (_db.select(_db.sessions)..where((t) => t.id.equals(id)))
+        .getSingleOrNull();
+    return row == null ? null : _toSession(row);
+  }
+
+  Future<Session> createSession() async {
+    final now = _clock();
+    final id = _newId();
+    await _db.into(_db.sessions).insert(SessionsCompanion.insert(
+          id: id,
+          createdAt: now,
+          updatedAt: now,
+        ));
+    return Session(id: id, title: '', createdAt: _date(now), updatedAt: _date(now));
+  }
+
+  /// 重命名不算活动：会话在列表中的位置不变。
+  Future<void> renameSession(String sessionId, String title) async {
+    await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
+        .write(SessionsCompanion(title: Value(title)));
+  }
+
+  /// 删除会话及其全部消息，再清理本会话引用过、且不再被引用的附件行。
+  /// 返回被移除的附件，供调用方在事务提交后删除本地文件。
+  Future<List<Attachment>> deleteSession(String sessionId) async {
+    var orphans = const <Attachment>[];
+    await _db.transaction(() async {
+      // Q7：先取出本会话引用过的附件，删除范围不波及其他会话的孤儿行。
+      final candidateIds = await _attachmentIdsForSession(sessionId);
+      await (_db.delete(_db.sessions)..where((t) => t.id.equals(sessionId)))
+          .go();
+      if (candidateIds.isEmpty) return;
+
+      final rows = await (_db.select(_db.attachments)
+            ..where((t) => t.id.isIn(candidateIds)))
+          .get();
+      final remainingLinks = await (_db.select(_db.messageAttachments)
+            ..where((t) => t.attachmentId.isIn(candidateIds)))
+          .get();
+      final referenced = {
+        for (final link in remainingLinks) link.attachmentId,
+      };
+      final orphanRows = [
+        for (final row in rows)
+          if (!referenced.contains(row.id)) row,
+      ];
+      if (orphanRows.isNotEmpty) {
+        await (_db.delete(_db.attachments)
+              ..where((t) => t.id.isIn(orphanRows.map((row) => row.id).toList())))
+            .go();
+      }
+      orphans = [for (final row in orphanRows) _toAttachment(row)];
+    });
+    return orphans;
+  }
+
+  // ---------------------------------------------------------------- 消息
+
+  /// 会话的全部消息，含所有分支，按模型规定的顺序排列。
+  Future<List<Message>> loadMessages(String sessionId) async {
+    final rows = await (_db.select(_db.messages)
+          ..where((t) => t.sessionId.equals(sessionId))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.createdAt),
+            (t) => OrderingTerm.asc(t.id),
+          ]))
+        .get();
+    return _enrich(rows);
+  }
+
+  /// 打开会话时的读取：残留的 `pending`/`streaming` 回复在返回结果中按
+  /// `stopped` 处理并收尾思考块，不写库。
+  Future<List<Message>> loadMessagesForDisplay(String sessionId) async {
+    final session = await getSession(sessionId);
+    final messages = await loadMessages(sessionId);
+    if (session == null) return messages;
+    return [
+      for (final message in messages)
+        _settleInterrupted(message, session.updatedAt),
+    ];
+  }
+
+  /// 选中分支：从 `rootMessageId` 沿每行 `selected_child_id` 走出的路径。
+  Future<List<Message>> visiblePath(String sessionId) async {
+    final ids = await _visibleIds(sessionId);
+    if (ids.isEmpty) return const [];
+    final messages = await loadMessages(sessionId);
+    final byId = {for (final message in messages) message.id: message};
+    return [
+      for (final id in ids)
+        if (byId[id] != null) byId[id]!,
+    ];
+  }
+
+  /// [parentId] 下的兄弟版本；parentId 为 null 时返回根版本。
+  Future<List<Message>> siblings(String sessionId, String? parentId) async {
+    final rows = await (_db.select(_db.messages)
+          ..where((t) =>
+              t.sessionId.equals(sessionId) &
+              t.parentId.equalsNullable(parentId))
+          ..orderBy([
+            (t) => OrderingTerm.asc(t.createdAt),
+            (t) => OrderingTerm.asc(t.id),
+          ]))
+        .get();
+    return _enrich(rows);
+  }
+
+  /// 把提问追加到选中分支末尾并选中它。
+  Future<UserMessage> addUserMessage({
+    required String sessionId,
+    required String text,
+    List<Attachment> attachments = const [],
+  }) async {
+    final id = _newId();
+    String? parentId;
+    late UserMessage message;
+
+    await _db.transaction(() async {
+      parentId = await _visibleLeafId(sessionId);
+      final createdAt = await _nextTimestamp(
+        sessionId,
+        parentId,
+        parentCreatedAt: parentId == null ? null : await _createdAt(parentId!),
+      );
+
+      await _db.into(_db.messages).insert(MessagesCompanion.insert(
+            id: id,
+            sessionId: sessionId,
+            parentId: Value(parentId),
+            role: 'user',
+            createdAt: createdAt,
+            textContent: Value(text),
+          ));
+      await _writeAttachments(id, attachments);
+
+      if (parentId == null) {
+        await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
+            .write(SessionsCompanion(rootMessageId: Value(id)));
+      } else {
+        await _selectChild(parentId!, id);
+      }
+      await _touchSession(sessionId, createdAt);
+
+      message = UserMessage(
+        id: id,
+        parentId: parentId,
+        createdAt: _date(createdAt),
+        text: text,
+        attachments: attachments,
+      );
+    });
+
+    return message;
+  }
+
+  /// 在 [userMessageId] 下创建 `pending` 回复并选中。
+  ///
+  /// 重新生成是同一操作：旧回复及其子树保持不变。
+  Future<AssistantMessage> createReply({
+    required String sessionId,
+    required String userMessageId,
+    required ChatModel model,
+    required bool thinking,
+    required bool search,
+    String? latestReminder,
+    bool prefix = true,
+  }) async {
+    final id = _newId();
+    late AssistantMessage message;
+
+    await _db.transaction(() async {
+      final createdAt = await _nextTimestamp(
+        sessionId,
+        userMessageId,
+        parentCreatedAt: await _createdAt(userMessageId),
+      );
+
+      await _db.into(_db.messages).insert(MessagesCompanion.insert(
+            id: id,
+            sessionId: sessionId,
+            parentId: Value(userMessageId),
+            role: 'assistant',
+            createdAt: createdAt,
+            model: Value(model.wire),
+            thinking: Value(thinking),
+            search: Value(search),
+            latestReminder: Value(latestReminder),
+            prefix: Value(prefix),
+            status: const Value('pending'),
+            blocks: const Value('[]'),
+          ));
+      await _selectChild(userMessageId, id);
+      await _touchSession(sessionId, createdAt);
+
+      message = AssistantMessage(
+        id: id,
+        parentId: userMessageId,
+        createdAt: _date(createdAt),
+        status: ReplyStatus.pending,
+        blocks: const [],
+        model: model,
+        thinking: thinking,
+        search: search,
+        latestReminder: latestReminder,
+        prefix: prefix,
+      );
+    });
+
+    return message;
+  }
+
+  /// 在终态迁移（`done`、`stopped`、`error`）写入回复状态。可空列直接替换，
+  /// 不与旧值合并。
+  Future<void> updateReply({
+    required String messageId,
+    required ReplyStatus status,
+    required List<ReplyBlock> blocks,
+    StopReason? stopReason,
+    StopDetails? stopDetails,
+    Usage? usage,
+    ReplyError? error,
+    bool? prefix,
+  }) async {
+    await (_db.update(_db.messages)..where((t) => t.id.equals(messageId)))
+        .write(MessagesCompanion(
+      blocks: Value(encodeReplyBlocks(blocks)),
+      status: Value(status.name),
+      stopReason: Value(stopReason?.wire),
+      stopDetails: Value(
+        stopDetails == null ? null : jsonEncode(encodeStopDetails(stopDetails)),
+      ),
+      usage: Value(usage == null ? null : jsonEncode(encodeUsage(usage))),
+      error: Value(error == null ? null : encodeReplyError(error)),
+      prefix: prefix == null ? const Value.absent() : Value(prefix),
+    ));
+  }
+
+  /// 请求发出前写入本轮系统信息快照，时机为附件补齐之后。
+  Future<void> setLatestReminder(String messageId, String latestReminder) async {
+    await (_db.update(_db.messages)..where((t) => t.id.equals(messageId)))
+        .write(MessagesCompanion(latestReminder: Value(latestReminder)));
+  }
+
+  /// 续写复用同一条 assistant 行及其请求快照。
+  Future<void> beginContinuation(String messageId) async {
+    await _db.transaction(() async {
+      final row = await _messageRow(messageId);
+      if (row == null) return;
+      await (_db.update(_db.messages)..where((t) => t.id.equals(messageId)))
+          .write(const MessagesCompanion(
+        status: Value('pending'),
+        stopReason: Value<String?>(null),
+        stopDetails: Value<String?>(null),
+        error: Value<String?>(null),
+      ));
+      await _touchSession(row.sessionId, _clock());
+    });
+  }
+
+  /// 在原提问的父节点下新建 user 版本，复制其附件引用，并插入新的
+  /// pending 回复。
+  Future<(UserMessage, AssistantMessage)> editUserMessage({
+    required String sessionId,
+    required String originalMessageId,
+    required String text,
+    required ChatModel model,
+    required bool thinking,
+    required bool search,
+    String? latestReminder,
+  }) async {
+    late UserMessage user;
+    late AssistantMessage reply;
+
+    await _db.transaction(() async {
+      final original = await _messageRow(originalMessageId);
+      if (original == null) {
+        throw StateError('message $originalMessageId not found');
+      }
+      final parentId = original.parentId;
+      final createdAt = await _nextTimestamp(
+        sessionId,
+        parentId,
+        parentCreatedAt: parentId == null ? null : await _createdAt(parentId),
+      );
+
+      final links = await (_db.select(_db.messageAttachments)
+            ..where((t) => t.messageId.equals(originalMessageId))
+            ..orderBy([(t) => OrderingTerm.asc(t.position)]))
+          .get();
+      final attachments = await _attachmentsByIds(
+        links.map((link) => link.attachmentId).toList(),
+      );
+
+      final userId = _newId();
+      await _db.into(_db.messages).insert(MessagesCompanion.insert(
+            id: userId,
+            sessionId: sessionId,
+            parentId: Value(parentId),
+            role: 'user',
+            createdAt: createdAt,
+            textContent: Value(text),
+          ));
+      for (final link in links) {
+        await _db.into(_db.messageAttachments).insert(
+              MessageAttachmentsCompanion.insert(
+                messageId: userId,
+                attachmentId: link.attachmentId,
+                position: link.position,
+              ),
+            );
+      }
+      if (parentId == null) {
+        await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
+            .write(SessionsCompanion(rootMessageId: Value(userId)));
+      } else {
+        await _selectChild(parentId, userId);
+      }
+
+      final replyId = _newId();
+      final replyCreatedAt = createdAt + 1;
+      await _db.into(_db.messages).insert(MessagesCompanion.insert(
+            id: replyId,
+            sessionId: sessionId,
+            parentId: Value(userId),
+            role: 'assistant',
+            createdAt: replyCreatedAt,
+            model: Value(model.wire),
+            thinking: Value(thinking),
+            search: Value(search),
+            latestReminder: Value(latestReminder),
+            prefix: const Value(true),
+            status: const Value('pending'),
+            blocks: const Value('[]'),
+          ));
+      await _selectChild(userId, replyId);
+      await _touchSession(sessionId, replyCreatedAt);
+
+      user = UserMessage(
+        id: userId,
+        parentId: parentId,
+        createdAt: _date(createdAt),
+        text: text,
+        attachments: attachments,
+      );
+      reply = AssistantMessage(
+        id: replyId,
+        parentId: userId,
+        createdAt: _date(replyCreatedAt),
+        status: ReplyStatus.pending,
+        blocks: const [],
+        model: model,
+        thinking: thinking,
+        search: search,
+        latestReminder: latestReminder,
+      );
+    });
+
+    return (user, reply);
+  }
+
+  /// 在兄弟版本中选中 [messageId]，不写 `updated_at`。
+  Future<void> selectVersion({
+    required String sessionId,
+    required String messageId,
+  }) async {
+    final row = await _messageRow(messageId);
+    if (row == null) return;
+    await _db.transaction(() async {
+      final parentId = row.parentId;
+      if (parentId == null) {
+        await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
+            .write(SessionsCompanion(rootMessageId: Value(messageId)));
+      } else {
+        await _selectChild(parentId, messageId);
+      }
+    });
+  }
+
+  /// 启动兜底：残留的 `pending`/`streaming` 回复置为 `stopped`。返回受影响
+  /// 的行数。
+  Future<int> resetInterruptedReplies() {
+    return (_db.update(_db.messages)
+          ..where((t) => t.status.isIn(['pending', 'streaming'])))
+        .write(const MessagesCompanion(status: Value('stopped')));
+  }
+
+  // ------------------------------------------------------------- 附件
+
+  /// `server_id` 由引用同一附件的所有消息共享。
+  Future<void> setAttachmentServerId(String attachmentId, String? serverId) async {
+    await (_db.update(_db.attachments)
+          ..where((t) => t.id.equals(attachmentId)))
+        .write(AttachmentsCompanion(serverId: Value(serverId)));
+  }
+
+  /// 数据库登记的全部原件相对路径，供启动时清理没有数据库记录的文件。
+  Future<Set<String>> attachmentLocalPaths() async {
+    final rows = await _db.select(_db.attachments).get();
+    return {
+      for (final row in rows)
+        if (row.localPath != null && row.localPath!.isNotEmpty) row.localPath!,
+    };
+  }
+
+  // ------------------------------------------------------------------ 私有
+
+  Future<void> _writeAttachments(
+    String messageId,
+    List<Attachment> attachments,
+  ) async {
+    for (var position = 0; position < attachments.length; position++) {
+      final attachment = attachments[position];
+      await _db.into(_db.attachments).insert(
+            AttachmentsCompanion.insert(
+              id: attachment.id,
+              name: attachment.name,
+              size: attachment.size,
+              isImage: Value(attachment.isImage),
+              mimeType: Value(attachment.mimeType),
+              localPath: Value(attachment.localPath),
+              serverId: Value(attachment.serverId),
+            ),
+            mode: InsertMode.insertOrIgnore,
+          );
+      await _db.into(_db.messageAttachments).insert(
+            MessageAttachmentsCompanion.insert(
+              messageId: messageId,
+              attachmentId: attachment.id,
+              position: position,
+            ),
+          );
+    }
+  }
+
+  Future<List<Attachment>> _attachmentsByIds(List<String> ids) async {
+    if (ids.isEmpty) return const [];
+    final rows = await (_db.select(_db.attachments)
+          ..where((t) => t.id.isIn(ids)))
+        .get();
+    return [for (final row in rows) _toAttachment(row)];
+  }
+
+  Future<List<Message>> _enrich(List<MessageRow> rows) async {
+    if (rows.isEmpty) return const [];
+    final links = await (_db.select(_db.messageAttachments)
+          ..where((t) => t.messageId.isIn(rows.map((row) => row.id).toList()))
+          ..orderBy([(t) => OrderingTerm.asc(t.position)]))
+        .get();
+    final attachments = await _attachmentsByIds(
+      links.map((link) => link.attachmentId).toSet().toList(),
+    );
+    final byId = {for (final attachment in attachments) attachment.id: attachment};
+    final byMessage = <String, List<Attachment>>{};
+    for (final link in links) {
+      final attachment = byId[link.attachmentId];
+      if (attachment == null) continue;
+      (byMessage[link.messageId] ??= []).add(attachment);
+    }
+    return [
+      for (final row in rows) _toMessage(row, byMessage[row.id] ?? const []),
+    ];
+  }
+
+  Message _toMessage(MessageRow row, List<Attachment> attachments) {
+    if (row.role == 'user') {
+      return UserMessage(
+        id: row.id,
+        parentId: row.parentId,
+        selectedChildId: row.selectedChildId,
+        createdAt: _date(row.createdAt),
+        text: row.textContent ?? '',
+        attachments: attachments,
+      );
+    }
+    return AssistantMessage(
+      id: row.id,
+      parentId: row.parentId,
+      selectedChildId: row.selectedChildId,
+      createdAt: _date(row.createdAt),
+      model: ChatModel.fromWire(row.model),
+      thinking: row.thinking,
+      search: row.search,
+      latestReminder: row.latestReminder,
+      prefix: row.prefix ?? true,
+      status: _replyStatus(row.status),
+      blocks: decodeReplyBlocks(row.blocks),
+      stopReason: StopReason.fromWire(row.stopReason),
+      stopDetails: parseStopDetails(decodeJsonSource(row.stopDetails)),
+      usage: parseUsage(decodeJsonSource(row.usage)),
+      error: parseReplyError(row.error),
+    );
+  }
+
+  Session _toSession(SessionRow row) => Session(
+        id: row.id,
+        title: row.title,
+        createdAt: _date(row.createdAt),
+        updatedAt: _date(row.updatedAt),
+        rootMessageId: row.rootMessageId,
+      );
+
+  Attachment _toAttachment(AttachmentRow row) => Attachment(
+        id: row.id,
+        name: row.name,
+        size: row.size,
+        isImage: row.isImage,
+        mimeType: row.mimeType,
+        localPath: row.localPath,
+        serverId: row.serverId,
+      );
+
+  Future<MessageRow?> _messageRow(String id) async =>
+      (_db.select(_db.messages)..where((t) => t.id.equals(id)))
+          .getSingleOrNull();
+
+  Future<int> _createdAt(String messageId) async {
+    final row = await _messageRow(messageId);
+    if (row == null) {
+      throw StateError('message $messageId not found');
+    }
+    return row.createdAt;
+  }
+
+  /// 保证 `ORDER BY created_at` 与父子顺序、版本顺序一致。
+  Future<int> _nextTimestamp(
+    String sessionId,
+    String? parentId, {
+    int? parentCreatedAt,
+  }) async {
+    var next = _clock();
+    if (parentCreatedAt != null && next <= parentCreatedAt) {
+      next = parentCreatedAt + 1;
+    }
+    final lastSibling = await (_db.select(_db.messages)
+          ..where((t) =>
+              t.sessionId.equals(sessionId) & t.parentId.equalsNullable(parentId))
+          ..orderBy([(t) => OrderingTerm.desc(t.createdAt)])
+          ..limit(1))
+        .getSingleOrNull();
+    if (lastSibling != null && next <= lastSibling.createdAt) {
+      next = lastSibling.createdAt + 1;
+    }
+    return next;
+  }
+
+  Future<void> _selectChild(String parentId, String childId) async {
+    await (_db.update(_db.messages)..where((t) => t.id.equals(parentId)))
+        .write(MessagesCompanion(selectedChildId: Value(childId)));
+  }
+
+  Future<void> _touchSession(String sessionId, int updatedAt) async {
+    await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
+        .write(SessionsCompanion(updatedAt: Value(updatedAt)));
+  }
+
+  Future<String?> _visibleLeafId(String sessionId) async {
+    final ids = await _visibleIds(sessionId);
+    return ids.isEmpty ? null : ids.last;
+  }
+
+  Future<List<String>> _visibleIds(String sessionId) async {
+    final rows = await _db.customSelect(
+      '''
+      WITH RECURSIVE path(id, depth) AS (
+        SELECT root_message_id, 0 FROM sessions
+         WHERE id = ? AND root_message_id IS NOT NULL
+        UNION ALL
+        SELECT m.selected_child_id, p.depth + 1
+          FROM messages m JOIN path p ON m.id = p.id
+         WHERE m.selected_child_id IS NOT NULL
+      )
+      SELECT m.id AS id FROM path p JOIN messages m ON m.id = p.id
+       ORDER BY p.depth
+      ''',
+      variables: [Variable.withString(sessionId)],
+      readsFrom: {_db.sessions, _db.messages},
+    ).get();
+    return [for (final row in rows) row.read<String>('id')];
+  }
+
+  Future<List<String>> _attachmentIdsForSession(String sessionId) async {
+    final rows = await _db.customSelect(
+      '''
+      SELECT DISTINCT ma.attachment_id AS id
+        FROM message_attachments ma
+        JOIN messages m ON m.id = ma.message_id
+       WHERE m.session_id = ?
+      ''',
+      variables: [Variable.withString(sessionId)],
+      readsFrom: {_db.messageAttachments, _db.messages},
+    ).get();
+    return [for (final row in rows) row.read<String>('id')];
+  }
+
+  /// 打开会话时把残留的生成状态视为已停止，并给未结束的思考块补结束时间。
+  Message _settleInterrupted(Message message, DateTime at) {
+    if (message is! AssistantMessage ||
+        (message.status != ReplyStatus.pending &&
+            message.status != ReplyStatus.streaming)) {
+      return message;
+    }
+    final endedAt = at.millisecondsSinceEpoch;
+    return AssistantMessage(
+      id: message.id,
+      parentId: message.parentId,
+      selectedChildId: message.selectedChildId,
+      createdAt: message.createdAt,
+      status: ReplyStatus.stopped,
+      blocks: [
+        for (final block in message.blocks)
+          block is ThinkingBlock &&
+                  block.startedAt != null &&
+                  block.endedAt == null
+              ? block.copyWith(endedAt: endedAt)
+              : block,
+      ],
+      model: message.model,
+      thinking: message.thinking,
+      search: message.search,
+      latestReminder: message.latestReminder,
+      prefix: message.prefix,
+      stopReason: message.stopReason,
+      stopDetails: message.stopDetails,
+      usage: message.usage,
+      error: message.error,
+    );
+  }
+
+  DateTime _date(int epochMillis) =>
+      DateTime.fromMillisecondsSinceEpoch(epochMillis);
+
+  ReplyStatus _replyStatus(String? wire) {
+    for (final status in ReplyStatus.values) {
+      if (status.name == wire) return status;
+    }
+    return ReplyStatus.error;
+  }
+}
