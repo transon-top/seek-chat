@@ -21,7 +21,7 @@ Status: resolved
 
 | 项 | 版本 / 路径 |
 |---|---|
-| Flutter | 3.50.0 stable，framework `ab2912035e`，engine `371f77202a` |
+| Flutter | 3.50.0 stable，framework `ab2912035e`，engine revision `371f77202a`，engine hash `bf601093ad255aaf5c6d0fc5c4f9acfa60943b2a` |
 | Dart | 3.14.0（DevTools 2.61.0） |
 | 主机 | macOS 15.8.2 arm64 |
 | Xcode | 26.3（Build 17C529），CocoaPods 1.17.0 |
@@ -39,6 +39,8 @@ Status: resolved
 - iOS：iPhone 17 Pro（iOS 26.3，UDID `AB9602D3-C05D-4B05-91D1-6F8F2443745F`）等 11 台。
 - Android：`Medium_Phone_API_37.0`（Android 17 / API 37，运行时设备号 `emulator-5554`）。
 
+`flutter devices` 在模拟器启动前只列出 macOS 与 Chrome；Android 模拟器启动后以 `emulator-5554` 出现（`adb devices` 确认）。iOS 模拟器由 `simctl` 管理。
+
 ### 验证
 
 临时空项目：`flutter create --platforms=ios,android --project-name toolchain_check toolchain_check`，位于 `/tmp`，验证后已删除。
@@ -52,7 +54,7 @@ xcrun simctl install AB9602D3-C05D-4B05-91D1-6F8F2443745F build/ios/iphonesimula
 xcrun simctl launch AB9602D3-C05D-4B05-91D1-6F8F2443745F com.example.toolchainCheck
 ```
 
-结果：`✓ Built build/ios/iphonesimulator/Runner.app`，进程启动（PID 59933），截图确认 Flutter counter 页面。
+结果：`✓ Built build/ios/iphonesimulator/Runner.app`，进程启动（PID 59933），截图确认 Flutter counter 页面。证据：`evidence/04-ios-simulator.png`。
 
 Android 模拟器（Medium_Phone_API_37.0）：
 
@@ -63,10 +65,10 @@ flutter build apk --debug
 ~/Library/Android/sdk/platform-tools/adb shell am start -n com.example.toolchain_check/.MainActivity
 ```
 
-结果：`✓ Built build/app/outputs/flutter-apk/app-debug.apk`（157,928,232 字节，`assembleDebug` 317.9s），安装成功，进程 PID 9792，截图确认 Flutter counter 页面。
+结果：`✓ Built build/app/outputs/flutter-apk/app-debug.apk`（157,928,232 字节，`assembleDebug` 317.9s），安装成功，进程 PID 9792，截图确认 Flutter counter 页面。证据：`evidence/04-android-emulator.png`。
 
 ### 环境注意
 
 - `adb` 不在 `PATH`，需用 `~/Library/Android/sdk/platform-tools/adb`。
-- 首次 Gradle 构建需下载 Gradle 9.5.0-all（240,667,887 字节）与依赖。直连/代理不稳定时 Gradle 会卡在解析阶段；本次临时项目在 `android/settings.gradle.kts` 与 `android/build.gradle.kts` 前置了阿里云 Maven 镜像，Gradle 发行版与 NDK 用 `curl` 从腾讯镜像下载。仓库工程在相同网络下构建时建议同样配置镜像或预热缓存。
+- 首次 Gradle 构建需下载 Gradle 9.5.0-all（240,667,887 字节）与依赖。直连/代理不稳定时 Gradle 会卡在解析阶段；本次临时项目在 `android/settings.gradle.kts` 与 `android/build.gradle.kts` 前置了阿里云 Maven 镜像，Gradle 发行版与 NDK 用 `curl` 从腾讯镜像下载。
 - AGP 构建时自动补装 Android SDK Platform 36；NDK 28.2.13676358 为当前 Flutter 模板要求。
