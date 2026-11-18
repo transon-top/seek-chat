@@ -1,7 +1,7 @@
 # shadcn_ui 聊天界面原型
 
 Type: prototype
-Status: open
+Status: resolved
 Blocked by: 04, 08
 
 ## Question
@@ -16,3 +16,38 @@ Blocked by: 04, 08
 6. 状态：空会话、首屏、加载、错误、断流、超长消息、内容拒答。
 
 产出：`prototype/` 下的 Flutter 原型代码或截图 / 录屏，链接到票内；不追求生产质量。
+
+## Answer
+
+原型已完成，入口与说明见 [`prototype/README.md`](../../../prototype/README.md)。
+
+- 代码：`prototype/main.dart`（应用壳、抽屉、场景切换与假状态机）、
+  `prototype/messages.dart`（思考块、引用、来源卡、分支、各状态）、
+  `prototype/composer.dart`（输入区、附件、语音、发送/停止）、
+  `prototype/data.dart`（假数据）。
+- 截图：`prototype/screenshots/`
+  - [完整会话（浅色）](../../../prototype/screenshots/01-demo-light.png)
+  - [流式中（浅色）](../../../prototype/screenshots/02-streaming-light.png)
+  - [空会话首屏](../../../prototype/screenshots/03-empty-light.png)
+  - [连接错误](../../../prototype/screenshots/04-error-light.png)
+  - [断流](../../../prototype/screenshots/05-dropped-light.png)
+  - [超长消息折叠](../../../prototype/screenshots/06-long-light.png)
+  - [完整会话（深色）](../../../prototype/screenshots/07-demo-dark.png)
+- 冒烟测试：`test/prototype/prototype_test.dart`，覆盖发送、停止、场景切换与展开长消息。
+
+原型确定的交互方向（视觉按用户提供的参考截图收敛）：
+
+1. 主界面极简：顶部只有菜单与居中的会话标题；会话增删改、模型、原型场景与主题
+   开关都收进左侧抽屉。
+2. 空会话首屏只显示「今天有什么可以帮到你？」，不放 logo 与建议卡。
+3. 输入区是底部大圆角容器，无阴影；占位文案「请输入消息」；深度思考与智能搜索用
+   描边胶囊开关；右侧是附件、麦克风、朗读与圆形发送按钮；忙碌时发送变停止。
+4. 输入区下方固定「内容由 AI 生成，请仔细甄别」；录音时输入区上方出现胶囊状聆听提示。
+5. 助手回复用非气泡通栏布局，用户消息右对齐浅灰气泡；思考块是无底色折叠行并显示
+   实时计时；引用角标为灰色小标签，来源卡在正文下方横向滚动；分支切换与操作条在底部。
+6. 流式回复显示光标、搜索进度卡与行内停止；用户停止显示「已停止生成 / 继续生成」，
+   断流显示独立提示与重试。
+7. 超长消息默认折叠 8 行并用底部渐隐提示，可展开/收起。
+
+留给票 10 的决定：来源卡是否改为抽屉、超长消息折叠阈值、录音条的完整布局、
+模型切换在 v1 是否保留（原型暂放抽屉）、横屏与平板断点、无障碍与动态字体。

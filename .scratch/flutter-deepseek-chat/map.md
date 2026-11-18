@@ -40,6 +40,7 @@
 - [会话、消息与分支数据模型](issues/06-data-model.md): drift 四表 `sessions`/`messages`/`attachments`/`message_attachments`，块存 JSON；UUID 主键 + epoch 毫秒；流式不写库、状态迁移落盘；详见 [`data-model.md`](data-model.md)，术语见根目录 `GLOSSARY.md`。
 - [应用架构与项目结构](issues/07-architecture.md): 功能优先 + `shared` 核心；`flutter_riverpod` 3.5 手写 Provider，聊天用 family + `keepAlive`；每会话单流、跨会话可并行（对齐 `chat-demo`）；设置走 `shared_preferences`，Key 走安全存储；`shadcn_ui` 0.60.x 为目标组件库；详见 [`architecture.md`](architecture.md)。
 - [Markdown / 数学 / Mermaid 方案锁定](issues/08-markdown-decision.md): `gpt_markdown` 1.4.1 + 内置 `val_latex_flutter` + `mermaid_flutter` 0.3.2；流式按帧耗时自适应节流（50 ms–2 s）；图片转链接不加载；单块超 200000 字符转纯文本；详见 [`markdown.md`](markdown.md)。
+- [shadcn_ui 聊天界面原型](issues/09-ui-prototype.md): 可运行原型在 [`prototype/`](../../prototype/README.md)；确定抽屉会话列表、非气泡助手/气泡用户、思考块折叠、来源卡与引用角标、分支与操作条、底部圆角输入区；截图与场景见票内。
 
 ## Not yet specified
 
@@ -50,7 +51,6 @@
 - 语言切换是否即时生效、是否影响已生成内容（等双语票）
 - 附件在消息中的呈现、预览与删除（等附件票）
 - 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
-- 深度思考与搜索开关在输入区的呈现（等原型）
 
 ## Out of scope
 
