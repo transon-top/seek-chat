@@ -27,3 +27,5 @@ coverage/
 # 混淆与符号表
 app.*.symbols
 app.*.map.json
+# Widget Preview related
+.widget_preview/
