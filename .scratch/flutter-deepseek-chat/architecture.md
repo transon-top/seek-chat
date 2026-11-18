@@ -206,7 +206,8 @@ flutter test
 | `mermaid_flutter` | `^0.3.2` | Mermaid 绘制 |
 | `mermaid_core` | `^0.3.2` | Mermaid 解析与主题 |
 | `url_launcher` | `^6.3.3` | 外部链接 |
-| `file_picker` | `^13.4.0`（新增） | 相册与文件选择（票 13） |
+| `file_picker` | `^13.4.0`（新增） | 相册、文件选择与导出保存（票 13、17） |
+| `archive` | `^3.6.1`（新增） | 历史归档 ZIP 读写（票 17） |
 | `drift_dev` | `^2.35.3`（dev） | drift 代码生成 |
 | `build_runner` | `^2.17.1`（dev） | 代码生成入口 |
 | `flutter_test` | SDK（dev） | 单元与 widget 测试 |

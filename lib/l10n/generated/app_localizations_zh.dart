@@ -141,4 +141,90 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLocationNone => '不指定';
+
+  @override
+  String get settingsData => '数据管理';
+
+  @override
+  String get historyImport => '导入历史对话';
+
+  @override
+  String get historyImportAction => '选择文件';
+
+  @override
+  String get historyImportDescription =>
+      '导入历史对话会覆盖全部本地对话和附件，支持 DeepSeek 导出的 ZIP 文件。';
+
+  @override
+  String get historyImportConfirmTitle => '确认导入历史对话？';
+
+  @override
+  String get historyImportConfirmDescription =>
+      '上传的历史对话会覆盖当前所有对话和附件。如需保留，请先导出备份。';
+
+  @override
+  String get historyImportConfirm => '确认导入';
+
+  @override
+  String get historyImporting => '正在导入…';
+
+  @override
+  String get historyImportedOne => '已导入 1 个对话';
+
+  @override
+  String historyImported(int count) {
+    return '已导入 $count 个对话';
+  }
+
+  @override
+  String get historyImportFailed => '文件导入失败，可能是格式错误或使用了旧版导出文件。';
+
+  @override
+  String get historyExport => '导出所有历史对话';
+
+  @override
+  String get historyExportAction => '导出';
+
+  @override
+  String get historyExportDescription =>
+      '包含所有历史对话及本地图片原件；其他附件仅保留文件信息，不包含 API Key。';
+
+  @override
+  String get historyExporting => '正在导出…';
+
+  @override
+  String get historyExported => '导出文件已保存';
+
+  @override
+  String get historyExportFailed => '导出失败，请重试';
+
+  @override
+  String get historyErrorUnrecognized => '无法识别该文件，请选择 DeepSeek 导出的历史对话 ZIP 文件';
+
+  @override
+  String get historyErrorNewerVersion => '文件版本过新，请升级应用后再导入';
+
+  @override
+  String get historyErrorInvalidVersion => '文件版本无效，无法导入';
+
+  @override
+  String get historyErrorInvalidJson => '文件不是有效的 JSON';
+
+  @override
+  String get historyErrorIncomplete => '文件内容不完整，无法导入';
+
+  @override
+  String get historyErrorInvalidBranches => '文件中的消息分支已损坏，无法导入';
+
+  @override
+  String get historyErrorInvalidFiles => '文件中的附件数据已损坏，无法导入';
+
+  @override
+  String get historyErrorTooLarge => '文件过大，无法导入';
+
+  @override
+  String get cancel => '取消';
+
+  @override
+  String get historyErrorExportTooLarge => '文件过大，无法导出';
 }

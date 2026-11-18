@@ -326,6 +326,168 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not specified'**
   String get settingsLocationNone;
+
+  /// No description provided for @settingsData.
+  ///
+  /// In en, this message translates to:
+  /// **'Data'**
+  String get settingsData;
+
+  /// No description provided for @historyImport.
+  ///
+  /// In en, this message translates to:
+  /// **'Import chat history'**
+  String get historyImport;
+
+  /// No description provided for @historyImportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose file'**
+  String get historyImportAction;
+
+  /// No description provided for @historyImportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing chat history replaces all local chats and attachments. Supports ZIP files exported from DeepSeek.'**
+  String get historyImportDescription;
+
+  /// No description provided for @historyImportConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Import chat history?'**
+  String get historyImportConfirmTitle;
+
+  /// No description provided for @historyImportConfirmDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'The uploaded chat history will replace all your current chats and attachments. Export a backup first if you need to keep them.'**
+  String get historyImportConfirmDescription;
+
+  /// No description provided for @historyImportConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Import'**
+  String get historyImportConfirm;
+
+  /// No description provided for @historyImporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Importing...'**
+  String get historyImporting;
+
+  /// No description provided for @historyImportedOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported 1 chat'**
+  String get historyImportedOne;
+
+  /// No description provided for @historyImported.
+  ///
+  /// In en, this message translates to:
+  /// **'Imported {count} chats'**
+  String historyImported(int count);
+
+  /// No description provided for @historyImportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Import failed. The file may be invalid or use an old export format.'**
+  String get historyImportFailed;
+
+  /// No description provided for @historyExport.
+  ///
+  /// In en, this message translates to:
+  /// **'Export all chats'**
+  String get historyExport;
+
+  /// No description provided for @historyExportAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Export'**
+  String get historyExportAction;
+
+  /// No description provided for @historyExportDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes all chat history and locally stored images. Other attachments keep file details only. Your API key is not included.'**
+  String get historyExportDescription;
+
+  /// No description provided for @historyExporting.
+  ///
+  /// In en, this message translates to:
+  /// **'Exporting...'**
+  String get historyExporting;
+
+  /// No description provided for @historyExported.
+  ///
+  /// In en, this message translates to:
+  /// **'Export saved'**
+  String get historyExported;
+
+  /// No description provided for @historyExportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Export failed. Please try again.'**
+  String get historyExportFailed;
+
+  /// No description provided for @historyErrorUnrecognized.
+  ///
+  /// In en, this message translates to:
+  /// **'File not recognized. Choose a DeepSeek chat history ZIP.'**
+  String get historyErrorUnrecognized;
+
+  /// No description provided for @historyErrorNewerVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'This file uses a newer version. Update the app before importing.'**
+  String get historyErrorNewerVersion;
+
+  /// No description provided for @historyErrorInvalidVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'The file version is invalid and cannot be imported.'**
+  String get historyErrorInvalidVersion;
+
+  /// No description provided for @historyErrorInvalidJson.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is not valid JSON.'**
+  String get historyErrorInvalidJson;
+
+  /// No description provided for @historyErrorIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is incomplete and cannot be imported.'**
+  String get historyErrorIncomplete;
+
+  /// No description provided for @historyErrorInvalidBranches.
+  ///
+  /// In en, this message translates to:
+  /// **'The message branches in this file are corrupted and cannot be imported.'**
+  String get historyErrorInvalidBranches;
+
+  /// No description provided for @historyErrorInvalidFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'The attachment data in this file is corrupted and cannot be imported.'**
+  String get historyErrorInvalidFiles;
+
+  /// No description provided for @historyErrorTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is too large to import.'**
+  String get historyErrorTooLarge;
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @historyErrorExportTooLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'The file is too large to export.'**
+  String get historyErrorExportTooLarge;
 }
 
 class _AppLocalizationsDelegate

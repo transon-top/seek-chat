@@ -326,6 +326,14 @@ final class SessionSummary {
   final DateTime updatedAt;
 }
 
+/// 一个会话及其完整消息树；导入导出的共享载体。
+final class SessionHistory {
+  const SessionHistory({required this.session, required this.messages});
+
+  final Session session;
+  final List<Message> messages;
+}
+
 final class Session {
   const Session({
     required this.id,
