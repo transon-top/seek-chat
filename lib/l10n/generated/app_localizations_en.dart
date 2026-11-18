@@ -131,6 +131,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get missingAttachment => 'The original file is missing';
 
   @override
+  String get settingsTitle => 'Settings';
+
+  @override
+  String get settingsTheme => 'Theme';
+
+  @override
+  String get settingsThemeSystem => 'System';
+
+  @override
+  String get settingsThemeLight => 'Light';
+
+  @override
+  String get settingsThemeDark => 'Dark';
+
+  @override
+  String get settingsSaveKey => 'Save and verify';
+
+  @override
+  String get settingsClearKey => 'Clear saved key';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override
@@ -144,6 +165,170 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLocationNone => 'Not specified';
+
+  @override
+  String get newChat => 'New chat';
+
+  @override
+  String get noSessions => 'No chats yet';
+
+  @override
+  String get untitledChat => 'New chat';
+
+  @override
+  String get renameSession => 'Rename chat';
+
+  @override
+  String get rename => 'Rename';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get deleteSession => 'Delete chat';
+
+  @override
+  String deleteSessionConfirm(String title) {
+    return 'Delete \"$title\"?';
+  }
+
+  @override
+  String get save => 'Save';
+
+  @override
+  String get close => 'Dismiss';
+
+  @override
+  String get regenerate => 'Regenerate';
+
+  @override
+  String get continueGeneration => 'Continue';
+
+  @override
+  String get chatEmpty => 'Send a message to start chatting';
+
+  @override
+  String get deepThinking => 'Deep thinking';
+
+  @override
+  String thoughtForSeconds(int seconds) {
+    return 'Thought for ${seconds}s';
+  }
+
+  @override
+  String get stopped => 'Stopped';
+
+  @override
+  String get imageSearching => 'Searching images...';
+
+  @override
+  String get searching => 'Searching';
+
+  @override
+  String get browsingWeb => 'Browsing the web';
+
+  @override
+  String get reading => 'Reading';
+
+  @override
+  String get thinking => 'Thinking';
+
+  @override
+  String searchingQuery(String query) {
+    return 'Searching $query';
+  }
+
+  @override
+  String get searchingDots => 'Searching...';
+
+  @override
+  String get searchStopped => 'Search stopped';
+
+  @override
+  String get searchUnavailable => 'Web search is unavailable';
+
+  @override
+  String get noSuitableResults => 'No suitable results found';
+
+  @override
+  String get noRelevantResults => 'No relevant results found';
+
+  @override
+  String searchedPages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Found $count pages',
+      one: 'Found 1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String readPages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Read $count pages',
+      one: 'Read 1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browsePageFailed => 'Could not load the page';
+
+  @override
+  String browsingPages(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: 'Browsing $count pages',
+      one: 'Browsing 1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get browseFailed => 'Load failed';
+
+  @override
+  String get viewAll => 'View all';
+
+  @override
+  String get findFailed => 'Find failed';
+
+  @override
+  String get findKeywords => 'Find keywords';
+
+  @override
+  String get noMatchingContent => 'No matching content found';
+
+  @override
+  String pagesCount(int count) {
+    String _temp0 = intl.Intl.pluralLogic(
+      count,
+      locale: localeName,
+      other: '$count pages',
+      one: '1 page',
+    );
+    return '$_temp0';
+  }
+
+  @override
+  String get searchResults => 'Search results';
+
+  @override
+  String get composerHint => 'Message';
+
+  @override
+  String get stop => 'Stop';
+
+  @override
+  String get send => 'Send';
+
+  @override
+  String get smartSearch => 'Smart search';
 
   @override
   String get settingsData => 'Data';

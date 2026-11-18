@@ -46,11 +46,11 @@
 - [内容安全与图片审核](issues/14-content-safety.md): 所有请求恒 `safety_check: high`；拒答丢弃思考与正文、模板 > 图片审核 > 通用文案、正文样式、禁用续写与重新生成；仅 `400 Content Exists Risk` 单独归类；详见 [`safety.md`](safety.md)。
 - [用户元信息：语言与所在地](issues/16-user-metadata.md): 一个语言设置同时驱动界面与元信息；所在地选择器跟随系统语言，支持清除；快照在附件补齐后生成、续写复用；详见 [`user-metadata.md`](user-metadata.md)。
 - [历史对话导入与导出](issues/17-history-import-export.md): 对齐 chat-demo 归档版本 3；`archive` 整包内存读写、256 MiB 上限；单事务覆盖导入，保留设置与 Key，不自动备份；详见 [`history.md`](history.md)。
+- [中英双语与浅深主题](issues/18-i18n-theme.md): 官方 `gen_l10n` + ARB，全部客户端文案进 ARB，模型正文不翻译；语言已即时生效；主题三档存 `ui.themeMode`、首帧同步读取、浅深共用种子 `#4D6BFE`；详见 [`i18n-theme.md`](i18n-theme.md)。
 
 ## Not yet specified
 
 - 子版本切分与每版验收边界（等「子版本计划」票）
-- 界面语言切换的即时刷新范围（等双语票 18；已生成内容不受影响由票 16 锁定）
 - 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
 
 ## Out of scope

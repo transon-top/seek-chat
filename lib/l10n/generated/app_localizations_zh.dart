@@ -128,6 +128,27 @@ class AppLocalizationsZh extends AppLocalizations {
   String get missingAttachment => '原件已丢失';
 
   @override
+  String get settingsTitle => '设置';
+
+  @override
+  String get settingsTheme => '主题';
+
+  @override
+  String get settingsThemeSystem => '跟随系统';
+
+  @override
+  String get settingsThemeLight => '浅色';
+
+  @override
+  String get settingsThemeDark => '深色';
+
+  @override
+  String get settingsSaveKey => '保存并校验';
+
+  @override
+  String get settingsClearKey => '清除已保存的 Key';
+
+  @override
   String get settingsLanguage => '语言';
 
   @override
@@ -141,6 +162,146 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsLocationNone => '不指定';
+
+  @override
+  String get newChat => '新建会话';
+
+  @override
+  String get noSessions => '还没有会话';
+
+  @override
+  String get untitledChat => '新对话';
+
+  @override
+  String get renameSession => '重命名会话';
+
+  @override
+  String get rename => '重命名';
+
+  @override
+  String get delete => '删除';
+
+  @override
+  String get deleteSession => '删除会话';
+
+  @override
+  String deleteSessionConfirm(String title) {
+    return '删除「$title」？';
+  }
+
+  @override
+  String get save => '保存';
+
+  @override
+  String get close => '关闭';
+
+  @override
+  String get regenerate => '重新生成';
+
+  @override
+  String get continueGeneration => '继续生成';
+
+  @override
+  String get chatEmpty => '发一条消息开始对话';
+
+  @override
+  String get deepThinking => '深度思考';
+
+  @override
+  String thoughtForSeconds(int seconds) {
+    return '已思考（用时 $seconds 秒）';
+  }
+
+  @override
+  String get stopped => '已停止';
+
+  @override
+  String get imageSearching => '图像搜索中...';
+
+  @override
+  String get searching => '正在搜索';
+
+  @override
+  String get browsingWeb => '正在浏览网页';
+
+  @override
+  String get reading => '正在阅读';
+
+  @override
+  String get thinking => '正在思考';
+
+  @override
+  String searchingQuery(String query) {
+    return '搜索 $query';
+  }
+
+  @override
+  String get searchingDots => '搜索中...';
+
+  @override
+  String get searchStopped => '搜索已停止';
+
+  @override
+  String get searchUnavailable => '联网搜索暂不可用';
+
+  @override
+  String get noSuitableResults => '未搜索到合适内容';
+
+  @override
+  String get noRelevantResults => '未搜索到相关内容';
+
+  @override
+  String searchedPages(int count) {
+    return '搜索到 $count 个网页';
+  }
+
+  @override
+  String readPages(int count) {
+    return '已阅读 $count 个网页';
+  }
+
+  @override
+  String get browsePageFailed => '浏览页面失败';
+
+  @override
+  String browsingPages(int count) {
+    return '浏览 $count 个页面';
+  }
+
+  @override
+  String get browseFailed => '浏览失败';
+
+  @override
+  String get viewAll => '查看全部';
+
+  @override
+  String get findFailed => '查找失败';
+
+  @override
+  String get findKeywords => '查找关键词';
+
+  @override
+  String get noMatchingContent => '未查找到相关内容';
+
+  @override
+  String pagesCount(int count) {
+    return '$count 个网页';
+  }
+
+  @override
+  String get searchResults => '搜索结果';
+
+  @override
+  String get composerHint => '输入消息';
+
+  @override
+  String get stop => '停止';
+
+  @override
+  String get send => '发送';
+
+  @override
+  String get smartSearch => '智能搜索';
 
   @override
   String get settingsData => '数据管理';

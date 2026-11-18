@@ -75,11 +75,81 @@
   "retry": "重试",
   "previewImage": "查看图片",
   "missingAttachment": "原件已丢失",
+  "settingsTitle": "设置",
+  "settingsTheme": "主题",
+  "settingsThemeSystem": "跟随系统",
+  "settingsThemeLight": "浅色",
+  "settingsThemeDark": "深色",
+  "settingsSaveKey": "保存并校验",
+  "settingsClearKey": "清除已保存的 Key",
   "settingsLanguage": "语言",
   "settingsLanguageZh": "简体中文",
   "settingsLanguageEn": "English",
   "settingsLocation": "位置信息",
   "settingsLocationNone": "不指定",
+  "newChat": "新建会话",
+  "noSessions": "还没有会话",
+  "untitledChat": "新对话",
+  "renameSession": "重命名会话",
+  "rename": "重命名",
+  "delete": "删除",
+  "deleteSession": "删除会话",
+  "deleteSessionConfirm": "删除「{title}」？",
+  "@deleteSessionConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "save": "保存",
+  "close": "关闭",
+  "regenerate": "重新生成",
+  "continueGeneration": "继续生成",
+  "chatEmpty": "发一条消息开始对话",
+  "deepThinking": "深度思考",
+  "thoughtForSeconds": "已思考（用时 {seconds} 秒）",
+  "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "stopped": "已停止",
+  "imageSearching": "图像搜索中...",
+  "searching": "正在搜索",
+  "browsingWeb": "正在浏览网页",
+  "reading": "正在阅读",
+  "thinking": "正在思考",
+  "searchingQuery": "搜索 {query}",
+  "@searchingQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchingDots": "搜索中...",
+  "searchStopped": "搜索已停止",
+  "searchUnavailable": "联网搜索暂不可用",
+  "noSuitableResults": "未搜索到合适内容",
+  "noRelevantResults": "未搜索到相关内容",
+  "searchedPages": "搜索到 {count} 个网页",
+  "readPages": "已阅读 {count} 个网页",
+  "browsePageFailed": "浏览页面失败",
+  "browsingPages": "浏览 {count} 个页面",
+  "browseFailed": "浏览失败",
+  "viewAll": "查看全部",
+  "findFailed": "查找失败",
+  "findKeywords": "查找关键词",
+  "noMatchingContent": "未查找到相关内容",
+  "pagesCount": "{count} 个网页",
+  "searchResults": "搜索结果",
+  "composerHint": "输入消息",
+  "stop": "停止",
+  "send": "发送",
+  "smartSearch": "智能搜索",
   "settingsData": "数据管理",
   "historyImport": "导入历史对话",
   "historyImportAction": "选择文件",

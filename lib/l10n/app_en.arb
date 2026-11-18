@@ -89,11 +89,109 @@
   "retry": "Retry",
   "previewImage": "View image",
   "missingAttachment": "The original file is missing",
+  "settingsTitle": "Settings",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsSaveKey": "Save and verify",
+  "settingsClearKey": "Clear saved key",
   "settingsLanguage": "Language",
   "settingsLanguageZh": "Simplified Chinese",
   "settingsLanguageEn": "English",
   "settingsLocation": "Location",
   "settingsLocationNone": "Not specified",
+  "newChat": "New chat",
+  "noSessions": "No chats yet",
+  "untitledChat": "New chat",
+  "renameSession": "Rename chat",
+  "rename": "Rename",
+  "delete": "Delete",
+  "deleteSession": "Delete chat",
+  "deleteSessionConfirm": "Delete \"{title}\"?",
+  "@deleteSessionConfirm": {
+    "placeholders": {
+      "title": {
+        "type": "String"
+      }
+    }
+  },
+  "save": "Save",
+  "close": "Dismiss",
+  "regenerate": "Regenerate",
+  "continueGeneration": "Continue",
+  "chatEmpty": "Send a message to start chatting",
+  "deepThinking": "Deep thinking",
+  "thoughtForSeconds": "Thought for {seconds}s",
+  "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "stopped": "Stopped",
+  "imageSearching": "Searching images...",
+  "searching": "Searching",
+  "browsingWeb": "Browsing the web",
+  "reading": "Reading",
+  "thinking": "Thinking",
+  "searchingQuery": "Searching {query}",
+  "@searchingQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchingDots": "Searching...",
+  "searchStopped": "Search stopped",
+  "searchUnavailable": "Web search is unavailable",
+  "noSuitableResults": "No suitable results found",
+  "noRelevantResults": "No relevant results found",
+  "searchedPages": "{count, plural, =1{Found 1 page} other{Found {count} pages}}",
+  "@searchedPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readPages": "{count, plural, =1{Read 1 page} other{Read {count} pages}}",
+  "@readPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "browsePageFailed": "Could not load the page",
+  "browsingPages": "{count, plural, =1{Browsing 1 page} other{Browsing {count} pages}}",
+  "@browsingPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "browseFailed": "Load failed",
+  "viewAll": "View all",
+  "findFailed": "Find failed",
+  "findKeywords": "Find keywords",
+  "noMatchingContent": "No matching content found",
+  "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResults": "Search results",
+  "composerHint": "Message",
+  "stop": "Stop",
+  "send": "Send",
+  "smartSearch": "Smart search",
   "settingsData": "Data",
   "historyImport": "Import chat history",
   "historyImportAction": "Choose file",

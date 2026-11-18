@@ -44,6 +44,7 @@ void main() {
     WidgetTester tester, {
     required DeepSeekApiClient client,
     required ApiKeyStore store,
+    Locale locale = const Locale('zh'),
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -53,7 +54,7 @@ void main() {
           sharedPreferencesProvider.overrideWithValue(prefs),
         ],
         child: MaterialApp(
-          locale: const Locale('zh'),
+          locale: locale,
           localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
           home: const SettingsPage(),
@@ -121,6 +122,36 @@ void main() {
     await tester.tap(find.text('不指定').last);
     await tester.pumpAndSettle();
     expect(prefs.getString('user.location'), isNull);
+  });
+
+  testWidgets('stores the selected theme', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await tester.tap(find.byKey(const Key('settings-theme')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('深色').last);
+    await tester.pumpAndSettle();
+
+    expect(prefs.getString('ui.themeMode'), 'dark');
+  });
+
+  testWidgets('renders the settings page in English', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+      locale: const Locale('en'),
+    );
+
+    expect(find.text('Settings'), findsOneWidget);
+    expect(find.text('Theme'), findsOneWidget);
+    expect(find.text('Language'), findsOneWidget);
+    expect(find.text('Save and verify'), findsOneWidget);
+    expect(find.text('Clear saved key'), findsOneWidget);
   });
 
   testWidgets('uses a country list when the system language is not Chinese', (

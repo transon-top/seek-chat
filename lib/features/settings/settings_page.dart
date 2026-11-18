@@ -8,6 +8,7 @@ import '../../shared/api/errors.dart';
 import '../../shared/models/location.dart';
 import '../../shared/models/location_data.dart';
 import '../../shared/models/types.dart';
+import '../../shared/prefs/theme_store.dart';
 import '../../shared/prefs/user_metadata_store.dart';
 
 /// 最小设置页：填写并校验 DeepSeek API Key。界面规格见票 10 / 20。
@@ -92,12 +93,14 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final error = _error;
     return Scaffold(
-      appBar: AppBar(title: const Text('设置')),
+      appBar: AppBar(title: Text(l10n.settingsTitle)),
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const _ThemeSection(),
           const _UserMetadataSection(),
           Text(
             'DeepSeek API Key',
@@ -131,11 +134,11 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
                     height: 18,
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
-                : const Text('保存并校验'),
+                : Text(l10n.settingsSaveKey),
           ),
           TextButton(
             onPressed: _loading ? null : _clear,
-            child: const Text('清除已保存的 Key'),
+            child: Text(l10n.settingsClearKey),
           ),
           if (widget.dataManagement != null) ...[
             const Divider(height: 32),
@@ -143,6 +146,50 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ],
         ],
       ),
+    );
+  }
+}
+
+/// 主题：浅色 / 深色 / 跟随系统，切换即时生效并持久化（票 18）。
+class _ThemeSection extends ConsumerWidget {
+  const _ThemeSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          l10n.settingsTheme,
+          style: Theme.of(context).textTheme.titleMedium,
+        ),
+        DropdownButton<ThemeMode>(
+          key: const Key('settings-theme'),
+          isExpanded: true,
+          value: ref.watch(themeModeProvider),
+          items: [
+            DropdownMenuItem(
+              value: ThemeMode.system,
+              child: Text(l10n.settingsThemeSystem),
+            ),
+            DropdownMenuItem(
+              value: ThemeMode.light,
+              child: Text(l10n.settingsThemeLight),
+            ),
+            DropdownMenuItem(
+              value: ThemeMode.dark,
+              child: Text(l10n.settingsThemeDark),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(themeModeProvider.notifier).setThemeMode(value);
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+      ],
     );
   }
 }

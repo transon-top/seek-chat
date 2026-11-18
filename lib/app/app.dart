@@ -9,12 +9,14 @@ import '../features/history/history_section.dart';
 import '../features/sessions/home_page.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../shared/prefs/theme_store.dart';
 import '../shared/prefs/user_metadata_store.dart';
 import 'localization.dart';
+import 'theme.dart';
 
 /// 应用壳：主题、双语、路由与生命周期接线。
 ///
-/// 设置项接入后语言与主题由设置驱动（票 18）。
+/// 语言与主题由设置驱动（票 18）；偏好同步读取，首帧即为最终样式。
 class OpenChatApp extends ConsumerStatefulWidget {
   const OpenChatApp({super.key});
 
@@ -50,12 +52,13 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
 
   @override
   Widget build(BuildContext context) {
-    const seed = Color(0xFF4D6BFE);
     final locale = ref.watch(userMetadataProvider).locale;
+    final chinese = locale == 'zh';
     return MaterialApp(
       title: 'Open Chat',
-      theme: ThemeData(colorSchemeSeed: seed),
-      darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark),
+      theme: buildAppTheme(brightness: Brightness.light, chinese: chinese),
+      darkTheme: buildAppTheme(brightness: Brightness.dark, chinese: chinese),
+      themeMode: ref.watch(themeModeProvider),
       locale: Locale(locale),
       localizationsDelegates: appLocalizationDelegates,
       supportedLocales: AppLocalizations.supportedLocales,

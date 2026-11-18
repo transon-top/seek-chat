@@ -37,20 +37,21 @@ class HomePage extends ConsumerWidget {
     WidgetRef ref,
     SessionSummary session,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final input = TextEditingController(text: session.title);
     final title = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('重命名会话'),
+        title: Text(l10n.renameSession),
         content: TextField(controller: input, autofocus: true),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, input.text),
-            child: const Text('保存'),
+            child: Text(l10n.save),
           ),
         ],
       ),
@@ -67,19 +68,24 @@ class HomePage extends ConsumerWidget {
     WidgetRef ref,
     SessionSummary session,
   ) async {
+    final l10n = AppLocalizations.of(context)!;
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('删除会话'),
-        content: Text('删除「${session.title.isEmpty ? '新对话' : session.title}」？'),
+        title: Text(l10n.deleteSession),
+        content: Text(
+          l10n.deleteSessionConfirm(
+            session.title.isEmpty ? l10n.untitledChat : session.title,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('取消'),
+            child: Text(l10n.cancel),
           ),
           FilledButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('删除'),
+            child: Text(l10n.delete),
           ),
         ],
       ),
@@ -94,6 +100,7 @@ class HomePage extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
     final sessions = ref.watch(sessionsProvider);
     return Scaffold(
       appBar: AppBar(
@@ -102,41 +109,50 @@ class HomePage extends ConsumerWidget {
           IconButton(
             onPressed: () => openSettings(context),
             icon: const Icon(Icons.settings),
-            tooltip: '设置',
+            tooltip: l10n.settingsTitle,
           ),
         ],
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _newChat(context, ref),
-        tooltip: '新建会话',
+        tooltip: l10n.newChat,
         child: const Icon(Icons.add),
       ),
       body: sessions.when(
         data: (items) => items.isEmpty
-            ? const Center(child: Text('还没有会话'))
+            ? Center(child: Text(l10n.noSessions))
             : ListView.builder(
                 itemCount: items.length,
                 itemBuilder: (context, index) {
                   final session = items[index];
                   return ListTile(
-                    title: Text(session.title.isEmpty ? '新对话' : session.title),
+                    title: Text(
+                      session.title.isEmpty
+                          ? l10n.untitledChat
+                          : session.title,
+                    ),
                     onTap: () => openChat(context, session.id),
                     trailing: PopupMenuButton<String>(
                       onSelected: (action) {
                         if (action == 'rename') _rename(context, ref, session);
                         if (action == 'delete') _delete(context, ref, session);
                       },
-                      itemBuilder: (context) => const [
-                        PopupMenuItem(value: 'rename', child: Text('重命名')),
-                        PopupMenuItem(value: 'delete', child: Text('删除')),
+                      itemBuilder: (context) => [
+                        PopupMenuItem(
+                          value: 'rename',
+                          child: Text(l10n.rename),
+                        ),
+                        PopupMenuItem(
+                          value: 'delete',
+                          child: Text(l10n.delete),
+                        ),
                       ],
                     ),
                   );
                 },
               ),
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (error, stackTrace) =>
-            Center(child: Text(AppLocalizations.of(context)!.apiErrorOther)),
+        error: (error, stackTrace) => Center(child: Text(l10n.apiErrorOther)),
       ),
     );
   }
