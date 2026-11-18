@@ -311,6 +311,88 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('renders the chat UI in English', (tester) async {
+    await prefs.setString('user.locale', 'en');
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No chats yet'), findsOneWidget);
+    await tester.tap(find.byTooltip('New chat'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('New chat'), findsOneWidget);
+    expect(find.text('Send a message to start chatting'), findsOneWidget);
+    expect(find.text('Deep thinking'), findsOneWidget);
+    expect(find.text('Smart search'), findsOneWidget);
+    expect(find.byTooltip('Send'), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('applies the saved theme mode on the first frame', (
+    tester,
+  ) async {
+    await prefs.setString('ui.themeMode', 'dark');
+    await tester.pumpWidget(appWith(apiKey: null));
+
+    final context = tester.element(find.text('Open Chat'));
+    expect(Theme.of(context).brightness, Brightness.dark);
+
+    await tester.pumpAndSettle();
+    await unmountApp(tester);
+  });
+
+  testWidgets('applies a theme change immediately', (tester) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-theme')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('深色').last);
+    await tester.pumpAndSettle();
+
+    final context = tester.element(find.text('设置'));
+    expect(Theme.of(context).brightness, Brightness.dark);
+    expect(prefs.getString('ui.themeMode'), 'dark');
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('applies a language change immediately', (tester) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('设置'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-language')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('English').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Settings'), findsOneWidget);
+    await tester.tap(find.byType(BackButton));
+    await tester.pumpAndSettle();
+    expect(find.text('No chats yet'), findsOneWidget);
+    expect(prefs.getString('user.locale'), 'en');
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('renders the chat UI in English dark mode', (tester) async {
+    await prefs.setString('user.locale', 'en');
+    await prefs.setString('ui.themeMode', 'dark');
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    expect(find.text('No chats yet'), findsOneWidget);
+    final context = tester.element(find.text('No chats yet'));
+    expect(Theme.of(context).brightness, Brightness.dark);
+
+    await unmountApp(tester);
+  });
+
   testWidgets('tells the user to set a key when none is saved', (tester) async {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();

@@ -224,7 +224,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       }
     });
     return Scaffold(
-      appBar: AppBar(title: Text(state.title.isEmpty ? '新对话' : state.title)),
+      appBar: AppBar(
+        title: Text(
+          state.title.isEmpty ? strings.untitledChat : state.title,
+        ),
+      ),
       body: Column(
         children: [
           if (state.error != null)
@@ -234,7 +238,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
           Expanded(
             child: messages.isEmpty
-                ? const Center(child: Text('发一条消息开始对话'))
+                ? Center(child: Text(strings.chatEmpty))
                 : ListView.builder(
                     reverse: true,
                     padding: const EdgeInsets.all(12),
@@ -300,6 +304,7 @@ class _ErrorBanner extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Material(
       color: colors.errorContainer,
@@ -316,7 +321,7 @@ class _ErrorBanner extends StatelessWidget {
             IconButton(
               onPressed: onDismiss,
               icon: const Icon(Icons.close, size: 18),
-              tooltip: '关闭',
+              tooltip: l10n.close,
             ),
           ],
         ),
@@ -472,13 +477,13 @@ class _ReplyView extends StatelessWidget {
                     ? null
                     : () => onRegenerate!(reply),
                 icon: const Icon(Icons.refresh),
-                tooltip: '重新生成',
+                tooltip: strings.regenerate,
               ),
               if (isLast && canContinueReply(reply))
                 IconButton(
                   onPressed: continueEnabled ? () => onContinue!(reply) : null,
                   icon: const Icon(Icons.play_arrow),
-                  tooltip: '继续生成',
+                  tooltip: strings.continueGeneration,
                 ),
             ],
           ),
@@ -537,12 +542,13 @@ class _ReplyAreaState extends State<_ReplyArea> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final reply = widget.reply;
     final view = widget.view;
     final streaming = reply.isInFlight;
     final thinking =
         reply.thinking ?? view.steps.any((step) => step is ThinkingStep);
-    final title = thinking ? _areaTitle() : null;
+    final title = thinking ? _areaTitle(l10n) : null;
     if (view.steps.isEmpty && title == null) return const SizedBox.shrink();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -576,28 +582,32 @@ class _ReplyAreaState extends State<_ReplyArea> {
     );
   }
 
-  String _areaTitle() {
+  String _areaTitle(AppLocalizations l10n) {
     final view = widget.view;
     if (view.answer != null) {
       final seconds = replyThinkingSeconds(widget.reply);
-      return seconds == null ? '深度思考' : '已思考（用时 $seconds 秒）';
+      return seconds == null
+          ? l10n.deepThinking
+          : l10n.thoughtForSeconds(seconds);
     }
-    if (!widget.reply.isInFlight) return '已停止';
+    if (!widget.reply.isInFlight) return l10n.stopped;
     final last = view.steps.isEmpty ? null : view.steps.last;
     if (last is SearchStep && last.status == ToolStatus.wip) {
-      return isImageSearchKind(last.kind) ? '图像搜索中...' : '正在搜索';
+      return isImageSearchKind(last.kind)
+          ? l10n.imageSearching
+          : l10n.searching;
     }
     if ((last is OpenStep &&
             last.pages.any((page) => page.status == ToolStatus.wip)) ||
         (last is FindStep &&
             last.patterns.any((item) => item.status == ToolStatus.wip))) {
-      return '正在浏览网页';
+      return l10n.browsingWeb;
     }
     if (last is ReadLinkStep &&
         last.links.any((link) => link.status == ToolStatus.wip)) {
-      return '正在阅读';
+      return l10n.reading;
     }
-    return '正在思考';
+    return l10n.thinking;
   }
 }
 
@@ -719,6 +729,7 @@ class _SearchRowState extends State<_SearchRow> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final step = widget.step;
     final failed = step.status == ToolStatus.failed;
@@ -730,28 +741,32 @@ class _SearchRowState extends State<_SearchRow> {
     if (step.status == ToolStatus.wip) {
       if (step.queries.isNotEmpty) {
         text = Text(
-          '搜索 ${step.queries[_tick % step.queries.length]}',
+          l10n.searchingQuery(step.queries[_tick % step.queries.length]),
           style: style,
         );
       } else {
         text = Text(
-          isImageSearchKind(step.kind) ? '图像搜索中...' : '搜索中...',
+          isImageSearchKind(step.kind)
+              ? l10n.imageSearching
+              : l10n.searchingDots,
           style: style,
         );
       }
     } else if (interrupted) {
-      text = Text('搜索已停止', style: style);
+      text = Text(l10n.searchStopped, style: style);
     } else if (failed) {
-      text = Text('联网搜索暂不可用', style: style);
+      text = Text(l10n.searchUnavailable, style: style);
     } else if (step.results.isEmpty) {
       text = Text(
-        isDeepSearchKind(step.kind) ? '未搜索到合适内容' : '未搜索到相关内容',
+        isDeepSearchKind(step.kind)
+            ? l10n.noSuitableResults
+            : l10n.noRelevantResults,
         style: style,
       );
     } else if (isDeepSearchKind(step.kind)) {
-      text = Text('搜索到 ${step.results.length} 个网页', style: style);
+      text = Text(l10n.searchedPages(step.results.length), style: style);
     } else {
-      text = Text('已阅读 ${step.results.length} 个网页', style: style);
+      text = Text(l10n.readPages(step.results.length), style: style);
     }
 
     return InkWell(
@@ -786,30 +801,34 @@ class _OpenRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final allFailed =
         step.pages.every((page) => page.status == ToolStatus.failed);
     return _ToolRow(
       icon: Icons.public,
       child: allFailed
-          ? Text('浏览页面失败', style: TextStyle(color: colors.onSurfaceVariant))
+          ? Text(
+              l10n.browsePageFailed,
+              style: TextStyle(color: colors.onSurfaceVariant),
+            )
           : Wrap(
               spacing: 8,
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  '浏览 ${step.pages.length} 个页面',
+                  l10n.browsingPages(step.pages.length),
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
                 for (final page in step.pages.take(5))
-                  _PageLink(page: page, failedTip: '浏览失败'),
+                  _PageLink(page: page, failedTip: l10n.browseFailed),
                 if (step.pages.length > 5)
                   InkWell(
                     onTap: () =>
                         _showSourcesSheet(context, searchResults),
                     child: Text(
-                      '查看全部',
+                      l10n.viewAll,
                       style: TextStyle(color: colors.primary),
                     ),
                   ),
@@ -826,20 +845,24 @@ class _FindRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final allFailed =
         step.patterns.every((item) => item.status == ToolStatus.failed);
     return _ToolRow(
       icon: Icons.public,
       child: allFailed
-          ? Text('查找失败', style: TextStyle(color: colors.onSurfaceVariant))
+          ? Text(
+              l10n.findFailed,
+              style: TextStyle(color: colors.onSurfaceVariant),
+            )
           : Wrap(
               spacing: 8,
               runSpacing: 4,
               crossAxisAlignment: WrapCrossAlignment.center,
               children: [
                 Text(
-                  '查找关键词',
+                  l10n.findKeywords,
                   style: TextStyle(color: colors.onSurfaceVariant),
                 ),
                 for (final item in step.patterns) _FindChip(item: item),
@@ -856,6 +879,7 @@ class _ReadLinkRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return _ToolRow(
       icon: Icons.link,
@@ -864,7 +888,10 @@ class _ReadLinkRow extends StatelessWidget {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text('正在阅读', style: TextStyle(color: colors.onSurfaceVariant)),
+          Text(
+            l10n.reading,
+            style: TextStyle(color: colors.onSurfaceVariant),
+          ),
           for (final link in step.links) _PageLink(page: link),
         ],
       ),
@@ -906,10 +933,11 @@ class _PageLink extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     if (page.status == ToolStatus.failed) {
       return Tooltip(
-        message: failedTip ?? '浏览失败',
+        message: failedTip ?? l10n.browseFailed,
         child: Text(page.title, style: TextStyle(color: colors.outline)),
       );
     }
@@ -927,6 +955,7 @@ class _FindChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     final failed = item.status == ToolStatus.failed;
     final chip = Container(
@@ -948,7 +977,7 @@ class _FindChip extends StatelessWidget {
       ),
     );
     if (!failed) return chip;
-    return Tooltip(message: '未查找到相关内容', child: chip);
+    return Tooltip(message: l10n.noMatchingContent, child: chip);
   }
 }
 
@@ -960,6 +989,7 @@ class _SearchSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
@@ -978,7 +1008,7 @@ class _SearchSummary extends StatelessWidget {
               _SiteThumbnails(sources: sources),
               const SizedBox(width: 6),
               Text(
-                '${sources.length} 个网页',
+                l10n.pagesCount(sources.length),
                 style: TextStyle(
                   color: colors.onSurfaceVariant,
                   fontSize: 12,
@@ -1070,7 +1100,7 @@ Future<void> _showSourcesSheet(
             Padding(
               padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
               child: Text(
-                '搜索结果',
+                AppLocalizations.of(context)!.searchResults,
                 style: Theme.of(context).textTheme.titleMedium,
               ),
             ),
@@ -1206,13 +1236,13 @@ class _Composer extends StatelessWidget {
             Row(
               children: [
                 FilterChip(
-                  label: const Text('深度思考'),
+                  label: Text(l10n.deepThinking),
                   selected: thinking,
                   onSelected: onThinkingChanged,
                 ),
                 const SizedBox(width: 8),
                 FilterChip(
-                  label: const Text('智能搜索'),
+                  label: Text(l10n.smartSearch),
                   selected: search,
                   onSelected: onSearchChanged,
                 ),
@@ -1232,9 +1262,9 @@ class _Composer extends StatelessWidget {
                     controller: input,
                     minLines: 1,
                     maxLines: 5,
-                    decoration: const InputDecoration(
-                      hintText: '输入消息',
-                      border: OutlineInputBorder(),
+                    decoration: InputDecoration(
+                      hintText: l10n.composerHint,
+                      border: const OutlineInputBorder(),
                     ),
                   ),
                 ),
@@ -1249,7 +1279,7 @@ class _Composer extends StatelessWidget {
                     return IconButton.filled(
                       onPressed: busy ? onStop : (canSend ? onSend : null),
                       icon: Icon(busy ? Icons.stop : Icons.send),
-                      tooltip: busy ? '停止' : '发送',
+                      tooltip: busy ? l10n.stop : l10n.send,
                     );
                   },
                 ),

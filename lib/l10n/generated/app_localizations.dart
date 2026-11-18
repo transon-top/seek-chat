@@ -297,6 +297,48 @@ abstract class AppLocalizations {
   /// **'The original file is missing'**
   String get missingAttachment;
 
+  /// No description provided for @settingsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsTitle;
+
+  /// No description provided for @settingsTheme.
+  ///
+  /// In en, this message translates to:
+  /// **'Theme'**
+  String get settingsTheme;
+
+  /// No description provided for @settingsThemeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsThemeSystem;
+
+  /// No description provided for @settingsThemeLight.
+  ///
+  /// In en, this message translates to:
+  /// **'Light'**
+  String get settingsThemeLight;
+
+  /// No description provided for @settingsThemeDark.
+  ///
+  /// In en, this message translates to:
+  /// **'Dark'**
+  String get settingsThemeDark;
+
+  /// No description provided for @settingsSaveKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Save and verify'**
+  String get settingsSaveKey;
+
+  /// No description provided for @settingsClearKey.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear saved key'**
+  String get settingsClearKey;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:
@@ -326,6 +368,258 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not specified'**
   String get settingsLocationNone;
+
+  /// No description provided for @newChat.
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get newChat;
+
+  /// No description provided for @noSessions.
+  ///
+  /// In en, this message translates to:
+  /// **'No chats yet'**
+  String get noSessions;
+
+  /// No description provided for @untitledChat.
+  ///
+  /// In en, this message translates to:
+  /// **'New chat'**
+  String get untitledChat;
+
+  /// No description provided for @renameSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename chat'**
+  String get renameSession;
+
+  /// No description provided for @rename.
+  ///
+  /// In en, this message translates to:
+  /// **'Rename'**
+  String get rename;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @deleteSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete chat'**
+  String get deleteSession;
+
+  /// No description provided for @deleteSessionConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete \"{title}\"?'**
+  String deleteSessionConfirm(String title);
+
+  /// No description provided for @save.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get save;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Dismiss'**
+  String get close;
+
+  /// No description provided for @regenerate.
+  ///
+  /// In en, this message translates to:
+  /// **'Regenerate'**
+  String get regenerate;
+
+  /// No description provided for @continueGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueGeneration;
+
+  /// No description provided for @chatEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'Send a message to start chatting'**
+  String get chatEmpty;
+
+  /// No description provided for @deepThinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Deep thinking'**
+  String get deepThinking;
+
+  /// No description provided for @thoughtForSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Thought for {seconds}s'**
+  String thoughtForSeconds(int seconds);
+
+  /// No description provided for @stopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Stopped'**
+  String get stopped;
+
+  /// No description provided for @imageSearching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching images...'**
+  String get imageSearching;
+
+  /// No description provided for @searching.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching'**
+  String get searching;
+
+  /// No description provided for @browsingWeb.
+  ///
+  /// In en, this message translates to:
+  /// **'Browsing the web'**
+  String get browsingWeb;
+
+  /// No description provided for @reading.
+  ///
+  /// In en, this message translates to:
+  /// **'Reading'**
+  String get reading;
+
+  /// No description provided for @thinking.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking'**
+  String get thinking;
+
+  /// No description provided for @searchingQuery.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching {query}'**
+  String searchingQuery(String query);
+
+  /// No description provided for @searchingDots.
+  ///
+  /// In en, this message translates to:
+  /// **'Searching...'**
+  String get searchingDots;
+
+  /// No description provided for @searchStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Search stopped'**
+  String get searchStopped;
+
+  /// No description provided for @searchUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Web search is unavailable'**
+  String get searchUnavailable;
+
+  /// No description provided for @noSuitableResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No suitable results found'**
+  String get noSuitableResults;
+
+  /// No description provided for @noRelevantResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No relevant results found'**
+  String get noRelevantResults;
+
+  /// No description provided for @searchedPages.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Found 1 page} other{Found {count} pages}}'**
+  String searchedPages(int count);
+
+  /// No description provided for @readPages.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Read 1 page} other{Read {count} pages}}'**
+  String readPages(int count);
+
+  /// No description provided for @browsePageFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load the page'**
+  String get browsePageFailed;
+
+  /// No description provided for @browsingPages.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{Browsing 1 page} other{Browsing {count} pages}}'**
+  String browsingPages(int count);
+
+  /// No description provided for @browseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Load failed'**
+  String get browseFailed;
+
+  /// No description provided for @viewAll.
+  ///
+  /// In en, this message translates to:
+  /// **'View all'**
+  String get viewAll;
+
+  /// No description provided for @findFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Find failed'**
+  String get findFailed;
+
+  /// No description provided for @findKeywords.
+  ///
+  /// In en, this message translates to:
+  /// **'Find keywords'**
+  String get findKeywords;
+
+  /// No description provided for @noMatchingContent.
+  ///
+  /// In en, this message translates to:
+  /// **'No matching content found'**
+  String get noMatchingContent;
+
+  /// No description provided for @pagesCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count, plural, =1{1 page} other{{count} pages}}'**
+  String pagesCount(int count);
+
+  /// No description provided for @searchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search results'**
+  String get searchResults;
+
+  /// No description provided for @composerHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get composerHint;
+
+  /// No description provided for @stop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop'**
+  String get stop;
+
+  /// No description provided for @send.
+  ///
+  /// In en, this message translates to:
+  /// **'Send'**
+  String get send;
+
+  /// No description provided for @smartSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Smart search'**
+  String get smartSearch;
 
   /// No description provided for @settingsData.
   ///
