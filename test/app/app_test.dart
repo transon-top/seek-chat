@@ -296,6 +296,7 @@ void main() {
     expect(find.text('新对话'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
@@ -317,11 +318,13 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
     expect(find.textContaining('未设置 API Key'), findsOneWidget);
-    expect(find.text('Hello'), findsNothing);
+    // 发送失败时保留输入内容，与 chat-demo 一致。
+    expect(find.text('Hello'), findsOneWidget);
 
     await unmountApp(tester);
   });
@@ -338,6 +341,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
     await tester.pump();
@@ -382,6 +386,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
     await tester.pump();
@@ -452,6 +457,7 @@ void main() {
     expect(prefs.getBool(ChatOptionsStore.searchKey), isTrue);
 
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
@@ -499,6 +505,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
@@ -541,6 +548,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
     await tester.pump();
@@ -584,6 +592,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
@@ -609,6 +618,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
@@ -667,6 +677,7 @@ void main() {
     await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 

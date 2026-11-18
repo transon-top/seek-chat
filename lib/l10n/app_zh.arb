@@ -11,5 +11,66 @@
   "apiErrorNetwork": "网络错误，请检查连接",
   "apiErrorOther": "发生错误，请重试",
   "replyFailed": "生成失败：{error}",
-  "replyRefused": "内容被安全策略拒绝"
+  "replyRefused": "内容被安全策略拒绝",
+  "errorSaveAttachmentFailed": "保存附件失败：{error}",
+  "@errorSaveAttachmentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFile": "上传文件",
+  "uploadFromPhotos": "从相册选择",
+  "uploadFromFiles": "选择文件",
+  "uploadUnsupportedFormat": "上传的文件包含暂未支持的文件格式，请转换文件格式后重试。支持 PDF、DOC、XLSX、PPT、图片、文本、代码等。",
+  "uploadMaxMBSize": "单个文件大小超过限制（{size}MB），请调整后重试",
+  "@uploadMaxMBSize": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadMaxFiles": "上传文件最多支持 {count} 个",
+  "@uploadMaxFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadFileStatusUploading": "上传中...",
+  "uploadFileStatusFailed": "上传失败",
+  "uploadRetry": "{message}，点击重试",
+  "@uploadRetry": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadServerBusy": "服务器繁忙",
+  "uploadParseFailed": "解析失败",
+  "uploadFileCountLimit": "已上传文件数达到上限（{limit} 个）",
+  "@uploadFileCountLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadStorageLimit": "已上传文件占用空间达到上限（{limit}GB）",
+  "@uploadStorageLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadDeleteFiles": "删除文件",
+  "removeAttachment": "移除附件",
+  "retry": "重试",
+  "previewImage": "查看图片",
+  "missingAttachment": "原件已丢失"
 }

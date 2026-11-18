@@ -28,6 +28,7 @@ dependencies:
   mermaid_flutter: ^0.3.2
   mermaid_core: ^0.3.2
   url_launcher: ^6.3.3
+  file_picker: ^13.4.0
 
 dev_dependencies:
   flutter_test:

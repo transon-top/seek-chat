@@ -57,6 +57,24 @@ void main() {
     expect(orphan.existsSync(), isFalse);
   });
 
+  test('save copies the original under attachments/<id>', () async {
+    final source = File(p.join(support.path, 'picked.pdf'))
+      ..writeAsBytesSync([1, 2, 3]);
+
+    final relative = await store.save('att-1', source.path);
+
+    expect(relative, 'attachments/att-1');
+    final saved = File(p.join(support.path, relative));
+    expect(saved.readAsBytesSync(), [1, 2, 3]);
+    expect(await store.absolutePath(relative), saved.path);
+  });
+
+  test('absolutePath returns null for missing originals', () async {
+    expect(await store.absolutePath(null), isNull);
+    expect(await store.absolutePath(''), isNull);
+    expect(await store.absolutePath('attachments/missing'), isNull);
+  });
+
   test('deleteAttachments removes originals and ignores missing files', () async {
     final known = await writeOriginal('known');
 

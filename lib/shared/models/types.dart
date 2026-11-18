@@ -369,6 +369,15 @@ final class UserMessage extends Message {
 
   final String text;
   final List<Attachment> attachments;
+
+  UserMessage withAttachments(List<Attachment> attachments) => UserMessage(
+        id: id,
+        parentId: parentId,
+        selectedChildId: selectedChildId,
+        createdAt: createdAt,
+        text: text,
+        attachments: attachments,
+      );
 }
 
 final class AssistantMessage extends Message {
@@ -429,6 +438,36 @@ final class Attachment {
 
   /// Files API 的 `file_id`，按附件 id 在所有引用间共享。
   final String? serverId;
+
+  /// 传 null 表示 `serverId` 已失效。
+  Attachment withServerId(String? serverId) => Attachment(
+        id: id,
+        name: name,
+        size: size,
+        isImage: isImage,
+        mimeType: mimeType,
+        localPath: localPath,
+        serverId: serverId,
+      );
+}
+
+/// 输入区里尚未发送的附件；原件仍在选择器给出的临时路径。
+final class DraftAttachment {
+  const DraftAttachment({
+    required this.id,
+    required this.path,
+    required this.name,
+    required this.size,
+    required this.isImage,
+    required this.mimeType,
+  });
+
+  final String id;
+  final String path;
+  final String name;
+  final int size;
+  final bool isImage;
+  final String mimeType;
 }
 
 final class LocalMessage {
@@ -449,6 +488,15 @@ abstract final class LocalMessageKeys {
   static const apiErrorServerBusy = 'apiErrorServerBusy';
   static const apiErrorNetwork = 'apiErrorNetwork';
   static const apiErrorOther = 'apiErrorOther';
+  static const uploadUnsupportedFormat = 'uploadUnsupportedFormat';
+  static const uploadMaxMBSize = 'uploadMaxMBSize';
+  static const uploadMaxFiles = 'uploadMaxFiles';
+  static const uploadFileStatusFailed = 'uploadFileStatusFailed';
+  static const uploadServerBusy = 'uploadServerBusy';
+  static const uploadParseFailed = 'uploadParseFailed';
+  static const uploadFileCountLimit = 'uploadFileCountLimit';
+  static const uploadStorageLimit = 'uploadStorageLimit';
+  static const errorSaveAttachmentFailed = 'errorSaveAttachmentFailed';
 }
 
 final class ReplyError {
