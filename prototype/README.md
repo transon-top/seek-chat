@@ -36,7 +36,7 @@ flutter run -t prototype/main.dart \
 
 - 真实 Markdown / 数学 / Mermaid 渲染（生产实现已由 `lib/features/chat/markdown_view.dart` 负责）。
 - 真实上传、语音、复制、朗读与网络请求；按钮只给视觉与状态反馈。
-- 设置页与数据管理页（留给票 20），原型只保留抽屉里的设置入口占位。
+- 设置页与数据管理页见[票 20 原型](settings/README.md)，本原型只保留抽屉里的设置入口占位。
 - 小屏适配、无障碍、国际化与像素级对齐；这些留给票 10 / 18 / 20。
 - 测试只覆盖一条冒烟路径（发送、停止、场景切换、展开长消息），见
   `test/prototype/prototype_test.dart`。
