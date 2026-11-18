@@ -12,6 +12,7 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   material_ui: ^1.1.0
+  shadcn_ui: ^0.60.0
   cupertino_icons: ^1.0.8
   http: ^1.6.0
   drift: ^2.35.4
