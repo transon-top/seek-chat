@@ -14,6 +14,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import 'composer.dart';
 import 'data.dart';
 import 'messages.dart';
+import 'theme.dart';
 
 /// 截图与演示用：`--dart-define=PROTOTYPE_SCENARIO=streaming`。
 const _initialScenarioName = String.fromEnvironment(
@@ -41,42 +42,8 @@ class _PrototypeAppState extends State<PrototypeApp> {
     return ShadApp(
       title: 'Open Chat 原型',
       debugShowCheckedModeBanner: false,
-      theme: ShadThemeData(
-        brightness: Brightness.light,
-        colorScheme: const ShadNeutralColorScheme.light(
-          foreground: Color(0xFF111113),
-          muted: Color(0xFFF4F5F7),
-          mutedForeground: Color(0xFF8A8F98),
-          secondary: Color(0xFFF4F5F7),
-          secondaryForeground: Color(0xFF111113),
-          accent: Color(0xFFF4F5F7),
-          accentForeground: Color(0xFF111113),
-          border: Color(0xFFE8EAED),
-          input: Color(0xFFE8EAED),
-          primary: Color(0xFF5B6CFF),
-          primaryForeground: Color(0xFFFFFFFF),
-          destructive: Color(0xFFE5484D),
-        ),
-      ),
-      darkTheme: ShadThemeData(
-        brightness: Brightness.dark,
-        colorScheme: const ShadNeutralColorScheme.dark(
-          background: Color(0xFF1B1B1D),
-          card: Color(0xFF232326),
-          foreground: Color(0xFFF2F2F3),
-          muted: Color(0xFF2C2C30),
-          mutedForeground: Color(0xFF939399),
-          secondary: Color(0xFF2C2C30),
-          secondaryForeground: Color(0xFFF2F2F3),
-          accent: Color(0xFF2C2C30),
-          accentForeground: Color(0xFFF2F2F3),
-          border: Color(0xFF34343A),
-          input: Color(0xFF34343A),
-          primary: Color(0xFF6B7CFF),
-          primaryForeground: Color(0xFFFFFFFF),
-          destructive: Color(0xFFF16A6A),
-        ),
-      ),
+      theme: prototypeShadTheme(Brightness.light),
+      darkTheme: prototypeShadTheme(Brightness.dark),
       themeMode: _dark ? ThemeMode.dark : ThemeMode.light,
       home: PrototypeHome(
         dark: _dark,
