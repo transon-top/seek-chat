@@ -1,3 +1,4 @@
+import '../../l10n/generated/app_localizations.dart';
 import '../../shared/models/types.dart';
 
 /// 工具调用的界面状态，只由已持久化的块推导（`search.md` §3.1）。
@@ -313,6 +314,21 @@ ReplyView buildReplyView(
     sources: registry.list,
     searchResults: searchResults,
   );
+}
+
+/// 拒答回复展示的文案：模板文本优先，其次图片审核文案，最后通用拒答文案
+/// （`safety.md` §3）。非拒答回复返回 null。
+String? refusalText(AppLocalizations l10n, AssistantMessage reply) {
+  if (reply.stopReason != StopReason.refusal) return null;
+  final template = reply.blocks
+      .whereType<TextBlock>()
+      .where((block) => block.isTemplate)
+      .map((block) => block.text)
+      .join()
+      .trim();
+  if (template.isNotEmpty) return template;
+  final explanation = reply.stopDetails?.explanation?.trim() ?? '';
+  return explanation.isEmpty ? l10n.replyRefused : l10n.replyImageBlocked;
 }
 
 final class _PendingText {

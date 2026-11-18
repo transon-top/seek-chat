@@ -41,6 +41,10 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiErrorNetwork => 'Network error. Check your connection.';
 
   @override
+  String get apiErrorContentRejected =>
+      'The content did not pass safety review. Edit it and try again.';
+
+  @override
   String get apiErrorOther => 'Something went wrong. Please try again.';
 
   @override
@@ -49,7 +53,12 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get replyRefused => 'The content was blocked by safety policy.';
+  String get replyRefused =>
+      'Sorry, that\'s beyond my current scope. Let\'s talk about something else.';
+
+  @override
+  String get replyImageBlocked =>
+      'The image was blocked by content safety review. Remove it and try again.';
 
   @override
   String errorSaveAttachmentFailed(String error) {

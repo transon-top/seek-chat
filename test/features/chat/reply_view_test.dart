@@ -1,5 +1,8 @@
+import 'dart:ui' show Locale;
+
 import 'package:flutter_test/flutter_test.dart';
 import 'package:open_chat/features/chat/reply_view.dart';
+import 'package:open_chat/l10n/generated/app_localizations.dart';
 import 'package:open_chat/shared/models/types.dart';
 
 const _toolUse = 'toolu_1';
@@ -109,6 +112,58 @@ const _citation = TextCitation(
 );
 
 void main() {
+  final zh = lookupAppLocalizations(const Locale('zh'));
+  final en = lookupAppLocalizations(const Locale('en'));
+
+  test('refusal text prefers template, then image review copy', () {
+    AssistantMessage reply({
+      List<ReplyBlock> blocks = const [],
+      StopDetails? stopDetails,
+      StopReason stopReason = StopReason.refusal,
+    }) =>
+        AssistantMessage(
+          id: 'a1',
+          createdAt: DateTime(2026),
+          status: ReplyStatus.done,
+          blocks: blocks,
+          stopReason: stopReason,
+          stopDetails: stopDetails,
+        );
+
+    expect(
+      refusalText(zh, reply()),
+      '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。',
+    );
+    expect(
+      refusalText(en, reply()),
+      "Sorry, that's beyond my current scope. Let's talk about something else.",
+    );
+    expect(
+      refusalText(
+        zh,
+        reply(
+          stopDetails: const StopDetails(
+            explanation:
+                'The following images were blocked by content moderation: '
+                'messages.1.content.0',
+          ),
+        ),
+      ),
+      '图片未通过内容安全审核，请移除后重试。',
+    );
+    expect(
+      refusalText(
+        zh,
+        reply(
+          blocks: const [TextBlock(text: '模板提示', isTemplate: true)],
+          stopDetails: const StopDetails(explanation: 'messages.1.content.0'),
+        ),
+      ),
+      '模板提示',
+    );
+    expect(refusalText(zh, reply(stopReason: StopReason.endTurn)), isNull);
+  });
+
   test('merges normal searches into their first position across a thinking block',
       () {
     final view = buildReplyView(

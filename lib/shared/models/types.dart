@@ -65,6 +65,7 @@ enum ApiErrorCondition {
   rateLimited,
   serverBusy,
   network,
+  contentRejected,
   other,
 }
 
@@ -487,6 +488,7 @@ abstract final class LocalMessageKeys {
   static const apiErrorRateLimited = 'apiErrorRateLimited';
   static const apiErrorServerBusy = 'apiErrorServerBusy';
   static const apiErrorNetwork = 'apiErrorNetwork';
+  static const apiErrorContentRejected = 'apiErrorContentRejected';
   static const apiErrorOther = 'apiErrorOther';
   static const uploadUnsupportedFormat = 'uploadUnsupportedFormat';
   static const uploadMaxMBSize = 'uploadMaxMBSize';

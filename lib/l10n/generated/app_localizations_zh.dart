@@ -41,6 +41,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiErrorNetwork => '网络错误，请检查连接';
 
   @override
+  String get apiErrorContentRejected => '内容未通过安全审核，请修改后重试';
+
+  @override
   String get apiErrorOther => '发生错误，请重试';
 
   @override
@@ -49,7 +52,10 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
-  String get replyRefused => '内容被安全策略拒绝';
+  String get replyRefused => '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。';
+
+  @override
+  String get replyImageBlocked => '图片未通过内容安全审核，请移除后重试。';
 
   @override
   String errorSaveAttachmentFailed(String error) {

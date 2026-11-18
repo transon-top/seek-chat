@@ -142,7 +142,7 @@ type CreateMessageRequest = {
 | `protocol` | 响应不符合协议，或流中抛出无法归类的异常 | 2xx 但非 SSE、无响应体；读流期间的非 `ApiException` 异常（`store.ts:1073-1077`） |
 | `upload` | 发送前补传附件失败，请求未发出 | 文件过期、超大、解析失败 |
 
-状态码归类（`errors.ts:17-34`）：`401 → unauthorized`、`402 → insufficientBalance`、`413 → tooLarge`、`429 → rateLimited`、`>=500 → serverBusy`，其余 `other`。无状态码且 kind 为 `network` 时归类 `network`（`errors.ts:36-44`）。
+状态码归类（`errors.ts:17-34`）：`401 → unauthorized`、`402 → insufficientBalance`、`413 → tooLarge`、`429 → rateLimited`、`>=500 → serverBusy`，其余 `other`。无状态码且 kind 为 `network` 时归类 `network`（`errors.ts:36-44`）。唯一的按文案归类：`400` 且错误文案含 `Content Exists Risk` → `contentRejected`（内容审核拒绝，见 [`safety.md`](safety.md) §5）。
 
 可重试判定（`errors.ts:46-55`）：
 
@@ -710,7 +710,7 @@ bool isRetryable(Object error) => error is! ApiException || error.retryable;
 | --- | --- |
 | `latest_reminder` 的平台标记（Web → iOS/Android）与语言文案；插入位置与快照语义已在 §3.3 锁定 | 票 16 |
 | 附件大小/格式/并发/purpose 细节 | 票 13 |
-| 拒绝、审核失败的用户提示文案 | 票 14 |
+| 拒绝、审核失败的用户提示文案 | 已定，见 [`safety.md`](safety.md) |
 | 引用角标与来源抽屉展示 | 票 12 |
 | 请求快照、分支、持久化结构 | 票 06 |
 | Key 存储、模块分层与依赖注入；共享 `http.Client` 的持有位置 | 票 07 |

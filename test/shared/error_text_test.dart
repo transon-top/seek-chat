@@ -19,6 +19,40 @@ void main() {
       'Too many requests. Try again later.',
     );
     expect(apiErrorText(zh, ApiErrorCondition.other), '发生错误，请重试');
+    expect(
+      apiErrorText(zh, ApiErrorCondition.contentRejected),
+      '内容未通过安全审核，请修改后重试',
+    );
+  });
+
+  test('splits a content-review 400 from other 400s', () {
+    expect(
+      classifyApiError(ApiErrorKind.http, 400, message: 'Content Exists Risk'),
+      ApiErrorCondition.contentRejected,
+    );
+    expect(
+      classifyApiError(ApiErrorKind.http, 400, message: 'invalid file_id'),
+      ApiErrorCondition.other,
+    );
+    expect(
+      ApiException(
+        ApiErrorKind.http,
+        'Content Exists Risk',
+        status: 400,
+      ).condition,
+      ApiErrorCondition.contentRejected,
+    );
+    expect(
+      replyErrorText(
+        zh,
+        const ReplyError(
+          kind: ApiErrorKind.http,
+          message: 'Content Exists Risk',
+          status: 400,
+        ),
+      ),
+      '内容未通过安全审核，请修改后重试',
+    );
   });
 
   test('classifies a persisted reply error by kind and status', () {
@@ -77,6 +111,8 @@ void main() {
         ApiErrorCondition.rateLimited: LocalMessageKeys.apiErrorRateLimited,
         ApiErrorCondition.serverBusy: LocalMessageKeys.apiErrorServerBusy,
         ApiErrorCondition.network: LocalMessageKeys.apiErrorNetwork,
+        ApiErrorCondition.contentRejected:
+            LocalMessageKeys.apiErrorContentRejected,
         ApiErrorCondition.other: LocalMessageKeys.apiErrorOther,
       },
     );

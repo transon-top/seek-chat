@@ -16,6 +16,7 @@
   "apiErrorRateLimited": "Too many requests. Try again later.",
   "apiErrorServerBusy": "The server is busy. Try again later.",
   "apiErrorNetwork": "Network error. Check your connection.",
+  "apiErrorContentRejected": "The content did not pass safety review. Edit it and try again.",
   "apiErrorOther": "Something went wrong. Please try again.",
   "replyFailed": "Generation failed: {error}",
   "@replyFailed": {
@@ -25,7 +26,8 @@
       }
     }
   },
-  "replyRefused": "The content was blocked by safety policy.",
+  "replyRefused": "Sorry, that's beyond my current scope. Let's talk about something else.",
+  "replyImageBlocked": "The image was blocked by content safety review. Remove it and try again.",
   "errorSaveAttachmentFailed": "Could not save the attachment: {error}",
   "@errorSaveAttachmentFailed": {
     "placeholders": {

@@ -9,9 +9,11 @@
   "apiErrorRateLimited": "请求过于频繁，请稍后再试",
   "apiErrorServerBusy": "服务器繁忙，请稍后再试",
   "apiErrorNetwork": "网络错误，请检查连接",
+  "apiErrorContentRejected": "内容未通过安全审核，请修改后重试",
   "apiErrorOther": "发生错误，请重试",
   "replyFailed": "生成失败：{error}",
-  "replyRefused": "内容被安全策略拒绝",
+  "replyRefused": "你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。",
+  "replyImageBlocked": "图片未通过内容安全审核，请移除后重试。",
   "errorSaveAttachmentFailed": "保存附件失败：{error}",
   "@errorSaveAttachmentFailed": {
     "placeholders": {
