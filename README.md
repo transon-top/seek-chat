@@ -1,7 +1,8 @@
 # Open Chat
 
 Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
-`.scratch/flutter-deepseek-chat/`，领域术语见 `GLOSSARY.md`。
+`.scratch/flutter-deepseek-chat/`，架构见 `docs/architecture.md`，
+领域术语见 `GLOSSARY.md`。
 
 ## 当前实现
 
