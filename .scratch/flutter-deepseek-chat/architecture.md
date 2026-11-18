@@ -1,8 +1,9 @@
 # 应用架构
 
 本文锁定票 07「应用架构与项目结构」的决策，约束 `api.md`、`data-model.md` 与
-`GLOSSARY.md` 之上的代码组织。代码尚未按本文迁移；迁移按第 12 节的顺序执行，
-每一步保持 `flutter analyze` 与 `flutter test` 通过。
+`GLOSSARY.md` 之上的代码组织。迁移已按第 12 节完成第 1–6 步（目录、Riverpod、
+ARB、安全项），第 7 步 shadcn_ui 随票 09 / 10 接入；每一步保持
+`flutter analyze` 与 `flutter test` 通过。
 
 ## 1. 分层与目录
 
@@ -27,6 +28,9 @@ lib/
     models/          # 领域与协议类型、JSON 编解码
     prefs/           # shared_preferences 封装
     security/        # ApiKeyStore
+    providers.dart   # 基础设施 Provider，features 与 main 共用
+    error_text.dart  # 本地化错误文案的唯一映射点
+    logging.dart     # 仅 debug 构建输出的日志
   l10n/              # ARB 与生成的 AppLocalizations
 ```
 
@@ -53,7 +57,7 @@ lib/
 
 使用 `flutter_riverpod` 3.5，手写 Provider，不引入 `riverpod_generator`。
 
-- 基础设施用同步 `Provider`：`appDatabaseProvider`、`chatRepositoryProvider`、
+- 基础设施用同步 `Provider`（定义在 `shared/providers.dart`）：`appDatabaseProvider`、`chatRepositoryProvider`、
   `apiClientProvider`、`apiKeyStoreProvider`、`attachmentStoreProvider`、
   `sharedPreferencesProvider`。
 - 启动顺序留在 `main()`：打开数据库、`resetInterruptedReplies()`、附件孤儿清理，
@@ -92,8 +96,8 @@ lib/
 
 - 传输与协议错误继续统一为 `ApiException`（`api/errors.dart`），
   `kind`、`status`、`condition`、`retryable` 是 UI 的唯一判断依据。
-- `app/` 提供唯一的本地化映射函数，把 `ApiErrorCondition` 映射为 ARB 文案；
-  未知异常统一显示「发生错误，请重试」。服务端原文只在 debug 构建显示，
+- `shared/error_text.dart` 提供唯一的本地化映射函数，把 `ApiErrorCondition`
+  映射为 ARB 文案；features 直接复用，未知异常统一显示「发生错误，请重试」。服务端原文只在 debug 构建显示，
   release 构建不展示原始 `message`。
 - 回复级错误按 `data-model.md` §2.2 存 `kind`、`message`、`status`、
   `localMessage`（键与参数）与 `retryable`；界面优先渲染 `localMessage`，

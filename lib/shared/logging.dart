@@ -1,0 +1,11 @@
+import 'dart:developer' as developer;
+
+import 'package:flutter/foundation.dart';
+
+/// 调试日志，只在 debug 构建输出（architecture.md §5）。
+///
+/// 禁止传入 API Key、请求头、完整请求体与附件内容。
+void debugLog(String message, [Object? error]) {
+  if (!kDebugMode) return;
+  developer.log(message, name: 'open_chat', error: error);
+}

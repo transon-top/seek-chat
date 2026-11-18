@@ -1,4 +1,4 @@
-import 'package:open_chat/settings/api_key_store.dart';
+import 'package:open_chat/shared/security/api_key_store.dart';
 
 class FakeApiKeyStore implements ApiKeyStore {
   FakeApiKeyStore([this.value]);

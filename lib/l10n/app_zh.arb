@@ -1,0 +1,15 @@
+{
+  "@@locale": "zh",
+  "errorNoApiKey": "未设置 API Key，请先在设置中填写。",
+  "errorSaveReplyFailed": "保存回复失败：{error}",
+  "errorApiKeyEmpty": "请输入 API Key",
+  "apiErrorUnauthorized": "API Key 无效",
+  "apiErrorInsufficientBalance": "余额不足",
+  "apiErrorTooLarge": "请求内容过大",
+  "apiErrorRateLimited": "请求过于频繁，请稍后再试",
+  "apiErrorServerBusy": "服务器繁忙，请稍后再试",
+  "apiErrorNetwork": "网络错误，请检查连接",
+  "apiErrorOther": "发生错误，请重试",
+  "replyFailed": "生成失败：{error}",
+  "replyRefused": "内容被安全策略拒绝"
+}

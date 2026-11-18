@@ -6,7 +6,11 @@ Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
 
 ## 当前实现
 
-- 应用壳与启动兜底：残留的 `pending`/`streaming` 回复置为 `stopped`。
+- 应用壳与启动兜底：残留的 `pending`/`streaming` 回复置为 `stopped`；
+  进入后台时补写所有存活控制器的流式回复。
+- 架构：功能优先目录 + `shared/` 核心；`flutter_riverpod` 手写 Provider，
+  会话列表走 `watchSessions()` + `StreamProvider`，聊天控制器按会话
+  `autoDispose.family` 并在流式期间 `keepAlive`。
 - 数据层：drift 四表（`sessions`、`messages`、`attachments`、
   `message_attachments`），分支、版本切换、续写、附件引用与清理。
 - API 客户端：请求构造、WHATWG SSE 解析、事件合并、错误分类、Key 校验、
@@ -16,14 +20,17 @@ Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
 - 回复渲染：`gpt_markdown` 渲染 Markdown、代码高亮与复制、链接外部打开；
   `val_latex_flutter` 渲染 `\(...\)` 与 `\[...\]`；`mermaid` 围栏由
   `mermaid_flutter` 绘制，解析失败降级为源码。
+- 双语：错误文案与错误映射走 `gen_l10n`（`lib/l10n/`），中英各一份；
+  其余界面文案与主题设置在票 18 收口。
 
-界面为临时最简实现；附件上传、语音、导入导出、双语与主题由后续票实现。
+界面为临时最简实现；附件上传、语音、导入导出、全量双语与主题由后续票实现。
 
 ## 开发命令
 
 ```bash
 flutter pub get
 dart run build_runner build    # 修改 drift 表后重新生成 database.g.dart
+flutter gen-l10n               # 修改 lib/l10n/*.arb 后重新生成
 flutter analyze
 flutter test
 flutter run
