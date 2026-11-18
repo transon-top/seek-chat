@@ -36,6 +36,7 @@
 - [数学公式渲染方案调研](issues/02-math-rendering.md): 主选 `val_latex_flutter` 0.1.4（与 `gpt_markdown` 内置数学同一引擎），备选 `katex` + `katex_dart`；`flutter_math_fork` 在 Flutter 3.29+ 构建失败。
 - [语音输入与朗读方案调研](issues/15-speech-research.md): ASR/TTS 为 DeepSeek 官方 API；主选 `record` 7.2.0 + `flutter_soloud` 5.3.0，备选 `just_audio` / `flutter_sound`。
 - [Flutter 工具链安装与构建验证](issues/04-flutter-toolchain.md): Flutter 3.50.0 stable + Xcode 26.3 + Android SDK 36 + NDK 28.2 已就绪；空项目在 iOS 26.3 与 Android API 37 模拟器均跑通；Gradle/NDK 下载需镜像加速。
+- [API 协议与流式客户端契约](issues/05-api-protocol.md): 契约写入 [`api.md`](api.md)；锁定请求体/SSE 合并/错误分类/停止续写/分支上下文/自动标题；Dart 用 `package:http` 1.5+ `AbortableRequest` + 自写 WHATWG SSE 解析，不设客户端超时，v1 固定 `deepseek-flash`。
 
 ## Not yet specified
 
@@ -46,7 +47,7 @@
 - 语言切换是否即时生效、是否影响已生成内容（等双语票）
 - 代码高亮 / Mermaid / KaTeX 的主题与深浅色对应（等渲染方案与界面规格）
 - 附件在消息中的呈现、预览与删除（等附件票）
-- 模型切换与深度思考开关在输入区的呈现（等原型）
+- 深度思考与搜索开关在输入区的呈现（等原型）
 
 ## Out of scope
 

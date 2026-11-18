@@ -14,3 +14,7 @@ Blocked by: 05
 6. 隐私说明与清除入口。
 
 产出：`user-metadata.md` 章节 + 模板样例。
+
+## Comments
+
+- 2026-11-18：`latest_reminder` 的插入位置（对应 user 前、快照变化才插）与回答版本快照语义已由票 05 锁定，见 [`../api.md`](../api.md) §3.3。本票只需锁定 content 的取值模板与样例。
