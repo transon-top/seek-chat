@@ -35,6 +35,7 @@
 - [Mermaid 渲染方案调研](issues/03-mermaid-rendering.md): 用户清单 7 个包全部存在；主选 `mermaid_flutter` + `mermaid_core`（纯 Dart、28 种图、MIT），备选 WebView + mermaid.js 兜底。
 - [数学公式渲染方案调研](issues/02-math-rendering.md): 主选 `val_latex_flutter` 0.1.4（与 `gpt_markdown` 内置数学同一引擎），备选 `katex` + `katex_dart`；`flutter_math_fork` 在 Flutter 3.29+ 构建失败。
 - [语音输入与朗读方案调研](issues/15-speech-research.md): ASR/TTS 为 DeepSeek 官方 API；主选 `record` 7.2.0 + `flutter_soloud` 5.3.0，备选 `just_audio` / `flutter_sound`。
+- [Flutter 工具链安装与构建验证](issues/04-flutter-toolchain.md): Flutter 3.50.0 stable + Xcode 26.3 + Android SDK 36 + NDK 28.2 已就绪；空项目在 iOS 26.3 与 Android API 37 模拟器均跑通；Gradle/NDK 下载需镜像加速。
 
 ## Not yet specified
 
