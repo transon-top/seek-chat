@@ -144,4 +144,97 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsLocationNone => 'Not specified';
+
+  @override
+  String get settingsData => 'Data';
+
+  @override
+  String get historyImport => 'Import chat history';
+
+  @override
+  String get historyImportAction => 'Choose file';
+
+  @override
+  String get historyImportDescription =>
+      'Importing chat history replaces all local chats and attachments. Supports ZIP files exported from DeepSeek.';
+
+  @override
+  String get historyImportConfirmTitle => 'Import chat history?';
+
+  @override
+  String get historyImportConfirmDescription =>
+      'The uploaded chat history will replace all your current chats and attachments. Export a backup first if you need to keep them.';
+
+  @override
+  String get historyImportConfirm => 'Import';
+
+  @override
+  String get historyImporting => 'Importing...';
+
+  @override
+  String get historyImportedOne => 'Imported 1 chat';
+
+  @override
+  String historyImported(int count) {
+    return 'Imported $count chats';
+  }
+
+  @override
+  String get historyImportFailed =>
+      'Import failed. The file may be invalid or use an old export format.';
+
+  @override
+  String get historyExport => 'Export all chats';
+
+  @override
+  String get historyExportAction => 'Export';
+
+  @override
+  String get historyExportDescription =>
+      'Includes all chat history and locally stored images. Other attachments keep file details only. Your API key is not included.';
+
+  @override
+  String get historyExporting => 'Exporting...';
+
+  @override
+  String get historyExported => 'Export saved';
+
+  @override
+  String get historyExportFailed => 'Export failed. Please try again.';
+
+  @override
+  String get historyErrorUnrecognized =>
+      'File not recognized. Choose a DeepSeek chat history ZIP.';
+
+  @override
+  String get historyErrorNewerVersion =>
+      'This file uses a newer version. Update the app before importing.';
+
+  @override
+  String get historyErrorInvalidVersion =>
+      'The file version is invalid and cannot be imported.';
+
+  @override
+  String get historyErrorInvalidJson => 'The file is not valid JSON.';
+
+  @override
+  String get historyErrorIncomplete =>
+      'The file is incomplete and cannot be imported.';
+
+  @override
+  String get historyErrorInvalidBranches =>
+      'The message branches in this file are corrupted and cannot be imported.';
+
+  @override
+  String get historyErrorInvalidFiles =>
+      'The attachment data in this file is corrupted and cannot be imported.';
+
+  @override
+  String get historyErrorTooLarge => 'The file is too large to import.';
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get historyErrorExportTooLarge => 'The file is too large to export.';
 }

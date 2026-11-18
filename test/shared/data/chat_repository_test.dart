@@ -507,4 +507,92 @@ void main() {
       expect(await repository.attachmentLocalPaths(), {'attachments/shared'});
     });
   });
+
+  group('replaceAllHistory', () {
+    test('replaces every session, message and attachment in one call', () async {
+      final old = await repository.createSession();
+      await repository.addUserMessage(
+        sessionId: old.id,
+        text: 'old',
+        attachments: const [
+          Attachment(
+            id: 'old-file',
+            name: 'old.png',
+            size: 1,
+            localPath: 'attachments/old-file',
+          ),
+        ],
+      );
+
+      final session = Session(
+        id: 'imported',
+        title: 'Imported',
+        createdAt: DateTime.utc(2026, 1, 2),
+        updatedAt: DateTime.utc(2026, 1, 3),
+        rootMessageId: 'user-1',
+      );
+      final user = UserMessage(
+        id: 'user-1',
+        createdAt: DateTime.utc(2026, 1, 2),
+        selectedChildId: 'reply-1',
+        text: 'question',
+        attachments: const [
+          Attachment(
+            id: 'new-file',
+            name: 'new.png',
+            size: 2,
+            isImage: true,
+            mimeType: 'image/png',
+            localPath: 'attachments/new-file',
+          ),
+        ],
+      );
+      final reply = AssistantMessage(
+        id: 'reply-1',
+        parentId: 'user-1',
+        createdAt: DateTime.utc(2026, 1, 2, 0, 0, 1),
+        status: ReplyStatus.stopped,
+        blocks: const [TextBlock(text: 'answer')],
+        thinking: true,
+        search: false,
+        prefix: false,
+      );
+
+      final removed = await repository.replaceAllHistory([
+        SessionHistory(session: session, messages: [user, reply]),
+      ]);
+
+      expect(removed.map((attachment) => attachment.id), ['old-file']);
+      final summaries = await repository.listSessions();
+      expect(summaries, hasLength(1));
+      expect(summaries.single.id, 'imported');
+      expect(summaries.single.title, 'Imported');
+
+      final path = await repository.visiblePath('imported');
+      expect(path.map((message) => message.id), ['user-1', 'reply-1']);
+      final storedUser = path.first as UserMessage;
+      expect(storedUser.text, 'question');
+      expect(storedUser.attachments.single.id, 'new-file');
+      expect(storedUser.attachments.single.mimeType, 'image/png');
+      expect(storedUser.attachments.single.localPath, 'attachments/new-file');
+      final storedReply = path.last as AssistantMessage;
+      expect(storedReply.status, ReplyStatus.stopped);
+      expect(storedReply.thinking, isTrue);
+      expect(storedReply.search, isFalse);
+      expect(storedReply.prefix, isFalse);
+      expect((storedReply.blocks.single as TextBlock).text, 'answer');
+      expect(await repository.attachmentLocalPaths(), {'attachments/new-file'});
+    });
+
+    test('clears everything when the archive has no sessions', () async {
+      final session = await repository.createSession();
+      await repository.addUserMessage(sessionId: session.id, text: 'old');
+
+      final removed = await repository.replaceAllHistory(const []);
+
+      expect(removed, isEmpty);
+      expect(await repository.listSessions(), isEmpty);
+      expect(await repository.loadMessages(session.id), isEmpty);
+    });
+  });
 }

@@ -93,5 +93,39 @@
   "settingsLanguageZh": "Simplified Chinese",
   "settingsLanguageEn": "English",
   "settingsLocation": "Location",
-  "settingsLocationNone": "Not specified"
+  "settingsLocationNone": "Not specified",
+  "settingsData": "Data",
+  "historyImport": "Import chat history",
+  "historyImportAction": "Choose file",
+  "historyImportDescription": "Importing chat history replaces all local chats and attachments. Supports ZIP files exported from DeepSeek.",
+  "historyImportConfirmTitle": "Import chat history?",
+  "historyImportConfirmDescription": "The uploaded chat history will replace all your current chats and attachments. Export a backup first if you need to keep them.",
+  "historyImportConfirm": "Import",
+  "historyImporting": "Importing...",
+  "historyImportedOne": "Imported 1 chat",
+  "historyImported": "Imported {count} chats",
+  "historyImportFailed": "Import failed. The file may be invalid or use an old export format.",
+  "historyExport": "Export all chats",
+  "historyExportAction": "Export",
+  "historyExportDescription": "Includes all chat history and locally stored images. Other attachments keep file details only. Your API key is not included.",
+  "historyExporting": "Exporting...",
+  "historyExported": "Export saved",
+  "historyExportFailed": "Export failed. Please try again.",
+  "historyErrorUnrecognized": "File not recognized. Choose a DeepSeek chat history ZIP.",
+  "historyErrorNewerVersion": "This file uses a newer version. Update the app before importing.",
+  "historyErrorInvalidVersion": "The file version is invalid and cannot be imported.",
+  "historyErrorInvalidJson": "The file is not valid JSON.",
+  "historyErrorIncomplete": "The file is incomplete and cannot be imported.",
+  "historyErrorInvalidBranches": "The message branches in this file are corrupted and cannot be imported.",
+  "historyErrorInvalidFiles": "The attachment data in this file is corrupted and cannot be imported.",
+  "historyErrorTooLarge": "The file is too large to import.",
+  "cancel": "Cancel",
+  "@historyImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyErrorExportTooLarge": "The file is too large to export."
 }

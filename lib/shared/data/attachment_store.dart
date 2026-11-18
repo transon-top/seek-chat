@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -27,6 +28,27 @@ class AttachmentStore {
     final target = File(p.join(directory.path, attachmentId));
     await File(sourcePath).copy(target.path);
     return '$directoryName/$attachmentId';
+  }
+
+  /// 写入归档导入的图片原件，返回数据库要存的相对路径（`history.md` §5）。
+  Future<String> saveBytes(String attachmentId, List<int> bytes) async {
+    final root = await _supportDirectory();
+    final directory = Directory(p.join(root.path, directoryName));
+    await directory.create(recursive: true);
+    final target = File(p.join(directory.path, attachmentId));
+    await target.writeAsBytes(bytes, flush: true);
+    return '$directoryName/$attachmentId';
+  }
+
+  /// 读取原件；缺失时返回 null。
+  Future<Uint8List?> readBytes(String? relativePath) async {
+    final path = await absolutePath(relativePath);
+    if (path == null) return null;
+    try {
+      return await File(path).readAsBytes();
+    } on FileSystemException {
+      return null;
+    }
   }
 
   /// 相对路径对应的绝对路径；原件不存在时返回 null。

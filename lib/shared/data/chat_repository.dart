@@ -419,6 +419,117 @@ class ChatRepository {
         .write(const MessagesCompanion(status: Value('stopped')));
   }
 
+  // ------------------------------------------------------------- 导入导出
+
+  /// 用归档内容整体替换全部会话、消息与附件（`history.md` §5）。
+  ///
+  /// 单事务完成：失败时旧数据保留。返回被移除的附件，供调用方在事务提交后
+  /// 删除本地原件。
+  Future<List<Attachment>> replaceAllHistory(
+    List<SessionHistory> history,
+  ) async {
+    var previous = const <Attachment>[];
+    await _db.transaction(() async {
+      final oldRows = await _db.select(_db.attachments).get();
+      previous = [for (final row in oldRows) _toAttachment(row)];
+
+      await _db.delete(_db.messageAttachments).go();
+      await _db.delete(_db.messages).go();
+      await _db.delete(_db.sessions).go();
+      await _db.delete(_db.attachments).go();
+
+      final seen = <String>{};
+      for (final tree in history) {
+        final session = tree.session;
+        await _db.into(_db.sessions).insert(SessionsCompanion.insert(
+              id: session.id,
+              title: Value(session.title),
+              createdAt: session.createdAt.millisecondsSinceEpoch,
+              updatedAt: session.updatedAt.millisecondsSinceEpoch,
+              rootMessageId: Value(session.rootMessageId),
+            ));
+
+        for (final message in tree.messages) {
+          switch (message) {
+            case UserMessage():
+              await _db.into(_db.messages).insert(MessagesCompanion.insert(
+                    id: message.id,
+                    sessionId: session.id,
+                    parentId: Value(message.parentId),
+                    selectedChildId: Value(message.selectedChildId),
+                    role: 'user',
+                    createdAt: message.createdAt.millisecondsSinceEpoch,
+                    textContent: Value(message.text),
+                  ));
+            case AssistantMessage():
+              await _db.into(_db.messages).insert(MessagesCompanion.insert(
+                    id: message.id,
+                    sessionId: session.id,
+                    parentId: Value(message.parentId),
+                    selectedChildId: Value(message.selectedChildId),
+                    role: 'assistant',
+                    createdAt: message.createdAt.millisecondsSinceEpoch,
+                    model: Value(message.model?.wire),
+                    thinking: Value(message.thinking),
+                    search: Value(message.search),
+                    latestReminder: Value(message.latestReminder),
+                    prefix: Value(message.prefix),
+                    status: Value(message.status.name),
+                    stopReason: Value(message.stopReason?.wire),
+                    blocks: Value(encodeReplyBlocks(message.blocks)),
+                    stopDetails: Value(
+                      message.stopDetails == null
+                          ? null
+                          : jsonEncode(encodeStopDetails(message.stopDetails!)),
+                    ),
+                    usage: Value(
+                      message.usage == null
+                          ? null
+                          : jsonEncode(encodeUsage(message.usage!)),
+                    ),
+                    error: Value(
+                      message.error == null
+                          ? null
+                          : encodeReplyError(message.error!),
+                    ),
+                  ));
+          }
+        }
+      }
+
+      for (final tree in history) {
+        for (final message in tree.messages.whereType<UserMessage>()) {
+          for (var position = 0;
+              position < message.attachments.length;
+              position++) {
+            final attachment = message.attachments[position];
+            if (seen.add(attachment.id)) {
+              await _db.into(_db.attachments).insert(
+                    AttachmentsCompanion.insert(
+                      id: attachment.id,
+                      name: attachment.name,
+                      size: attachment.size,
+                      isImage: Value(attachment.isImage),
+                      mimeType: Value(attachment.mimeType),
+                      localPath: Value(attachment.localPath),
+                      serverId: Value(attachment.serverId),
+                    ),
+                  );
+            }
+            await _db.into(_db.messageAttachments).insert(
+                  MessageAttachmentsCompanion.insert(
+                    messageId: message.id,
+                    attachmentId: attachment.id,
+                    position: position,
+                  ),
+                );
+          }
+        }
+      }
+    });
+    return previous;
+  }
+
   // ------------------------------------------------------------- 附件
 
   /// `server_id` 由引用同一附件的所有消息共享。

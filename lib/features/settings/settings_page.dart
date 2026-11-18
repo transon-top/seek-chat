@@ -12,7 +12,10 @@ import '../../shared/prefs/user_metadata_store.dart';
 
 /// 最小设置页：填写并校验 DeepSeek API Key。界面规格见票 10 / 20。
 class SettingsPage extends ConsumerStatefulWidget {
-  const SettingsPage({super.key});
+  const SettingsPage({super.key, this.dataManagement});
+
+  /// 数据管理层由 `app/` 注入，设置页不直接 import 其他功能目录。
+  final Widget? dataManagement;
 
   @override
   ConsumerState<SettingsPage> createState() => _SettingsPageState();
@@ -134,6 +137,10 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             onPressed: _loading ? null : _clear,
             child: const Text('清除已保存的 Key'),
           ),
+          if (widget.dataManagement != null) ...[
+            const Divider(height: 32),
+            widget.dataManagement!,
+          ],
         ],
       ),
     );

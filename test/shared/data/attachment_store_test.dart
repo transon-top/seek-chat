@@ -69,6 +69,19 @@ void main() {
     expect(await store.absolutePath(relative), saved.path);
   });
 
+  test('saveBytes writes an archive image and readBytes reads it back', () async {
+    final relative = await store.saveBytes('imported', [1, 2, 3, 4]);
+
+    expect(relative, 'attachments/imported');
+    expect(
+      File(p.join(support.path, relative)).readAsBytesSync(),
+      [1, 2, 3, 4],
+    );
+    expect(await store.readBytes(relative), [1, 2, 3, 4]);
+    expect(await store.readBytes('attachments/missing'), isNull);
+    expect(await store.readBytes(null), isNull);
+  });
+
   test('absolutePath returns null for missing originals', () async {
     expect(await store.absolutePath(null), isNull);
     expect(await store.absolutePath(''), isNull);

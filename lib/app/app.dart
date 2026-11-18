@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../features/chat/chat_controller.dart';
 import '../features/chat/chat_page.dart';
+import '../features/history/history_section.dart';
 import '../features/sessions/home_page.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/generated/app_localizations.dart';
@@ -64,9 +65,20 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
             builder: (_) => ChatPage(sessionId: sessionId),
           ),
         ),
-        openSettings: (context) => Navigator.of(
-          context,
-        ).push(MaterialPageRoute<void>(builder: (_) => const SettingsPage())),
+        openSettings: (context) => Navigator.of(context).push(
+          MaterialPageRoute<void>(
+            builder: (_) => SettingsPage(
+              dataManagement: HistorySection(
+                stopGeneration: () {
+                  for (final controller
+                      in ref.read(activeChatControllersProvider)) {
+                    controller.stop();
+                  }
+                },
+              ),
+            ),
+          ),
+        ),
         cancelSession: (sessionId) {
           for (final controller in ref.read(activeChatControllersProvider)) {
             if (controller.sessionId == sessionId) controller.stop();
