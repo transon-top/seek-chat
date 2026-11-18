@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -10,11 +11,13 @@ import 'package:open_chat/shared/providers.dart';
 import 'package:open_chat/features/chat/chat_controller.dart';
 import 'package:open_chat/shared/api/client.dart';
 import 'package:open_chat/shared/api/errors.dart';
+import 'package:open_chat/shared/data/attachment_store.dart';
 import 'package:open_chat/shared/data/chat_repository.dart';
 import 'package:open_chat/shared/data/database.dart';
 import 'package:open_chat/shared/models/reply_rules.dart';
 import 'package:open_chat/shared/models/types.dart';
 import 'package:open_chat/shared/security/api_key_store.dart';
+import 'package:path/path.dart' as p;
 
 import '../../support/fake_api_key_store.dart';
 import '../../support/sse_fixtures.dart';
@@ -74,15 +77,20 @@ final class _ThrowingApiKeyStore implements ApiKeyStore {
 void main() {
   late AppDatabase db;
   late ChatRepository repository;
+  late Directory support;
   var tick = 1000;
 
-  setUp(() {
+  setUp(() async {
     tick = 1000;
     db = AppDatabase(NativeDatabase.memory());
     repository = ChatRepository(db, clock: () => tick++);
+    support = await Directory.systemTemp.createTemp('chat-attachments-test');
   });
 
-  tearDown(() => db.close());
+  tearDown(() async {
+    await db.close();
+    await support.delete(recursive: true);
+  });
 
   ProviderContainer makeContainer({
     required DeepSeekApiClient client,
@@ -94,8 +102,24 @@ void main() {
       apiKeyStoreProvider.overrideWithValue(
         apiKeyStore ?? FakeApiKeyStore('secret'),
       ),
+      attachmentStoreProvider.overrideWithValue(
+        AttachmentStore(supportDirectory: () async => support),
+      ),
     ],
   );
+
+  http.StreamedResponse jsonResponse(Object body, {int status = 200}) =>
+      http.StreamedResponse(
+        Stream.value(utf8.encode(jsonEncode(body))),
+        status,
+        headers: {'content-type': 'application/json'},
+      );
+
+  File pickedFile(String name, {String content = 'data'}) {
+    final file = File(p.join(support.path, name))
+      ..writeAsStringSync(content);
+    return file;
+  }
 
   ChatController controllerFor(ProviderContainer container, String sessionId) {
     container.listen(chatControllerProvider(sessionId), (_, _) {});
@@ -425,5 +449,274 @@ void main() {
     expect(controller.state.messages, isEmpty);
     expect(controller.state.busy, isFalse);
     expect(controller.state.error?.key, LocalMessageKeys.apiErrorNetwork);
+  });
+
+  test('send with an attachment stores the original and file block', () async {
+    final session = await newSession();
+    final photo = pickedFile('photo.png', content: 'png');
+    late http.Request captured;
+    var uploads = 0;
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) async {
+          if (request.url.path.endsWith('/files')) {
+            uploads++;
+            return jsonResponse({'id': 'file-1'});
+          }
+          captured = request as http.Request;
+          return streamOf(simpleReply('ok'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.send(
+      text: '看看',
+      thinking: false,
+      search: false,
+      attachments: [
+        DraftAttachment(
+          id: 'att-1',
+          path: photo.path,
+          name: 'photo.png',
+          size: 3,
+          isImage: true,
+          mimeType: 'image/png',
+        ),
+      ],
+    );
+
+    expect(uploads, 1);
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    expect(body['messages'], [
+      {
+        'role': 'user',
+        'content': [
+          {
+            'type': 'image',
+            'source': {'type': 'file', 'file_id': 'file-1'},
+          },
+          {'type': 'text', 'text': '看看'},
+        ],
+      },
+    ]);
+    expect(
+      captured.headers['anthropic-beta'],
+      DeepSeekApiClient.filesApiBeta,
+    );
+
+    final saved = File(p.join(support.path, 'attachments', 'att-1'));
+    expect(saved.readAsStringSync(), 'png');
+
+    final stored = (await repository.visiblePath(session.id)).first as UserMessage;
+    expect(stored.attachments.single.serverId, 'file-1');
+    expect(stored.attachments.single.localPath, 'attachments/att-1');
+    expect(
+      (controller.state.messages.first as UserMessage)
+          .attachments
+          .single
+          .serverId,
+      'file-1',
+    );
+  });
+
+  test('upload failure marks the reply as retryable upload error', () async {
+    final session = await newSession();
+    final doc = pickedFile('notes.txt', content: 'hello');
+    var uploadOk = false;
+    var messageRequests = 0;
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) async {
+          if (request.url.path.endsWith('/files')) {
+            if (!uploadOk) {
+              return jsonResponse(
+                {
+                  'error': {'message': 'server exploded'},
+                },
+                status: 500,
+              );
+            }
+            return jsonResponse({'id': 'file-1'});
+          }
+          messageRequests++;
+          return streamOf(simpleReply('ok'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.send(
+      text: '读一下',
+      thinking: false,
+      search: false,
+      attachments: [
+        DraftAttachment(
+          id: 'att-1',
+          path: doc.path,
+          name: 'notes.txt',
+          size: 5,
+          isImage: false,
+          mimeType: 'text/plain',
+        ),
+      ],
+    );
+
+    expect(messageRequests, 0);
+    final failed = controller.state.messages.last as AssistantMessage;
+    expect(failed.status, ReplyStatus.error);
+    expect(failed.error?.kind, ApiErrorKind.upload);
+    expect(failed.error?.retryable, isTrue);
+    expect(failed.error?.localMessage?.key, LocalMessageKeys.uploadServerBusy);
+
+    uploadOk = true;
+    await controller.retryUpload(failed, thinking: false, search: false);
+
+    expect(messageRequests, 1);
+    final retried = controller.state.messages.last as AssistantMessage;
+    expect(retried.status, ReplyStatus.done);
+    expect(retried.error, isNull);
+  });
+
+  test('invalid file id is cleared, reuploaded and retried', () async {
+    final session = await newSession();
+    final photo = pickedFile('photo.png', content: 'png');
+    var uploads = 0;
+    var messageRequests = 0;
+    late http.Request lastRequest;
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) async {
+          if (request.url.path.endsWith('/files')) {
+            uploads++;
+            return jsonResponse({'id': 'file-$uploads'});
+          }
+          messageRequests++;
+          lastRequest = request as http.Request;
+          if (messageRequests == 2) {
+            return jsonResponse(
+              {
+                'error': {'message': 'file data not found for file_id file-1'},
+              },
+              status: 400,
+            );
+          }
+          return streamOf(simpleReply('ok'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.send(
+      text: '看看',
+      thinking: false,
+      search: false,
+      attachments: [
+        DraftAttachment(
+          id: 'att-1',
+          path: photo.path,
+          name: 'photo.png',
+          size: 3,
+          isImage: true,
+          mimeType: 'image/png',
+        ),
+      ],
+    );
+    final first = controller.state.messages.last as AssistantMessage;
+    expect(first.status, ReplyStatus.done);
+    expect(uploads, 1);
+
+    await controller.regenerate(first, thinking: false, search: false);
+
+    expect(uploads, 2);
+    expect(messageRequests, 3);
+    final body = jsonDecode(lastRequest.body) as Map<String, dynamic>;
+    final content = (body['messages'] as List<dynamic>).last['content']
+        as List<dynamic>;
+    expect(
+      (content.first as Map<String, dynamic>)['source'],
+      {'type': 'file', 'file_id': 'file-2'},
+    );
+    expect(
+      (controller.state.messages.last as AssistantMessage).status,
+      ReplyStatus.done,
+    );
+    final stored = await repository.visiblePath(session.id);
+    expect(
+      (stored.first as UserMessage).attachments.single.serverId,
+      'file-2',
+    );
+  });
+
+  test('history attachments without server id are backfilled silently',
+      () async {
+    final session = await newSession();
+    final attachments = Directory(p.join(support.path, 'attachments'))
+      ..createSync(recursive: true);
+    File(p.join(attachments.path, 'att-old')).writeAsStringSync('old');
+    final oldQuestion = await repository.addUserMessage(
+      sessionId: session.id,
+      text: '旧问题',
+      attachments: const [
+        Attachment(
+          id: 'att-old',
+          name: 'old.png',
+          size: 3,
+          isImage: true,
+          mimeType: 'image/png',
+          localPath: 'attachments/att-old',
+        ),
+      ],
+    );
+    final oldReply = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: oldQuestion.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: oldReply.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: '旧回答')],
+    );
+
+    late http.Request captured;
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) async {
+          if (request.url.path.endsWith('/files')) {
+            return jsonResponse({'id': 'file-old'});
+          }
+          captured = request as http.Request;
+          return streamOf(simpleReply('新回答'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.send(text: '新问题', thinking: false, search: false);
+
+    final body = jsonDecode(captured.body) as Map<String, dynamic>;
+    final messages = body['messages'] as List<dynamic>;
+    expect(messages, hasLength(3));
+    expect((messages[0]['content'] as List<dynamic>).first, {
+      'type': 'image',
+      'source': {'type': 'file', 'file_id': 'file-old'},
+    });
+
+    final stored = await repository.visiblePath(session.id);
+    expect(
+      (stored.first as UserMessage).attachments.single.serverId,
+      'file-old',
+    );
   });
 }

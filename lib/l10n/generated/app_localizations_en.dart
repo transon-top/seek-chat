@@ -50,4 +50,74 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get replyRefused => 'The content was blocked by safety policy.';
+
+  @override
+  String errorSaveAttachmentFailed(String error) {
+    return 'Could not save the attachment: $error';
+  }
+
+  @override
+  String get uploadFile => 'Upload files';
+
+  @override
+  String get uploadFromPhotos => 'Choose from Photos';
+
+  @override
+  String get uploadFromFiles => 'Choose Files';
+
+  @override
+  String get uploadUnsupportedFormat =>
+      'The selected files include an unsupported format. Convert them and try again. Supported: PDF, DOC, XLSX, PPT, images, text, and code.';
+
+  @override
+  String uploadMaxMBSize(int size) {
+    return 'Each file must be at most $size MB. Adjust the file and try again';
+  }
+
+  @override
+  String uploadMaxFiles(int count) {
+    return 'You can attach at most $count files';
+  }
+
+  @override
+  String get uploadFileStatusUploading => 'Uploading...';
+
+  @override
+  String get uploadFileStatusFailed => 'Upload failed';
+
+  @override
+  String uploadRetry(String message) {
+    return '$message. Click to retry';
+  }
+
+  @override
+  String get uploadServerBusy => 'The server is busy';
+
+  @override
+  String get uploadParseFailed => 'Could not parse the file';
+
+  @override
+  String uploadFileCountLimit(String limit) {
+    return 'Uploaded file limit reached ($limit files)';
+  }
+
+  @override
+  String uploadStorageLimit(String limit) {
+    return 'Storage quota reached ($limit GB)';
+  }
+
+  @override
+  String get uploadDeleteFiles => 'Delete files';
+
+  @override
+  String get removeAttachment => 'Remove attachment';
+
+  @override
+  String get retry => 'Retry';
+
+  @override
+  String get previewImage => 'View image';
+
+  @override
+  String get missingAttachment => 'The original file is missing';
 }

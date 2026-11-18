@@ -54,6 +54,49 @@ class DeepSeekApiClient {
     );
   }
 
+  /// `POST /anthropic/v1/files`：上传附件并返回 Files API 的 `file_id`。
+  ///
+  /// `purpose` 为 null 时不传该字段（图片）。Multipart 编码先写字段再写文件，
+  /// 与 chat-demo 的 `purpose` 在前一致。上传本身不支持中止：移除附件后结果
+  /// 直接丢弃（attachments.md §2）。
+  Future<String> uploadFile({
+    required String apiKey,
+    required String path,
+    required String filename,
+    String? purpose,
+  }) async {
+    final request = http.MultipartRequest(
+      'POST',
+      Uri.parse('$_origin/anthropic/v1/files'),
+    )
+      ..headers.addAll({
+        'x-api-key': apiKey,
+        'anthropic-beta': filesApiBeta,
+      });
+    if (purpose != null) request.fields['purpose'] = purpose;
+    request.files.add(
+      await http.MultipartFile.fromPath('file', path, filename: filename),
+    );
+
+    final response = await _guard(() => _http.send(request));
+    final body = await _guard(() => response.stream.bytesToString());
+    if (response.statusCode < 200 || response.statusCode >= 300) {
+      throw ApiException(
+        ApiErrorKind.http,
+        _errorMessage(body, response),
+        status: response.statusCode,
+      );
+    }
+    try {
+      final decoded = jsonDecode(body);
+      final id = decoded is Map ? decoded['id'] : null;
+      if (id is String && id.isNotEmpty) return id;
+    } on FormatException {
+      // 落空到协议错误。
+    }
+    throw ApiException(ApiErrorKind.protocol, 'Missing file id in response');
+  }
+
   /// 发送消息请求，按到达顺序产出解析后的事件。遇到 `message_stop` 或
   /// 已见 `stop_reason` 的 EOF 时结束。
   Stream<StreamEvent> streamMessage({

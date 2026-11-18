@@ -170,6 +170,120 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The content was blocked by safety policy.'**
   String get replyRefused;
+
+  /// No description provided for @errorSaveAttachmentFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not save the attachment: {error}'**
+  String errorSaveAttachmentFailed(String error);
+
+  /// No description provided for @uploadFile.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload files'**
+  String get uploadFile;
+
+  /// No description provided for @uploadFromPhotos.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose from Photos'**
+  String get uploadFromPhotos;
+
+  /// No description provided for @uploadFromFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Files'**
+  String get uploadFromFiles;
+
+  /// No description provided for @uploadUnsupportedFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'The selected files include an unsupported format. Convert them and try again. Supported: PDF, DOC, XLSX, PPT, images, text, and code.'**
+  String get uploadUnsupportedFormat;
+
+  /// No description provided for @uploadMaxMBSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Each file must be at most {size} MB. Adjust the file and try again'**
+  String uploadMaxMBSize(int size);
+
+  /// No description provided for @uploadMaxFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'You can attach at most {count} files'**
+  String uploadMaxFiles(int count);
+
+  /// No description provided for @uploadFileStatusUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploading...'**
+  String get uploadFileStatusUploading;
+
+  /// No description provided for @uploadFileStatusFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload failed'**
+  String get uploadFileStatusFailed;
+
+  /// No description provided for @uploadRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'{message}. Click to retry'**
+  String uploadRetry(String message);
+
+  /// No description provided for @uploadServerBusy.
+  ///
+  /// In en, this message translates to:
+  /// **'The server is busy'**
+  String get uploadServerBusy;
+
+  /// No description provided for @uploadParseFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not parse the file'**
+  String get uploadParseFailed;
+
+  /// No description provided for @uploadFileCountLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Uploaded file limit reached ({limit} files)'**
+  String uploadFileCountLimit(String limit);
+
+  /// No description provided for @uploadStorageLimit.
+  ///
+  /// In en, this message translates to:
+  /// **'Storage quota reached ({limit} GB)'**
+  String uploadStorageLimit(String limit);
+
+  /// No description provided for @uploadDeleteFiles.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete files'**
+  String get uploadDeleteFiles;
+
+  /// No description provided for @removeAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Remove attachment'**
+  String get removeAttachment;
+
+  /// No description provided for @retry.
+  ///
+  /// In en, this message translates to:
+  /// **'Retry'**
+  String get retry;
+
+  /// No description provided for @previewImage.
+  ///
+  /// In en, this message translates to:
+  /// **'View image'**
+  String get previewImage;
+
+  /// No description provided for @missingAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'The original file is missing'**
+  String get missingAttachment;
 }
 
 class _AppLocalizationsDelegate

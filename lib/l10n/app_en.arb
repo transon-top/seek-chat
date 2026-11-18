@@ -25,5 +25,66 @@
       }
     }
   },
-  "replyRefused": "The content was blocked by safety policy."
+  "replyRefused": "The content was blocked by safety policy.",
+  "errorSaveAttachmentFailed": "Could not save the attachment: {error}",
+  "@errorSaveAttachmentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFile": "Upload files",
+  "uploadFromPhotos": "Choose from Photos",
+  "uploadFromFiles": "Choose Files",
+  "uploadUnsupportedFormat": "The selected files include an unsupported format. Convert them and try again. Supported: PDF, DOC, XLSX, PPT, images, text, and code.",
+  "uploadMaxMBSize": "Each file must be at most {size} MB. Adjust the file and try again",
+  "@uploadMaxMBSize": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadMaxFiles": "You can attach at most {count} files",
+  "@uploadMaxFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadFileStatusUploading": "Uploading...",
+  "uploadFileStatusFailed": "Upload failed",
+  "uploadRetry": "{message}. Click to retry",
+  "@uploadRetry": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadServerBusy": "The server is busy",
+  "uploadParseFailed": "Could not parse the file",
+  "uploadFileCountLimit": "Uploaded file limit reached ({limit} files)",
+  "@uploadFileCountLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadStorageLimit": "Storage quota reached ({limit} GB)",
+  "@uploadStorageLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadDeleteFiles": "Delete files",
+  "removeAttachment": "Remove attachment",
+  "retry": "Retry",
+  "previewImage": "View image",
+  "missingAttachment": "The original file is missing"
 }

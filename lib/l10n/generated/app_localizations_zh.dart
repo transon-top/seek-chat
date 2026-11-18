@@ -50,4 +50,74 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get replyRefused => '内容被安全策略拒绝';
+
+  @override
+  String errorSaveAttachmentFailed(String error) {
+    return '保存附件失败：$error';
+  }
+
+  @override
+  String get uploadFile => '上传文件';
+
+  @override
+  String get uploadFromPhotos => '从相册选择';
+
+  @override
+  String get uploadFromFiles => '选择文件';
+
+  @override
+  String get uploadUnsupportedFormat =>
+      '上传的文件包含暂未支持的文件格式，请转换文件格式后重试。支持 PDF、DOC、XLSX、PPT、图片、文本、代码等。';
+
+  @override
+  String uploadMaxMBSize(int size) {
+    return '单个文件大小超过限制（${size}MB），请调整后重试';
+  }
+
+  @override
+  String uploadMaxFiles(int count) {
+    return '上传文件最多支持 $count 个';
+  }
+
+  @override
+  String get uploadFileStatusUploading => '上传中...';
+
+  @override
+  String get uploadFileStatusFailed => '上传失败';
+
+  @override
+  String uploadRetry(String message) {
+    return '$message，点击重试';
+  }
+
+  @override
+  String get uploadServerBusy => '服务器繁忙';
+
+  @override
+  String get uploadParseFailed => '解析失败';
+
+  @override
+  String uploadFileCountLimit(String limit) {
+    return '已上传文件数达到上限（$limit 个）';
+  }
+
+  @override
+  String uploadStorageLimit(String limit) {
+    return '已上传文件占用空间达到上限（${limit}GB）';
+  }
+
+  @override
+  String get uploadDeleteFiles => '删除文件';
+
+  @override
+  String get removeAttachment => '移除附件';
+
+  @override
+  String get retry => '重试';
+
+  @override
+  String get previewImage => '查看图片';
+
+  @override
+  String get missingAttachment => '原件已丢失';
 }

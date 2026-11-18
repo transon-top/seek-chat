@@ -1,13 +1,19 @@
 import 'dart:async';
 
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:uuid/uuid.dart';
 
+import 'attachment_rules.dart';
 import '../../shared/error_text.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
 import '../../shared/prefs/chat_options_store.dart';
+import '../../shared/providers.dart';
+import 'upload_tasks.dart';
+import 'attachments_view.dart';
 import 'chat_controller.dart';
 import 'markdown_view.dart';
 import 'reply_view.dart';
@@ -26,6 +32,7 @@ class ChatPage extends ConsumerStatefulWidget {
 
 class _ChatPageState extends ConsumerState<ChatPage> {
   final TextEditingController _input = TextEditingController();
+  final List<DraftAttachment> _attachments = [];
   late final ChatOptionsStore _options;
   late bool _thinking;
   late bool _search;
@@ -49,9 +56,145 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Future<void> _send() async {
     final text = _input.text;
-    if (text.trim().isEmpty) return;
+    if (text.trim().isEmpty && _attachments.isEmpty) return;
+    if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
+    final sent = await _controller.send(
+      text: text,
+      thinking: _thinking,
+      search: _search,
+      attachments: List.of(_attachments),
+    );
+    if (!sent || !mounted) return;
     _input.clear();
-    await _controller.send(text: text, thinking: _thinking, search: _search);
+    setState(_attachments.clear);
+  }
+
+  Future<void> _addAttachments() async {
+    final l10n = AppLocalizations.of(context)!;
+    final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      _showSnackBar(l10n.errorNoApiKey);
+      return;
+    }
+    if (!mounted) return;
+    final source = await showModalBottomSheet<_AttachmentSource>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: Text(l10n.uploadFromPhotos),
+              onTap: () => Navigator.of(context).pop(_AttachmentSource.photos),
+            ),
+            ListTile(
+              leading: const Icon(Icons.attach_file),
+              title: Text(l10n.uploadFromFiles),
+              onTap: () => Navigator.of(context).pop(_AttachmentSource.files),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (source == null || !mounted) return;
+
+    final List<PlatformFile> files;
+    try {
+      files = await FilePicker.pickFiles(
+        type: source == _AttachmentSource.photos
+            ? FileType.image
+            : FileType.any,
+      );
+    } on Object {
+      if (mounted) _showSnackBar(l10n.uploadFileStatusFailed);
+      return;
+    }
+    if (files.isEmpty || !mounted) return;
+
+    final picked = <DraftAttachment>[];
+    for (final file in files) {
+      final path = file.path;
+      if (path == null) continue;
+      final size = file.lengthSync() ?? await file.length() ?? 0;
+      picked.add(
+        DraftAttachment(
+          id: const Uuid().v4(),
+          path: path,
+          name: file.name,
+          size: size,
+          isImage: isImageFileName(file.name),
+          mimeType: mimeTypeForFileName(file.name),
+        ),
+      );
+    }
+    if (!mounted || picked.isEmpty) return;
+
+    final error = validateAttachmentSelection(
+      files: [
+        for (final item in picked)
+          SelectedFile(name: item.name, size: item.size),
+      ],
+      currentCount: _attachments.length,
+    );
+    if (error != null) {
+      _showSnackBar(localMessageText(l10n, error));
+      return;
+    }
+
+    setState(() => _attachments.addAll(picked));
+    for (final item in picked) {
+      _startUpload(item);
+    }
+  }
+
+  void _startUpload(DraftAttachment item) {
+    unawaited(
+      ref
+          .read(uploadTasksProvider.notifier)
+          .upload(
+            id: item.id,
+            path: item.path,
+            name: item.name,
+            isImage: item.isImage,
+          )
+          .catchError((_) => null),
+    );
+  }
+
+  void _removeAttachment(String id) {
+    ref.read(uploadTasksProvider.notifier).remove(id);
+    setState(() => _attachments.removeWhere((item) => item.id == id));
+  }
+
+  void _retryAttachment(String id) {
+    for (final item in _attachments) {
+      if (item.id != id) continue;
+      _startUpload(item);
+      return;
+    }
+  }
+
+  void _showSnackBar(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  /// 配额类上传失败：原因用 SnackBar 说明，并给出删除旧文件的文档入口。
+  void _showQuotaSnackBar(LocalMessage quota) {
+    final l10n = AppLocalizations.of(context)!;
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(localMessageText(l10n, quota)),
+        action: SnackBarAction(
+          label: l10n.uploadDeleteFiles,
+          onPressed: () => openExternalLink(
+            'https://api-docs.deepseek.com/api/delete-file',
+            '',
+          ),
+        ),
+      ),
+    );
   }
 
   void _setThinking(bool value) {
@@ -70,8 +213,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   @override
   Widget build(BuildContext context) {
     final state = ref.watch(chatControllerProvider(widget.sessionId));
+    final tasks = ref.watch(uploadTasksProvider);
     final messages = state.messages;
     final strings = AppLocalizations.of(context)!;
+    ref.listen<Map<String, UploadTask>>(uploadTasksProvider, (previous, next) {
+      for (final entry in next.entries) {
+        final quota = entry.value.quota;
+        if (quota == null || previous?[entry.key]?.quota != null) continue;
+        _showQuotaSnackBar(quota);
+      }
+    });
     return Scaffold(
       appBar: AppBar(title: Text(state.title.isEmpty ? '新对话' : state.title)),
       body: Column(
@@ -109,6 +260,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                                 thinking: _thinking,
                                 search: _search,
                               ),
+                        onRetryUpload: state.busy
+                            ? null
+                            : (reply) => _controller.retryUpload(
+                                reply,
+                                thinking: _thinking,
+                                search: _search,
+                              ),
                       );
                     },
                   ),
@@ -118,8 +276,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             busy: state.busy,
             thinking: _thinking,
             search: _search,
+            attachments: _attachments,
+            tasks: tasks,
             onThinkingChanged: _setThinking,
             onSearchChanged: _setSearch,
+            onAddAttachment: _addAttachments,
+            onRetryAttachment: _retryAttachment,
+            onRemoveAttachment: _removeAttachment,
             onSend: _send,
             onStop: _controller.stop,
           ),
@@ -170,6 +333,7 @@ class _MessageView extends StatelessWidget {
     required this.busy,
     required this.onRegenerate,
     required this.onContinue,
+    required this.onRetryUpload,
   });
 
   final Message message;
@@ -177,26 +341,35 @@ class _MessageView extends StatelessWidget {
   final bool busy;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
+  final ValueChanged<AssistantMessage>? onRetryUpload;
 
   @override
   Widget build(BuildContext context) {
     final message = this.message;
     if (message is UserMessage) {
       final colors = Theme.of(context).colorScheme;
-      return Align(
-        alignment: Alignment.centerRight,
-        child: Container(
-          margin: const EdgeInsets.symmetric(vertical: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-          decoration: BoxDecoration(
-            color: colors.primaryContainer,
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: SelectableText(
-            message.text,
-            style: TextStyle(color: colors.onPrimaryContainer),
-          ),
-        ),
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          if (message.attachments.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: MessageAttachments(attachments: message.attachments),
+            ),
+          if (message.text.isNotEmpty)
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: SelectableText(
+                message.text,
+                style: TextStyle(color: colors.onPrimaryContainer),
+              ),
+            ),
+        ],
       );
     }
     if (message is! AssistantMessage) return const SizedBox.shrink();
@@ -206,6 +379,7 @@ class _MessageView extends StatelessWidget {
       busy: busy,
       onRegenerate: onRegenerate,
       onContinue: onContinue,
+      onRetryUpload: onRetryUpload,
     );
   }
 }
@@ -217,6 +391,7 @@ class _ReplyView extends StatelessWidget {
     required this.busy,
     required this.onRegenerate,
     required this.onContinue,
+    required this.onRetryUpload,
   });
 
   final AssistantMessage reply;
@@ -224,6 +399,7 @@ class _ReplyView extends StatelessWidget {
   final bool busy;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
+  final ValueChanged<AssistantMessage>? onRetryUpload;
 
   @override
   Widget build(BuildContext context) {
@@ -249,13 +425,26 @@ class _ReplyView extends StatelessWidget {
               ),
             ),
           if (reply.status == ReplyStatus.error)
-            Text(
-              strings.replyFailed(
-                reply.error == null
-                    ? apiErrorText(strings, ApiErrorCondition.other)
-                    : replyErrorText(strings, reply.error!),
-              ),
-              style: TextStyle(color: colors.error),
+            Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    strings.replyFailed(
+                      reply.error == null
+                          ? apiErrorText(strings, ApiErrorCondition.other)
+                          : replyErrorText(strings, reply.error!),
+                    ),
+                    style: TextStyle(color: colors.error),
+                  ),
+                ),
+                if (reply.error?.kind == ApiErrorKind.upload &&
+                    reply.error?.retryable == true &&
+                    onRetryUpload != null)
+                  TextButton(
+                    onPressed: busy ? null : () => onRetryUpload!(reply),
+                    child: Text(strings.retry),
+                  ),
+              ],
             ),
           if (refused)
             Text(strings.replyRefused, style: TextStyle(color: colors.error)),
@@ -968,8 +1157,13 @@ class _Composer extends StatelessWidget {
     required this.busy,
     required this.thinking,
     required this.search,
+    required this.attachments,
+    required this.tasks,
     required this.onThinkingChanged,
     required this.onSearchChanged,
+    required this.onAddAttachment,
+    required this.onRetryAttachment,
+    required this.onRemoveAttachment,
     required this.onSend,
     required this.onStop,
   });
@@ -978,13 +1172,20 @@ class _Composer extends StatelessWidget {
   final bool busy;
   final bool thinking;
   final bool search;
+  final List<DraftAttachment> attachments;
+  final Map<String, UploadTask> tasks;
   final ValueChanged<bool> onThinkingChanged;
   final ValueChanged<bool> onSearchChanged;
+  final VoidCallback onAddAttachment;
+  final ValueChanged<String> onRetryAttachment;
+  final ValueChanged<String> onRemoveAttachment;
   final VoidCallback onSend;
   final VoidCallback onStop;
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final ready = allUploadsDone(attachments, tasks);
     return SafeArea(
       top: false,
       child: Padding(
@@ -992,6 +1193,12 @@ class _Composer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            DraftAttachmentStrip(
+              attachments: attachments,
+              tasks: tasks,
+              onRetry: onRetryAttachment,
+              onRemove: onRemoveAttachment,
+            ),
             Row(
               children: [
                 FilterChip(
@@ -1011,6 +1218,11 @@ class _Composer extends StatelessWidget {
             Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
+                IconButton(
+                  onPressed: busy ? null : onAddAttachment,
+                  icon: const Icon(Icons.attach_file),
+                  tooltip: l10n.uploadFile,
+                ),
                 Expanded(
                   child: TextField(
                     controller: input,
@@ -1023,10 +1235,19 @@ class _Composer extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: busy ? onStop : onSend,
-                  icon: Icon(busy ? Icons.stop : Icons.send),
-                  tooltip: busy ? '停止' : '发送',
+                ValueListenableBuilder<TextEditingValue>(
+                  valueListenable: input,
+                  builder: (context, value, child) {
+                    final canSend = !busy &&
+                        ready &&
+                        (value.text.trim().isNotEmpty ||
+                            attachments.isNotEmpty);
+                    return IconButton.filled(
+                      onPressed: busy ? onStop : (canSend ? onSend : null),
+                      icon: Icon(busy ? Icons.stop : Icons.send),
+                      tooltip: busy ? '停止' : '发送',
+                    );
+                  },
                 ),
               ],
             ),
@@ -1036,3 +1257,5 @@ class _Composer extends StatelessWidget {
     );
   }
 }
+
+enum _AttachmentSource { photos, files }

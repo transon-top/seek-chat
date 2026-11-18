@@ -42,6 +42,7 @@
 - [Markdown / 数学 / Mermaid 方案锁定](issues/08-markdown-decision.md): `gpt_markdown` 1.4.1 + 内置 `val_latex_flutter` + `mermaid_flutter` 0.3.2；流式按帧耗时自适应节流（50 ms–2 s）；图片转链接不加载；单块超 200000 字符转纯文本；详见 [`markdown.md`](markdown.md)。
 - [shadcn_ui 聊天界面原型](issues/09-ui-prototype.md): 可运行原型在 [`prototype/`](../../prototype/README.md)；确定抽屉会话列表、非气泡助手/气泡用户、思考块折叠、来源卡与引用角标、分支与操作条、底部圆角输入区；截图与场景见票内。原型中的正文下横向来源卡后续由票 12 改为「N 个网页」胶囊 + 底部抽屉。
 - [联网搜索、阅读链接与引用角标](issues/12-web-search-links.md): 两开关独立持久化、默认关；视图由块纯函数推导；角标点击外开；来源改为「N 个网页」胶囊 + 底部抽屉（取代原型横向来源卡）；详见 [`search.md`](search.md)。
+- [图片与文档上传](issues/13-attachments.md): `file_picker` 单一依赖，回形针 → 相册/文件面板；选中即上传（并发 3）、发送时复制原件；白名单 + 32/64 MB + 50 个；补传与失效重传对齐 `chat-demo`；详见 [`attachments.md`](attachments.md)。
 
 ## Not yet specified
 
@@ -49,7 +50,6 @@
 - 图片审核失败与拒答的用户提示（等内容安全票）
 - 导入覆盖前的备份与回滚（等导入导出票）
 - 语言切换是否即时生效、是否影响已生成内容（等双语票）
-- 附件在消息中的呈现、预览与删除（等附件票）
 - 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
 
 ## Out of scope

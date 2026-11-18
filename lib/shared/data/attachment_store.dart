@@ -18,6 +18,25 @@ class AttachmentStore {
 
   static const String directoryName = 'attachments';
 
+  /// 把选择器给出的原件复制到 `attachments/<id>`，返回数据库要存的相对路径。
+  /// 发送时调用：先写文件，再提交数据库行（`data-model.md` §5）。
+  Future<String> save(String attachmentId, String sourcePath) async {
+    final root = await _supportDirectory();
+    final directory = Directory(p.join(root.path, directoryName));
+    await directory.create(recursive: true);
+    final target = File(p.join(directory.path, attachmentId));
+    await File(sourcePath).copy(target.path);
+    return '$directoryName/$attachmentId';
+  }
+
+  /// 相对路径对应的绝对路径；原件不存在时返回 null。
+  Future<String?> absolutePath(String? relativePath) async {
+    if (relativePath == null || relativePath.isEmpty) return null;
+    final root = await _supportDirectory();
+    final file = File(p.join(root.path, relativePath));
+    return await file.exists() ? file.path : null;
+  }
+
   /// 删除已从数据库移除的附件原件；文件缺失时忽略。
   Future<void> deleteAttachments(Iterable<Attachment> attachments) async {
     final root = await _supportDirectory();

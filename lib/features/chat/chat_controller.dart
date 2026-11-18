@@ -8,11 +8,13 @@ import '../../shared/api/errors.dart';
 import '../../shared/api/reply_accumulator.dart';
 import '../../shared/api/request.dart';
 import '../../shared/api/stream_events.dart';
+import '../../shared/data/attachment_store.dart';
 import '../../shared/data/chat_repository.dart';
 import '../../shared/logging.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
 import '../../shared/security/api_key_store.dart';
+import 'upload_tasks.dart';
 
 /// 一个会话的可见路径与流式回复状态（`api.md` §6）。
 ///
@@ -67,9 +69,14 @@ class ChatController extends Notifier<ChatState> {
 
   final String sessionId;
 
+  /// 服务端判定 file_id 失效后的自动重传次数（chat-demo 同值）。
+  static const int _fileRetryLimit = 2;
+  static const int _fileRetryBaseDelayMs = 1000;
+
   late final ChatRepository _repository;
   late final DeepSeekApiClient _client;
   late final ApiKeyStore _apiKeyStore;
+  late final AttachmentStore _attachmentStore;
 
   /// `KeepAliveLink` 未导出，只保存释放回调。
   void Function()? _releaseKeepAlive;
@@ -82,6 +89,7 @@ class ChatController extends Notifier<ChatState> {
     _repository = ref.read(chatRepositoryProvider);
     _client = ref.read(apiClientProvider);
     _apiKeyStore = ref.read(apiKeyStoreProvider);
+    _attachmentStore = ref.read(attachmentStoreProvider);
     final active = ref.read(activeChatControllersProvider)..add(this);
     ref.onDispose(() {
       active.remove(this);
@@ -98,29 +106,45 @@ class ChatController extends Notifier<ChatState> {
     state = state.copyWith(title: session?.title ?? '', messages: messages);
   }
 
-  /// 追加提问并流式生成回复。
-  Future<void> send({
+  /// 追加提问并流式生成回复。附件原件在写入数据库前复制到应用支持目录；
+  /// 返回是否已创建提问与回复（界面据此清空输入区）。
+  Future<bool> send({
     required String text,
     required bool thinking,
     required bool search,
+    List<DraftAttachment> attachments = const [],
   }) async {
-    if (state.busy) return;
+    if (state.busy) return false;
     final trimmed = text.trim();
-    if (trimmed.isEmpty) return;
+    if (trimmed.isEmpty && attachments.isEmpty) return false;
 
     _begin();
+    var submitted = false;
     try {
       final apiKey = await _requireApiKey();
-      if (apiKey == null) return;
-      if (_cancelled) return;
+      if (apiKey == null) return false;
+      if (_cancelled) return false;
       final session = await _repository.getSession(sessionId);
-      if (session == null) return;
+      if (session == null) return false;
 
-      final history = await _repository.visiblePath(sessionId);
-      if (_cancelled) return;
+      final List<Attachment> stored;
+      try {
+        stored = await _storeAttachments(attachments);
+      } on Object catch (error) {
+        state = state.copyWith(
+          error: LocalMessage(
+            key: LocalMessageKeys.errorSaveAttachmentFailed,
+            params: {'error': error.toString()},
+          ),
+        );
+        return false;
+      }
+      if (_cancelled) return false;
+
       final question = await _repository.addUserMessage(
         sessionId: sessionId,
         text: trimmed,
+        attachments: stored,
       );
       final reply = await _repository.createReply(
         sessionId: sessionId,
@@ -129,25 +153,30 @@ class ChatController extends Notifier<ChatState> {
         thinking: thinking,
         search: search,
       );
-      state = state.copyWith(messages: [...history, question, reply]);
+      state = state.copyWith(
+        messages: await _repository.visiblePath(sessionId),
+      );
+      submitted = true;
+      // 已完成的上传任务只在发送前有用；serverId 已随消息落库。
+      for (final attachment in stored) {
+        ref.read(uploadTasksProvider.notifier).remove(attachment.id);
+      }
 
       await _stream(
-        request: buildMessageRequest(
-          history: history,
-          question: question,
-          thinking: thinking,
-          search: search,
-          titleEnabled: state.title.isEmpty,
-        ),
         reply: reply,
         accumulator: ReplyAccumulator(),
         apiKey: apiKey,
+        questionId: question.id,
+        thinking: thinking,
+        search: search,
+        titleEnabled: state.title.isEmpty,
       );
     } on Object catch (error) {
       _recordError(error);
     } finally {
       _end();
     }
+    return submitted;
   }
 
   /// 在提问下新增回复版本并流式生成，旧回复保留。
@@ -165,7 +194,6 @@ class ChatController extends Notifier<ChatState> {
       final apiKey = await _requireApiKey();
       if (apiKey == null) return;
       if (_cancelled) return;
-      final history = _historyBefore(question.id);
 
       final fresh = await _repository.createReply(
         sessionId: sessionId,
@@ -179,16 +207,13 @@ class ChatController extends Notifier<ChatState> {
       );
 
       await _stream(
-        request: buildMessageRequest(
-          history: history,
-          question: question,
-          thinking: thinking,
-          search: search,
-          titleEnabled: state.title.isEmpty,
-        ),
         reply: fresh,
         accumulator: ReplyAccumulator(),
         apiKey: apiKey,
+        questionId: question.id,
+        thinking: thinking,
+        search: search,
+        titleEnabled: state.title.isEmpty,
       );
     } on Object catch (error) {
       _recordError(error);
@@ -214,21 +239,10 @@ class ChatController extends Notifier<ChatState> {
       final apiKey = await _requireApiKey();
       if (apiKey == null) return;
       if (_cancelled) return;
-      final history = _historyBefore(question.id);
       await _repository.beginContinuation(reply.id);
       _replace(_copyReply(reply, status: ReplyStatus.pending));
 
       await _stream(
-        request: buildMessageRequest(
-          history: history,
-          question: question,
-          thinking: reply.thinking ?? thinking,
-          search: reply.search ?? search,
-          prefix: reply,
-          latestReminder: reply.latestReminder,
-          titleEnabled: state.title.isEmpty,
-          model: reply.model ?? ChatModel.deepseekFlash,
-        ),
         reply: reply,
         accumulator: ReplyAccumulator(
           blocks: reply.blocks,
@@ -236,6 +250,52 @@ class ChatController extends Notifier<ChatState> {
           prefix: reply.prefix,
         ),
         apiKey: apiKey,
+        questionId: question.id,
+        thinking: reply.thinking ?? thinking,
+        search: reply.search ?? search,
+        prefix: reply,
+        latestReminder: reply.latestReminder,
+        titleEnabled: state.title.isEmpty,
+        model: reply.model ?? ChatModel.deepseekFlash,
+      );
+    } on Object catch (error) {
+      _recordError(error);
+    } finally {
+      _end();
+    }
+  }
+
+  /// 附件补传失败后重试：保留原回复位置，重新补传并请求（`attachments.md` §5）。
+  Future<void> retryUpload(
+    AssistantMessage reply, {
+    required bool thinking,
+    required bool search,
+  }) async {
+    if (state.busy || reply.error?.kind != ApiErrorKind.upload) return;
+    final question = _userFor(reply);
+    if (question == null) return;
+
+    _begin();
+    try {
+      final apiKey = await _requireApiKey();
+      if (apiKey == null) return;
+      if (_cancelled) return;
+      await _repository.beginContinuation(reply.id);
+      _replace(_copyReply(reply, status: ReplyStatus.pending, clearError: true));
+
+      await _stream(
+        reply: reply,
+        accumulator: ReplyAccumulator(
+          blocks: reply.blocks,
+          usage: reply.usage,
+          prefix: reply.prefix,
+        ),
+        apiKey: apiKey,
+        questionId: question.id,
+        thinking: reply.thinking ?? thinking,
+        search: reply.search ?? search,
+        titleEnabled: state.title.isEmpty,
+        model: reply.model ?? ChatModel.deepseekFlash,
       );
     } on Object catch (error) {
       _recordError(error);
@@ -286,10 +346,16 @@ class ChatController extends Notifier<ChatState> {
   // ------------------------------------------------------------------ 流
 
   Future<void> _stream({
-    required CreateMessageRequest request,
     required AssistantMessage reply,
     required ReplyAccumulator accumulator,
     required String apiKey,
+    required String questionId,
+    required bool thinking,
+    required bool search,
+    required bool titleEnabled,
+    AssistantMessage? prefix,
+    String? latestReminder,
+    ChatModel model = ChatModel.deepseekFlash,
   }) async {
     final abort = _abort ?? Completer<void>();
     _activeReplyId = reply.id;
@@ -297,6 +363,232 @@ class ChatController extends Notifier<ChatState> {
       await _finish(reply, accumulator, ReplyStatus.stopped, null);
       return;
     }
+
+    var receivedContent = false;
+    Object? failure;
+    for (var attempt = 0; ; attempt++) {
+      try {
+        final request = await _requestFor(
+          questionId: questionId,
+          apiKey: apiKey,
+          thinking: thinking,
+          search: search,
+          titleEnabled: titleEnabled,
+          prefix: prefix,
+          latestReminder: latestReminder,
+          model: model,
+        );
+        if (_stopRequested || abort.isCompleted) break;
+        await _consume(
+          request: request,
+          reply: reply,
+          accumulator: accumulator,
+          apiKey: apiKey,
+          abort: abort,
+          onContent: () => receivedContent = true,
+        );
+        failure = null;
+        break;
+      } on _UploadFailure catch (upload) {
+        failure = upload;
+        break;
+      } on Object catch (error) {
+        if (_stopRequested || abort.isCompleted) break;
+        // 附件失效：清掉 serverId、重新补传后重发。收到过内容块后不自动重发。
+        final canRetry = attempt < _fileRetryLimit &&
+            !receivedContent &&
+            await _reuploadInvalidatedFiles(error, questionId);
+        if (!canRetry) {
+          failure = error;
+          break;
+        }
+        await _waitForRetry(attempt, abort);
+        if (abort.isCompleted) break;
+      }
+    }
+
+    final stopped = _stopRequested || abort.isCompleted;
+    final status = stopped
+        ? ReplyStatus.stopped
+        : failure == null
+            ? ReplyStatus.done
+            : ReplyStatus.error;
+    ReplyError? replyError;
+    if (failure is _UploadFailure) {
+      final cause = failure.cause;
+      replyError = ReplyError(
+        kind: ApiErrorKind.upload,
+        message: cause is ApiException ? cause.message : cause.toString(),
+        localMessage: uploadErrorMessage(cause),
+        retryable: isRetryable(cause),
+      );
+    } else if (failure != null) {
+      replyError = _replyError(failure);
+    }
+    await _finish(reply, accumulator, status, replyError);
+  }
+
+  /// 建立请求前补齐本轮与历史上下文的 serverId（`attachments.md` §5），
+  /// 然后用数据库里的最新消息构造请求。
+  Future<CreateMessageRequest> _requestFor({
+    required String questionId,
+    required String apiKey,
+    required bool thinking,
+    required bool search,
+    required bool titleEnabled,
+    AssistantMessage? prefix,
+    String? latestReminder,
+    ChatModel model = ChatModel.deepseekFlash,
+  }) async {
+    await _ensureAttachments(questionId: questionId, apiKey: apiKey);
+    final path = await _repository.visiblePath(sessionId);
+    final index = path.indexWhere((message) => message.id == questionId);
+    if (index < 0) throw StateError('question $questionId not found');
+    final question = path[index];
+    if (question is! UserMessage) {
+      throw StateError('message $questionId is not a user message');
+    }
+    return buildMessageRequest(
+      history: path.sublist(0, index),
+      question: question,
+      thinking: thinking,
+      search: search,
+      prefix: prefix,
+      latestReminder: latestReminder,
+      titleEnabled: titleEnabled,
+      model: model,
+    );
+  }
+
+  /// 本轮附件并行补传，任一失败则整体失败；历史轮次从新到旧逐张补传，
+  /// 失败静默跳过，该附件不进入本次请求。
+  Future<void> _ensureAttachments({
+    required String questionId,
+    required String apiKey,
+  }) async {
+    final path = await _repository.visiblePath(sessionId);
+    final index = path.indexWhere((message) => message.id == questionId);
+    if (index < 0) return;
+    final question = path[index];
+    if (question is! UserMessage) return;
+    final history = path.sublist(0, index);
+
+    Object? firstError;
+    Future<void> uploadQuestionFile(Attachment attachment) async {
+      try {
+        final serverId = await _ensureServerId(attachment);
+        if (serverId != null) await _saveServerId(attachment.id, serverId);
+      } on Object catch (error) {
+        firstError ??= error;
+      }
+    }
+
+    await Future.wait([
+      for (final attachment in question.attachments)
+        if (attachment.serverId == null) uploadQuestionFile(attachment),
+    ]);
+    if (firstError != null) throw _UploadFailure(firstError!);
+
+    for (final (user, _) in contextRounds(history).toList().reversed) {
+      for (final attachment in user.attachments) {
+        if (attachment.serverId != null) continue;
+        if (_cancelled) return;
+        try {
+          final serverId = await _ensureServerId(attachment);
+          if (serverId != null) await _saveServerId(attachment.id, serverId);
+        } on Object {
+          // 历史附件补传失败：静默跳过，下次发送再试。
+        }
+      }
+    }
+  }
+
+  /// 已有 serverId 直接复用；正在上传的等待同一任务；否则按本地原件补传。
+  /// 本地也没有原件时返回 null，该附件只展示、不进入请求。
+  Future<String?> _ensureServerId(Attachment attachment) async {
+    final task = ref.read(uploadTasksProvider)[attachment.id];
+    if (task != null &&
+        task.status == UploadStatus.done &&
+        task.serverId != null) {
+      return task.serverId;
+    }
+    final path = await _attachmentStore.absolutePath(attachment.localPath);
+    if (path == null) return null;
+    return ref.read(uploadTasksProvider.notifier).upload(
+          id: attachment.id,
+          path: path,
+          name: attachment.name,
+          isImage: attachment.isImage,
+        );
+  }
+
+  /// 把补传得到的 serverId 写回附件行与内存中的全部引用。
+  Future<void> _saveServerId(String attachmentId, String serverId) async {
+    await _repository.setAttachmentServerId(attachmentId, serverId);
+    _setAttachmentServerId(attachmentId, serverId);
+  }
+
+  /// 服务端判定 file_id 失效时清掉对应附件并丢弃旧任务，下一次补齐会重传。
+  /// 报错没点名 file_id 时只重置本次请求用到的附件（提问 + 进入上下文的历史轮次）。
+  Future<bool> _reuploadInvalidatedFiles(
+    Object error,
+    String questionId,
+  ) async {
+    if (fileErrorCode(error) == null) return false;
+    final message = error is ApiException ? error.message : '';
+    final mentioned = extractFileIds(message);
+    final path = await _repository.visiblePath(sessionId);
+    final index = path.indexWhere((item) => item.id == questionId);
+    final question = index < 0 ? null : path[index];
+    final inRequest = <UserMessage>[
+      if (question is UserMessage) question,
+      for (final (user, _) in contextRounds(
+        index < 0 ? const [] : path.sublist(0, index),
+      ))
+        user,
+    ];
+    final targets = mentioned.isNotEmpty
+        ? mentioned.toSet()
+        : {
+            for (final user in inRequest)
+              for (final attachment in user.attachments)
+                if (attachment.serverId != null) attachment.serverId!,
+          };
+    if (targets.isEmpty) return false;
+
+    var changed = false;
+    for (final message in path) {
+      if (message is! UserMessage) continue;
+      for (final attachment in message.attachments) {
+        final serverId = attachment.serverId;
+        if (serverId == null || !targets.contains(serverId)) continue;
+        await _repository.setAttachmentServerId(attachment.id, null);
+        ref.read(uploadTasksProvider.notifier).remove(attachment.id);
+        _setAttachmentServerId(attachment.id, null);
+        changed = true;
+      }
+    }
+    return changed;
+  }
+
+  Future<void> _waitForRetry(int attempt, Completer<void> abort) async {
+    await Future.any([
+      Future<void>.delayed(
+        Duration(milliseconds: _fileRetryBaseDelayMs * (1 << attempt)),
+      ),
+      abort.future,
+    ]);
+  }
+
+  /// 消费一次流：增量只在内存合并，事件到达时刷新界面。
+  Future<void> _consume({
+    required CreateMessageRequest request,
+    required AssistantMessage reply,
+    required ReplyAccumulator accumulator,
+    required String apiKey,
+    required Completer<void> abort,
+    required void Function() onContent,
+  }) async {
     final done = Completer<void>();
     late final StreamSubscription<StreamEvent> subscription;
 
@@ -313,8 +605,9 @@ class ChatController extends Notifier<ChatState> {
         .listen(
           (event) {
             if (done.isCompleted) return;
+            if (event is ContentBlockStart) onContent();
             accumulator.apply(event);
-            _replace(_liveReply(reply, accumulator));
+            _replace(_liveReply(reply, accumulator, clearError: true));
             if (event is MessageDelta) _adoptTitle(accumulator);
             if (event is MessageStop) {
               subscription.cancel();
@@ -337,21 +630,7 @@ class ChatController extends Notifier<ChatState> {
       }),
     );
 
-    ReplyStatus status;
-    ReplyError? replyError;
-    try {
-      await done.future;
-      status = _stopRequested ? ReplyStatus.stopped : ReplyStatus.done;
-    } on Object catch (error) {
-      if (_stopRequested || abort.isCompleted) {
-        status = ReplyStatus.stopped;
-      } else {
-        status = ReplyStatus.error;
-        replyError = _replyError(error);
-      }
-    }
-
-    await _finish(reply, accumulator, status, replyError);
+    await done.future;
   }
 
   /// 收尾并落盘；后台补写与终态写入共用。
@@ -362,7 +641,14 @@ class ChatController extends Notifier<ChatState> {
     ReplyError? error,
   ) async {
     accumulator.settle(status);
-    _replace(_liveReply(reply, accumulator, error: error));
+    _replace(
+      _liveReply(
+        reply,
+        accumulator,
+        error: error,
+        clearError: status != ReplyStatus.error,
+      ),
+    );
     try {
       await _repository.updateReply(
         messageId: reply.id,
@@ -389,6 +675,7 @@ class ChatController extends Notifier<ChatState> {
     AssistantMessage base,
     ReplyAccumulator accumulator, {
     ReplyError? error,
+    bool clearError = false,
   }) => AssistantMessage(
     id: base.id,
     parentId: base.parentId,
@@ -404,12 +691,13 @@ class ChatController extends Notifier<ChatState> {
     stopReason: accumulator.stopReason,
     stopDetails: accumulator.stopDetails,
     usage: accumulator.usage,
-    error: error ?? base.error,
+    error: clearError ? null : error ?? base.error,
   );
 
   AssistantMessage _copyReply(
     AssistantMessage base, {
     required ReplyStatus status,
+    bool clearError = false,
   }) => AssistantMessage(
     id: base.id,
     parentId: base.parentId,
@@ -425,8 +713,47 @@ class ChatController extends Notifier<ChatState> {
     stopReason: base.stopReason,
     stopDetails: base.stopDetails,
     usage: base.usage,
-    error: base.error,
+    error: clearError ? null : base.error,
   );
+
+  /// 复制草稿原件到应用支持目录；数据库只存相对路径。
+  Future<List<Attachment>> _storeAttachments(
+    List<DraftAttachment> drafts,
+  ) async {
+    final stored = <Attachment>[];
+    for (final draft in drafts) {
+      final localPath = await _attachmentStore.save(draft.id, draft.path);
+      stored.add(
+        Attachment(
+          id: draft.id,
+          name: draft.name,
+          size: draft.size,
+          isImage: draft.isImage,
+          mimeType: draft.mimeType,
+          localPath: localPath,
+          serverId: ref.read(uploadTasksProvider)[draft.id]?.serverId,
+        ),
+      );
+    }
+    return stored;
+  }
+
+  /// 同步内存中引用该附件的消息；传 null 表示 serverId 已失效。
+  void _setAttachmentServerId(String attachmentId, String? serverId) {
+    state = state.copyWith(
+      messages: [
+        for (final message in state.messages)
+          if (message is UserMessage &&
+              message.attachments.any((item) => item.id == attachmentId))
+            message.withAttachments([
+              for (final item in message.attachments)
+                item.id == attachmentId ? item.withServerId(serverId) : item,
+            ])
+          else
+            message,
+      ],
+    );
+  }
 
   // ---------------------------------------------------------------- 辅助
 
@@ -516,14 +843,6 @@ class ChatController extends Notifier<ChatState> {
     return null;
   }
 
-  List<Message> _historyBefore(String messageId) {
-    final index = state.messages.indexWhere(
-      (message) => message.id == messageId,
-    );
-    if (index < 0) return const [];
-    return state.messages.sublist(0, index);
-  }
-
   void _replace(Message message) {
     state = state.copyWith(
       messages: [
@@ -532,4 +851,11 @@ class ChatController extends Notifier<ChatState> {
       ],
     );
   }
+}
+
+/// 请求发出前补传附件失败；请求没有发出（`api.md` §5）。
+final class _UploadFailure implements Exception {
+  const _UploadFailure(this.cause);
+
+  final Object cause;
 }

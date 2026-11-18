@@ -138,7 +138,7 @@ CreateMessageRequest buildMessageRequest({
     }
   }
 
-  for (final (userMessage, reply) in _contextRounds(history)) {
+  for (final (userMessage, reply) in contextRounds(history)) {
     final userParam = _userParam(userMessage);
     // 既无文本也无服务端文件的提问整轮不发送。
     if (userParam.text.isEmpty && userParam.files.isEmpty) continue;
@@ -179,7 +179,10 @@ CreateMessageRequest buildMessageRequest({
   );
 }
 
-Iterable<(UserMessage, AssistantMessage)> _contextRounds(List<Message> history) sync* {
+/// 进入请求上下文的历史轮次：提问后紧跟可用回答。
+Iterable<(UserMessage, AssistantMessage)> contextRounds(
+  List<Message> history,
+) sync* {
   for (var i = 0; i + 1 < history.length; i++) {
     final first = history[i];
     final second = history[i + 1];

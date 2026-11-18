@@ -54,6 +54,28 @@ String localMessageText(AppLocalizations l10n, LocalMessage message) {
       return l10n.apiErrorServerBusy;
     case LocalMessageKeys.apiErrorNetwork:
       return l10n.apiErrorNetwork;
+    case LocalMessageKeys.errorSaveAttachmentFailed:
+      return l10n.errorSaveAttachmentFailed(
+        '${message.params['error'] ?? ''}',
+      );
+    case LocalMessageKeys.uploadUnsupportedFormat:
+      return l10n.uploadUnsupportedFormat;
+    case LocalMessageKeys.uploadMaxMBSize:
+      return l10n.uploadMaxMBSize((message.params['size'] as num?)?.toInt() ?? 0);
+    case LocalMessageKeys.uploadMaxFiles:
+      return l10n.uploadMaxFiles(
+        (message.params['count'] as num?)?.toInt() ?? 0,
+      );
+    case LocalMessageKeys.uploadFileStatusFailed:
+      return l10n.uploadFileStatusFailed;
+    case LocalMessageKeys.uploadServerBusy:
+      return l10n.uploadServerBusy;
+    case LocalMessageKeys.uploadParseFailed:
+      return l10n.uploadParseFailed;
+    case LocalMessageKeys.uploadFileCountLimit:
+      return l10n.uploadFileCountLimit('${message.params['limit'] ?? ''}');
+    case LocalMessageKeys.uploadStorageLimit:
+      return l10n.uploadStorageLimit('${message.params['limit'] ?? ''}');
     default:
       return apiErrorText(
         l10n,
