@@ -404,6 +404,66 @@ void main() {
       });
     });
 
+    test('drops search tools, results and deep search pages from history', () {
+      final history = [
+        user('u1', 'question'),
+        assistant(
+          'a1',
+          '',
+          blocks: [
+            const ServerToolUseBlock(
+              id: 'search-1',
+              name: 'deepseek_web_search',
+              input: SearchInput(queries: ['q']),
+              kind: ServerToolKind.deepSearch,
+            ),
+            const WebSearchToolResultBlock(
+              toolUseId: 'search-1',
+              kind: ServerToolKind.deepSearch,
+              content: [
+                WebSearchResult(
+                  title: 'Result',
+                  url: 'https://result.example',
+                  snippet: '',
+                  encryptedContent: '',
+                ),
+              ],
+            ),
+            const ServerToolUseBlock(
+              id: 'open-1',
+              name: 'deepseek_web_search',
+              input: OpenPageInput('https://page.example'),
+              kind: ServerToolKind.deepSearch,
+            ),
+            const WebFetchToolResultBlock(
+              toolUseId: 'open-1',
+              kind: ServerToolKind.deepSearch,
+              signature: 'sig',
+              content: WebFetchResult(
+                url: 'https://page.example',
+                content: {'title': 'Page'},
+              ),
+            ),
+            const TextBlock(text: 'answer'),
+          ],
+        ),
+      ];
+
+      final json = buildMessageRequest(
+        history: history,
+        question: user('u2', 'next'),
+        thinking: false,
+        search: false,
+      ).toJson();
+
+      expect(json['messages'][1], {
+        'role': 'assistant',
+        'content': [
+          {'type': 'text', 'text': 'answer'},
+        ],
+      });
+    });
+
     test('drops citations and empty text blocks from assistant history', () {
       final history = [
         user('u1', 'question'),

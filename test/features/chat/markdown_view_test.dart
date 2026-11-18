@@ -4,12 +4,33 @@ import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:open_chat/features/chat/markdown_view.dart';
+import 'package:open_chat/features/chat/reply_view.dart';
 import 'package:val_latex_flutter/val_latex_flutter.dart' show Math;
 
+Source _source(int index) => Source(
+  index: index,
+  url: 'https://source$index.example',
+  title: 'Source $index',
+  siteName: 'source$index.example',
+  publishedAt: null,
+  snippet: null,
+  siteIcon: null,
+);
+
 void main() {
-  Widget app(String text, {bool streaming = false}) => MaterialApp(
+  Widget app(
+    String text, {
+    bool streaming = false,
+    List<Source>? sources,
+    bool disableLinks = false,
+  }) => MaterialApp(
     home: Scaffold(
-      body: MarkdownView(text: text, streaming: streaming),
+      body: MarkdownView(
+        text: text,
+        streaming: streaming,
+        sources: sources,
+        disableLinks: disableLinks,
+      ),
     ),
   );
 
@@ -17,8 +38,17 @@ void main() {
     WidgetTester tester,
     String data, {
     bool streaming = false,
+    List<Source>? sources,
+    bool disableLinks = false,
   }) async {
-    await tester.pumpWidget(app(data, streaming: streaming));
+    await tester.pumpWidget(
+      app(
+        data,
+        streaming: streaming,
+        sources: sources,
+        disableLinks: disableLinks,
+      ),
+    );
     await tester.pumpAndSettle();
   }
 
@@ -57,6 +87,69 @@ void main() {
   testWidgets('does not crash on a half-streamed formula', (tester) async {
     await pumpMarkdown(tester, r'half \(\frac{a}{');
 
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('renders a citation token as a numbered badge', (tester) async {
+    await pumpMarkdown(
+      tester,
+      'answer[citation:2]',
+      sources: [_source(1), _source(2)],
+    );
+
+    expect(find.textContaining('[citation:', findRichText: true), findsNothing);
+    expect(find.textContaining('answer', findRichText: true), findsWidgets);
+    expect(find.textContaining('2', findRichText: true), findsWidgets);
+  });
+
+  testWidgets('removes citation tokens without a matching source', (
+    tester,
+  ) async {
+    await pumpMarkdown(
+      tester,
+      'answer[citation:99] and [citation:1]',
+      sources: [_source(1)],
+    );
+
+    expect(find.textContaining('[citation:99]', findRichText: true), findsNothing);
+    expect(find.textContaining('[citation:1]', findRichText: true), findsNothing);
+    expect(find.textContaining('1', findRichText: true), findsWidgets);
+  });
+
+  testWidgets('keeps citation tokens as text when no sources are given', (
+    tester,
+  ) async {
+    await pumpMarkdown(tester, 'answer[citation:1]');
+
+    expect(
+      find.textContaining('[citation:1]', findRichText: true),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('does not parse citation tokens inside code', (tester) async {
+    await pumpMarkdown(
+      tester,
+      '`[citation:1]`\n\n```\n[citation:1]\n```',
+      sources: [_source(1)],
+    );
+
+    expect(
+      find.textContaining('[citation:1]', findRichText: true),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('renders links as plain text when links are disabled', (
+    tester,
+  ) async {
+    await pumpMarkdown(
+      tester,
+      '[label](https://example.com)',
+      disableLinks: true,
+    );
+
+    expect(find.textContaining('label', findRichText: true), findsWidgets);
     expect(tester.takeException(), isNull);
   });
 

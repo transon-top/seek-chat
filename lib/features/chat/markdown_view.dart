@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:gpt_markdown/custom_widgets/code_field.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
@@ -7,6 +8,8 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_core/mermaid_core.dart' as mermaid_core;
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+
+import 'reply_view.dart';
 
 /// 渲染回复中的 Markdown 文本。
 ///
@@ -16,12 +19,28 @@ import 'package:url_launcher/url_launcher.dart';
 /// 流式期间按上次渲染耗时的两倍节流，把连续 token 合并成一次更新；
 /// 区间限制在 50ms 到 2s（票 08）。
 class MarkdownView extends StatefulWidget {
-  const MarkdownView({super.key, required this.text, this.streaming = false});
+  const MarkdownView({
+    super.key,
+    required this.text,
+    this.streaming = false,
+    this.sources,
+    this.dense = false,
+    this.disableLinks = false,
+  });
 
   final String text;
 
   /// 回复仍在流式生成时为 true；流结束后立即显示全文。
   final bool streaming;
+
+  /// 传入时把 `[citation:N]` 渲染为可点击的来源角标；不传则保留原文。
+  final List<Source>? sources;
+
+  /// 思考与过程性正文使用小号文本。
+  final bool dense;
+
+  /// 思考内容只保留链接文字，不渲染成可点击链接。
+  final bool disableLinks;
 
   /// 单块超过此长度时不再解析 Markdown，按纯文本展示（票 08 的降级上限）。
   static const int plainTextLimit = 200000;
@@ -99,7 +118,8 @@ class _MarkdownViewState extends State<MarkdownView> {
 
   @override
   Widget build(BuildContext context) {
-    final style = Theme.of(context).textTheme.bodyMedium;
+    final theme = Theme.of(context).textTheme;
+    final style = widget.dense ? theme.bodySmall : theme.bodyMedium;
     return SelectionArea(
       child: _shown.length > MarkdownView.plainTextLimit
           ? Text(_shown, style: style)
@@ -107,7 +127,14 @@ class _MarkdownViewState extends State<MarkdownView> {
               _shown,
               style: style,
               useDollarSignsForLatex: false,
-              onLinkTap: _openLink,
+              onLinkTap: widget.disableLinks ? null : openExternalLink,
+              inlineLinkBuilder: widget.disableLinks
+                  ? (details) =>
+                        TextSpan(text: details.label, style: details.style)
+                  : null,
+              inlinePatterns: widget.sources == null
+                  ? null
+                  : [_citationPattern(widget.sources!)],
               // 与 chat-demo 一致：图片不加载，只显示可点击的地址（票 08）。
               imageBuilder: _imageAsLink,
               codeBuilder: (context, name, code, closed) {
@@ -128,9 +155,9 @@ Widget _imageAsLink(
   double? height,
 ) {
   final colors = Theme.of(context).colorScheme;
-  final uri = _webUri(url);
+  final uri = webUri(url);
   return GestureDetector(
-    onTap: uri == null ? null : () => _openLink(uri.toString(), ''),
+    onTap: uri == null ? null : () => openExternalLink(uri.toString(), ''),
     child: Text(
       uri?.toString() ?? url,
       style: TextStyle(
@@ -142,7 +169,7 @@ Widget _imageAsLink(
 }
 
 /// 无协议地址补 `https://`（对齐 chat-demo）；只放行 http(s)。
-Uri? _webUri(String raw) {
+Uri? webUri(String raw) {
   final trimmed = raw.trim();
   if (trimmed.isEmpty || trimmed.startsWith('mailto:')) return null;
   final hasScheme = RegExp(r'^[a-zA-Z][a-zA-Z0-9+.-]*://').hasMatch(trimmed);
@@ -153,8 +180,8 @@ Uri? _webUri(String raw) {
 }
 
 /// 只打开 http(s)，避免模型输出触发任意 URI scheme。
-Future<void> _openLink(String url, String title) async {
-  final uri = _webUri(url);
+Future<void> openExternalLink(String url, String title) async {
+  final uri = webUri(url);
   if (uri == null) return;
   try {
     await launchUrl(uri, mode: LaunchMode.externalApplication);
@@ -162,6 +189,35 @@ Future<void> _openLink(String url, String title) async {
     // 链接打不开时保持内容可读，不中断渲染。
   }
 }
+
+/// `[citation:N]` 行内模式：找到来源时渲染数字角标，找不到时整个移除。
+InlinePattern _citationPattern(List<Source> sources) => InlinePattern(
+  pattern: RegExp(r'\[citation:(\d+)\]'),
+  builder: (context, match, style) {
+    final index = int.tryParse(match.group(1) ?? '');
+    Source? matchSource;
+    for (final candidate in sources) {
+      if (candidate.index == index) {
+        matchSource = candidate;
+        break;
+      }
+    }
+    if (matchSource == null) return const TextSpan(text: '');
+    final source = matchSource;
+    final colors = Theme.of(context).colorScheme;
+    return TextSpan(
+      text: ' ${source.index} ',
+      style: style.copyWith(
+        color: colors.onSurfaceVariant,
+        backgroundColor: colors.surfaceContainerHighest,
+        fontSize: (style.fontSize ?? 14) * 0.75,
+        fontWeight: FontWeight.w600,
+      ),
+      recognizer: TapGestureRecognizer()
+        ..onTap = () => openExternalLink(source.url, source.title),
+    );
+  },
+);
 
 class _MermaidBlock extends StatelessWidget {
   const _MermaidBlock({required this.source});
