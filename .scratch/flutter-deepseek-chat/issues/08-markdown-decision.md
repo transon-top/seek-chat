@@ -1,7 +1,7 @@
 # Markdown / 数学 / Mermaid 方案锁定
 
 Type: grilling
-Status: open
+Status: resolved
 Blocked by: 01, 02, 03
 
 ## Question
@@ -27,3 +27,26 @@ Blocked by: 01, 02, 03
 - Mermaid 使用固定 320 高度的 `MermaidView`（缩放、平移、全屏）；流式失败保留上次成功场景，无成功场景时降级为源码文本。
 - 链接仅打开 `http` / `https`。
 - 仍未定：流式节流频率、长会话性能预算、图片缓存策略、超大文档降级。
+
+## Answer
+
+决策完成（2026-11-18），详见 [`markdown.md`](../markdown.md)。
+
+- **Markdown**：`gpt_markdown` 1.4.1 主选，`flutter_markdown_plus` +
+  `flutter_markdown_stream` 备选；caret 声明，`pubspec.lock` 锁实际版本。
+- **数学**：`val_latex_flutter` 0.1.4（`gpt_markdown` 内置）；只认
+  `\(...\)` / `\[...\]`，单 `$` 关闭；语义与 chat-demo 一致，不做像素一致；
+  v1 不实现单公式 WebView 兜底。
+- **Mermaid**：`mermaid_flutter` + `mermaid_core` 0.3.2，`codeBuilder` 接入；
+  固定 320 高，平移/缩放/全屏；`keepLastGoodSceneOnError` + 源码降级。
+- **代码高亮**：复用 `gpt_markdown` 内置 `val_highlight` / `CodeField`，
+  不新增依赖；深浅色随主题。
+- **管线**：流式按「上次帧耗时 × 2」节流，限制 50 ms–2 s，窗口内合并；
+  包内增量分段缓存；消息列表按 id 建 `ValueKey`；流结束立即显示全文。
+- **交互**：`SelectionArea` 选区复制；`CodeField` 复制按钮；链接仅
+  http(s) 外部打开；Markdown 图片按 chat-demo 转成链接，不加载、无图片缓存。
+- **降级**：半截公式不崩溃、Mermaid 保留上次成功场景、未知围栏纯文本、
+  单块超 200000 字符转纯文本。
+- **验收**：`test/ui/markdown_view_test.dart` 覆盖 12 条样例，全部通过。
+- **未验证**：真机性能预算、`mermaid_*` 0.3.x API 稳定性、数学与 KaTeX
+  的视觉差异。性能预算只有目标值，未做真机基准。

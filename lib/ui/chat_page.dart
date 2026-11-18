@@ -100,6 +100,7 @@ class _ChatPageState extends State<ChatPage> with WidgetsBindingObserver {
                         itemBuilder: (context, index) {
                           final position = messages.length - 1 - index;
                           return _MessageView(
+                            key: ValueKey(messages[position].id),
                             message: messages[position],
                             isLast: position == messages.length - 1,
                             busy: _controller.busy,
@@ -174,6 +175,7 @@ class _ErrorBanner extends StatelessWidget {
 
 class _MessageView extends StatelessWidget {
   const _MessageView({
+    super.key,
     required this.message,
     required this.isLast,
     required this.busy,
@@ -290,7 +292,10 @@ class _ReplyView extends StatelessWidget {
       if (block.text.isEmpty) return const SizedBox.shrink();
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: MarkdownView(text: block.text),
+        child: MarkdownView(
+          text: block.text,
+          streaming: reply.isInFlight,
+        ),
       );
     }
     if (block is ThinkingBlock) {

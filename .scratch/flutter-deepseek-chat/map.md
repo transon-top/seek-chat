@@ -39,6 +39,7 @@
 - [API 协议与流式客户端契约](issues/05-api-protocol.md): 契约写入 [`api.md`](api.md)；锁定请求体/SSE 合并/错误分类/停止续写/分支上下文/自动标题；Dart 用 `package:http` 1.5+ `AbortableRequest` + 自写 WHATWG SSE 解析，不设客户端超时，v1 固定 `deepseek-flash`。
 - [会话、消息与分支数据模型](issues/06-data-model.md): drift 四表 `sessions`/`messages`/`attachments`/`message_attachments`，块存 JSON；UUID 主键 + epoch 毫秒；流式不写库、状态迁移落盘；详见 [`data-model.md`](data-model.md)，术语见根目录 `GLOSSARY.md`。
 - [应用架构与项目结构](issues/07-architecture.md): 功能优先 + `shared` 核心；`flutter_riverpod` 3.5 手写 Provider，聊天用 family + `keepAlive`；每会话单流、跨会话可并行（对齐 `chat-demo`）；设置走 `shared_preferences`，Key 走安全存储；`shadcn_ui` 0.60.x 为目标组件库；详见 [`architecture.md`](architecture.md)。
+- [Markdown / 数学 / Mermaid 方案锁定](issues/08-markdown-decision.md): `gpt_markdown` 1.4.1 + 内置 `val_latex_flutter` + `mermaid_flutter` 0.3.2；流式按帧耗时自适应节流（50 ms–2 s）；图片转链接不加载；单块超 200000 字符转纯文本；详见 [`markdown.md`](markdown.md)。
 
 ## Not yet specified
 
@@ -47,8 +48,8 @@
 - 图片审核失败与拒答的用户提示（等内容安全票）
 - 导入覆盖前的备份与回滚（等导入导出票）
 - 语言切换是否即时生效、是否影响已生成内容（等双语票）
-- 代码高亮 / Mermaid / KaTeX 的主题与深浅色对应（等渲染方案与界面规格）
 - 附件在消息中的呈现、预览与删除（等附件票）
+- 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
 - 深度思考与搜索开关在输入区的呈现（等原型）
 
 ## Out of scope
