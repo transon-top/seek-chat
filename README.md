@@ -20,6 +20,8 @@ Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
 - 回复渲染：`gpt_markdown` 渲染 Markdown、代码高亮与复制、链接外部打开；
   `val_latex_flutter` 渲染 `\(...\)` 与 `\[...\]`；`mermaid` 围栏由
   `mermaid_flutter` 绘制，解析失败降级为源码。
+- 联网搜索：深度思考与智能搜索开关持久化并随回复快照；工具步骤时间线、
+  `[citation:N]` 引用角标、「N 个网页」胶囊与来源抽屉。
 - 双语：错误文案与错误映射走 `gen_l10n`（`lib/l10n/`），中英各一份；
   其余界面文案与主题设置在票 18 收口。
 
