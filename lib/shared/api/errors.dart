@@ -13,7 +13,8 @@ class ApiException implements Exception {
   @override
   String toString() => 'ApiException(${kind.name}, $message, status: $status)';
 
-  ApiErrorCondition get condition => classifyApiError(kind, status);
+  ApiErrorCondition get condition =>
+      classifyApiError(kind, status, message: message);
 
   bool get retryable =>
       condition == ApiErrorCondition.network ||
@@ -22,11 +23,22 @@ class ApiException implements Exception {
 }
 
 /// 状态码归类（`api.md` §5）；从已持久化的 [ReplyError] 复原条件时也用它。
-ApiErrorCondition classifyApiError(ApiErrorKind kind, int? status) {
+///
+/// 内容审核拒绝是唯一按错误文案识别的 400（`safety.md` §5），其余错因不能
+/// 因为同为 400 被误判成审核。
+ApiErrorCondition classifyApiError(
+  ApiErrorKind kind,
+  int? status, {
+  String? message,
+}) {
   if (status == null) {
     return kind == ApiErrorKind.network
         ? ApiErrorCondition.network
         : ApiErrorCondition.other;
+  }
+  if (status == 400 &&
+      _contentRejectedPattern.hasMatch(message ?? '')) {
+    return ApiErrorCondition.contentRejected;
   }
   if (status == 401) return ApiErrorCondition.unauthorized;
   if (status == 402) return ApiErrorCondition.insufficientBalance;
@@ -35,6 +47,11 @@ ApiErrorCondition classifyApiError(ApiErrorKind kind, int? status) {
   if (status >= 500) return ApiErrorCondition.serverBusy;
   return ApiErrorCondition.other;
 }
+
+final RegExp _contentRejectedPattern = RegExp(
+  r'Content Exists Risk',
+  caseSensitive: false,
+);
 
 /// 条件到本地化键的映射，键名与 ARB 条目一致；控制器存状态时使用。
 String localMessageKeyFor(ApiErrorCondition condition) => switch (condition) {
@@ -45,6 +62,8 @@ String localMessageKeyFor(ApiErrorCondition condition) => switch (condition) {
       ApiErrorCondition.rateLimited => LocalMessageKeys.apiErrorRateLimited,
       ApiErrorCondition.serverBusy => LocalMessageKeys.apiErrorServerBusy,
       ApiErrorCondition.network => LocalMessageKeys.apiErrorNetwork,
+      ApiErrorCondition.contentRejected =>
+        LocalMessageKeys.apiErrorContentRejected,
       ApiErrorCondition.other => LocalMessageKeys.apiErrorOther,
     };
 

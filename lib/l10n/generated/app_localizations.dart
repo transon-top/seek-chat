@@ -153,6 +153,12 @@ abstract class AppLocalizations {
   /// **'Network error. Check your connection.'**
   String get apiErrorNetwork;
 
+  /// No description provided for @apiErrorContentRejected.
+  ///
+  /// In en, this message translates to:
+  /// **'The content did not pass safety review. Edit it and try again.'**
+  String get apiErrorContentRejected;
+
   /// No description provided for @apiErrorOther.
   ///
   /// In en, this message translates to:
@@ -168,8 +174,14 @@ abstract class AppLocalizations {
   /// No description provided for @replyRefused.
   ///
   /// In en, this message translates to:
-  /// **'The content was blocked by safety policy.'**
+  /// **'Sorry, that\'s beyond my current scope. Let\'s talk about something else.'**
   String get replyRefused;
+
+  /// No description provided for @replyImageBlocked.
+  ///
+  /// In en, this message translates to:
+  /// **'The image was blocked by content safety review. Remove it and try again.'**
+  String get replyImageBlocked;
 
   /// No description provided for @errorSaveAttachmentFailed.
   ///

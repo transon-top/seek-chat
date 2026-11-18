@@ -681,7 +681,13 @@ void main() {
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
-    expect(find.text('内容被安全策略拒绝'), findsOneWidget);
+    expect(
+      find.textContaining(
+        '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。',
+        findRichText: true,
+      ),
+      findsOneWidget,
+    );
     expect(
       find.textContaining('must not appear', findRichText: true),
       findsNothing,
@@ -691,6 +697,91 @@ void main() {
       findsNothing,
     );
     expect(find.textContaining('个网页'), findsNothing);
+    expect(
+      tester
+          .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.refresh))
+          .onPressed,
+      isNull,
+    );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('a blocked image shows the image review copy', (tester) async {
+    const explanation =
+        'The following images were blocked by content moderation: '
+        'messages.1.content.0';
+    final fixture =
+        messageStart +
+        textStart(0) +
+        textDelta(0, 'must not appear') +
+        textStop(0) +
+        frame('message_delta', {
+          'type': 'message_delta',
+          'delta': {
+            'stop_reason': 'refusal',
+            'stop_details': {
+              'type': 'refusal',
+              'category': null,
+              'explanation': explanation,
+            },
+          },
+        }) +
+        messageStop;
+    final client = DeepSeekApiClient(
+      origin: Uri.parse(origin),
+      httpClient: MockClient.streaming(
+        (_, _) async => sseResponse(Stream.value(utf8.encode(fixture))),
+      ),
+    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('新建会话'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
+    await tester.tap(find.byTooltip('发送'));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('图片未通过内容安全审核，请移除后重试。', findRichText: true),
+      findsOneWidget,
+    );
+    expect(find.textContaining('must not appear', findRichText: true), findsNothing);
+    expect(find.textContaining('messages.1.content.0', findRichText: true), findsNothing);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('a content-review 400 shows localized copy without the raw error', (
+    tester,
+  ) async {
+    final client = DeepSeekApiClient(
+      origin: Uri.parse(origin),
+      httpClient: MockClient.streaming(
+        (_, _) async => http.StreamedResponse(
+          Stream.value(
+            utf8.encode(
+              '{"type":"error","error":{"type":"invalid_request_error",'
+              '"message":"Content Exists Risk"}}',
+            ),
+          ),
+          400,
+          headers: {'content-type': 'application/json'},
+        ),
+      ),
+    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('新建会话'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.pump();
+    await tester.tap(find.byTooltip('发送'));
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('内容未通过安全审核'), findsOneWidget);
+    expect(find.textContaining('Content Exists Risk'), findsNothing);
 
     await unmountApp(tester);
   });

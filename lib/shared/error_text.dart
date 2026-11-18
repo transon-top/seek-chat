@@ -18,6 +18,7 @@ String apiErrorText(
     ApiErrorCondition.rateLimited => l10n.apiErrorRateLimited,
     ApiErrorCondition.serverBusy => l10n.apiErrorServerBusy,
     ApiErrorCondition.network => l10n.apiErrorNetwork,
+    ApiErrorCondition.contentRejected => l10n.apiErrorContentRejected,
     ApiErrorCondition.other => l10n.apiErrorOther,
   };
   if (condition != ApiErrorCondition.other || !kDebugMode) return text;
@@ -31,7 +32,7 @@ String replyErrorText(AppLocalizations l10n, ReplyError error) {
   if (local != null) return localMessageText(l10n, local);
   return apiErrorText(
     l10n,
-    classifyApiError(error.kind, error.status),
+    classifyApiError(error.kind, error.status, message: error.message),
     detail: error.message,
   );
 }
@@ -54,6 +55,8 @@ String localMessageText(AppLocalizations l10n, LocalMessage message) {
       return l10n.apiErrorServerBusy;
     case LocalMessageKeys.apiErrorNetwork:
       return l10n.apiErrorNetwork;
+    case LocalMessageKeys.apiErrorContentRejected:
+      return l10n.apiErrorContentRejected;
     case LocalMessageKeys.errorSaveAttachmentFailed:
       return l10n.errorSaveAttachmentFailed(
         '${message.params['error'] ?? ''}',

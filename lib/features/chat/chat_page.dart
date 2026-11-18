@@ -407,6 +407,7 @@ class _ReplyView extends StatelessWidget {
     final strings = AppLocalizations.of(context)!;
     final view = buildReplyView(reply, streaming: reply.isInFlight);
     final refused = reply.stopReason == StopReason.refusal;
+    final refusal = refusalText(strings, reply);
     final continueEnabled =
         isLast && !busy && canContinueReply(reply) && onContinue != null;
     return Container(
@@ -446,8 +447,11 @@ class _ReplyView extends StatelessWidget {
                   ),
               ],
             ),
-          if (refused)
-            Text(strings.replyRefused, style: TextStyle(color: colors.error)),
+          if (refusal != null && reply.status != ReplyStatus.error)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 4),
+              child: MarkdownView(text: refusal),
+            ),
           if (!refused &&
               !reply.isInFlight &&
               view.searchResults.isNotEmpty)
@@ -464,7 +468,7 @@ class _ReplyView extends StatelessWidget {
           Row(
             children: [
               IconButton(
-                onPressed: busy || onRegenerate == null
+                onPressed: busy || refused || onRegenerate == null
                     ? null
                     : () => onRegenerate!(reply),
                 icon: const Icon(Icons.refresh),
