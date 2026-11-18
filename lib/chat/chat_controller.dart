@@ -221,11 +221,7 @@ class ChatController extends ChangeNotifier {
     for (final message in _messages) {
       if (message.id == id && message is AssistantMessage) live = message;
     }
-    if (live == null ||
-        (live.status != ReplyStatus.pending &&
-            live.status != ReplyStatus.streaming)) {
-      return;
-    }
+    if (live == null || !live.isInFlight) return;
     try {
       await _repository.updateReply(
         messageId: live.id,

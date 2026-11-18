@@ -634,9 +634,7 @@ class ChatRepository {
 
   /// 打开会话时把残留的生成状态视为已停止，并给未结束的思考块补结束时间。
   Message _settleInterrupted(Message message, DateTime at) {
-    if (message is! AssistantMessage ||
-        (message.status != ReplyStatus.pending &&
-            message.status != ReplyStatus.streaming)) {
+    if (message is! AssistantMessage || !message.isInFlight) {
       return message;
     }
     final endedAt = at.millisecondsSinceEpoch;
