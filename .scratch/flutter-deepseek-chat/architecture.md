@@ -26,6 +26,7 @@ lib/
     data/            # drift 数据库、ChatRepository、AttachmentStore
     models/          # 领域与协议类型、JSON 编解码
     prefs/           # shared_preferences 封装
+    security/        # ApiKeyStore
   l10n/              # ARB 与生成的 AppLocalizations
 ```
 
@@ -39,10 +40,12 @@ lib/
 | `lib/api/` | `lib/shared/api/` |
 | `lib/data/` | `lib/shared/data/` |
 | `lib/models/` | `lib/shared/models/` |
+| `lib/app.dart` | `lib/app/` |
 | `lib/chat/` | `lib/features/chat/` |
 | `lib/ui/chat_page.dart`、`lib/ui/markdown_view.dart` | `lib/features/chat/` |
 | `lib/ui/home_page.dart` | `lib/features/sessions/` |
-| `lib/settings/` | `lib/features/settings/` 与 `lib/shared/prefs/` |
+| `lib/settings/settings_page.dart` | `lib/features/settings/` |
+| `lib/settings/api_key_store.dart` | `lib/shared/security/` |
 
 `test/` 目录跟随源码同名分层移动。
 
@@ -67,14 +70,14 @@ lib/
 
 ## 3. 并发与生命周期
 
-- 全局同一时间只允许一个生成中的回复。应用级 `activeReplyProvider` 记录
-  `(sessionId, replyId, abort)`；开始生成前抢占，结束、停止或出错后释放。
-  已有生成中的回复时，其他会话的发送、重新生成与续写被拒绝。
-- 同一会话内的 `ChatController` 自身再保证「一个请求」：`busy` 时其余入口无效。
-- 切换会话不取消后台流；会话列表与聊天页都显示生成中状态。
-- App 进入 `paused` / `hidden` 时把内存中的回复补写一次（`data-model.md` §4）。
-  v1 不申请 iOS 后台执行权限；系统挂起或杀掉进程后，下次启动把残留
-  `pending`/`streaming` 置为 `stopped`。
+- 每个会话同一时间只允许一个生成中的回复；不同会话可以并行生成，与
+  `chat-demo` 的 `streaming: Record<sessionId, AbortController>` 一致。
+  会话内的闸门由 `ChatController.busy` 与 `ActiveReply`（`sessionId`、`replyId`、
+  `abort`）表达，不设全局锁。
+- 切换会话不取消后台流；多个会话可同时显示生成中状态。
+- App 进入 `paused` / `hidden` 时把各控制器内存中的回复补写一次
+  （`data-model.md` §4）。v1 不申请 iOS 后台执行权限；系统挂起或杀掉进程后，
+  下次启动把残留 `pending`/`streaming` 置为 `stopped`。
 - 音频同一时刻只有一个通道：录音与朗读互斥，具体行为由票 21 定。
 
 ## 4. 数据层边界
@@ -92,8 +95,9 @@ lib/
 - `app/` 提供唯一的本地化映射函数，把 `ApiErrorCondition` 映射为 ARB 文案；
   未知异常统一显示「发生错误，请重试」。服务端原文只在 debug 构建显示，
   release 构建不展示原始 `message`。
-- 回复级错误以结构化字段存库（`kind`、`message`、`status`）；界面按 `kind`
-  映射文案，未知 `kind` 回退到通用文案。
+- 回复级错误按 `data-model.md` §2.2 存 `kind`、`message`、`status`、
+  `localMessage`（键与参数）与 `retryable`；界面优先渲染 `localMessage`，
+  未知键回退到按 `kind` 的通用文案，服务端 `message` 仅 debug 显示。
 - 日志使用 `dart:developer` 的 `log`，仅在 `kDebugMode` 输出。禁止记录 API Key、
   请求头、完整请求体与附件内容。v1 不引入日志 SDK 或崩溃上报。
 
@@ -112,8 +116,9 @@ lib/
 ## 7. 安全
 
 - API Key 只经 `ApiKeyStore` 读写。iOS 使用
-  `IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)`，
-  支持后台继续生成且不随备份迁移；Android 使用 `flutter_secure_storage` v11
+  `IOSOptions(accessibility: KeychainAccessibility.first_unlock_this_device)`：
+  设备首次解锁后可读，且不随备份迁移到新设备。它不提供后台执行能力，
+  后台行为见第 3 节。Android 使用 `flutter_secure_storage` v11
   默认密码套件，v1 不启用生物识别。
 - Key 不写数据库、不进日志、不进导出包、不进崩溃上报；导出格式由票 17 定义。
 - Android `allowBackup="false"`：聊天记录通过导入导出迁移，避免系统备份把
@@ -143,7 +148,8 @@ lib/
 ## 10. 测试边界与质量门槛
 
 - 单元测试：`shared/api`（SSE、事件解析、请求构造）、`shared/data`
-  （drift 内存库上的仓库与附件清理）、各功能控制器（合并、并发、错误映射）。
+  （drift 内存库上的仓库与附件清理）、各功能控制器（合并、并发、错误映射）、
+  `features/history` 的 ZIP 归档读写与覆盖导入。
 - widget 测试：每个功能页面，使用 `ProviderScope` override、`NativeDatabase.memory()`
   与 `http/testing.dart` 的 `MockClient`；覆盖空态、错误态与关键交互。
 - `integration_test` 只覆盖平台插件：安全存储、文件选择、录音与播放。
@@ -173,33 +179,42 @@ flutter test
 
 ### 依赖清单
 
+版本以 `pubspec.yaml` 为准；本表是锁定时的直接依赖快照。
+
 | 包 | 版本 | 用途 |
 | --- | --- | --- |
+| `flutter` | SDK | 运行时与界面框架 |
 | `material_ui` | `^1.1.0`（锁 1.11.1） | Material 3 基础与 shadcn_ui 底座 |
 | `flutter_riverpod` | `^3.5.0`（新增） | 状态管理、依赖注入 |
 | `shadcn_ui` | `>=0.60.0 <0.61.0`（新增） | 目标组件库 |
 | `shared_preferences` | `^2.5.6`（新增） | 本机设置 |
 | `flutter_localizations` | SDK（新增） | 本地化委托 |
 | `intl` | `^0.20.2`（新增直接依赖） | gen_l10n 运行时 |
+| `cupertino_icons` | `^1.0.8` | 图标资源 |
 | `http` | `^1.6.0` | 网络、SSE、AbortableRequest |
-| `drift` / `drift_dev` | `^2.35.x` | 数据库与代码生成 |
+| `drift` | `^2.35.4` | 数据库 |
 | `sqlite3` | `^3.9.1` | drift 原生实现 |
-| `path_provider` / `path` | `^2.1.6` / `^1.9.1` | 应用目录与路径 |
+| `path_provider` | `^2.1.6` | 应用目录 |
+| `path` | `^1.9.1` | 路径拼接 |
 | `uuid` | `^4.6.0` | 主键 |
 | `flutter_secure_storage` | `^11.2.0` | API Key |
 | `gpt_markdown` | `^1.4.1` | Markdown 与代码高亮 |
-| `mermaid_flutter` / `mermaid_core` | `^0.3.2` | Mermaid |
+| `mermaid_flutter` | `^0.3.2` | Mermaid 绘制 |
+| `mermaid_core` | `^0.3.2` | Mermaid 解析与主题 |
 | `url_launcher` | `^6.3.3` | 外部链接 |
-| `val_latex_flutter` | `^0.1.4`（dev） | 数学渲染的测试断言 |
+| `drift_dev` | `^2.35.3`（dev） | drift 代码生成 |
+| `build_runner` | `^2.17.1`（dev） | 代码生成入口 |
+| `flutter_test` | SDK（dev） | 单元与 widget 测试 |
 | `flutter_lints` | `^6.0.0`（dev） | 静态规则 |
+| `val_latex_flutter` | `^0.1.4`（dev） | 数学渲染的测试断言 |
 
 ## 12. 迁移顺序
 
 1. 加入新依赖与 `l10n.yaml`，保持行为不变。
 2. 按第 1 节移动目录与测试，修正 import；`flutter analyze` 与 `flutter test` 全绿。
 3. 接入 Riverpod 基础设施 Provider 与 `ProviderScope`，设置状态改 `shared_preferences`。
-4. `ChatController` 改为 `Notifier` + family + `keepAlive`；加入全局单流闸门；
-   会话列表改 `watchSessions()` + `StreamProvider`。
+4. `ChatController` 改为 `Notifier` + family + `keepAlive`；会话内的
+   `ActiveReply` 保证单请求；会话列表改 `watchSessions()` + `StreamProvider`。
 5. 错误文案迁入 ARB，日志收口到调试封装。
 6. 落实安全选项与 Android `allowBackup="false"`。
 7. shadcn_ui 随票 09 / 10 接入。
