@@ -23,7 +23,7 @@
 - 隐含基础能力：流式回复、深度思考、多会话、API Key 设置、代码高亮、数学公式。
 - 技术基线（研究未推翻前成立）：Riverpod、drift + SQLite、flutter_secure_storage、App 直连 API。
 - 安全风险：移动端 BYOK 的 API Key 可被逆向提取，安全存储只能降低不能消除；v1 接受此风险，生产分发需后端代理。
-- 本机未安装 Flutter / Dart；见任务票。
+- 本机工具链已就绪：Flutter 3.50.0 stable、Xcode 26.3、Android SDK 36 / NDK 28.2；验证细节见票 04。
 - 每个会话开始先读 `GLOSSARY.md`（如存在）与 `docs/adr/`；按需调用 grilling、domain-modeling、research、prototype 技能。
 - 用户提供的 Mermaid 包清单来自网络，真实性未验证；以 research 票结论为准。
 
