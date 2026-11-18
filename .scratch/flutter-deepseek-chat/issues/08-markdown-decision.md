@@ -17,3 +17,13 @@ Blocked by: 01, 02, 03
 7. 降级策略：解析失败、超大文档、未知语法。
 
 产出：`markdown.md` 章节，含选型结论、依赖版本、管线图、验收样例（含数学与 Mermaid 的典型 LLM 输出）。
+
+## Comments
+
+2026-11-18 实现记录：聊天页文本块已接入 `MarkdownView`（`lib/ui/markdown_view.dart`），本票保持 open。
+
+- 依赖：`gpt_markdown` 1.4.1、`val_latex_flutter` 0.1.4、`mermaid_flutter` 0.3.2 + `mermaid_core` 0.3.2、`url_launcher` 6.3.3。
+- 数学只启用 `\(...\)` / `\[...\]`，`useDollarSignsForLatex: false`，避免 `$5` 误判。
+- Mermaid 使用固定 320 高度的 `MermaidView`（缩放、平移、全屏）；流式失败保留上次成功场景，无成功场景时降级为源码文本。
+- 链接仅打开 `http` / `https`。
+- 仍未定：流式节流频率、长会话性能预算、图片缓存策略、超大文档降级。

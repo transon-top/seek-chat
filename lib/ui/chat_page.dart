@@ -6,6 +6,7 @@ import '../chat/reply_rules.dart';
 import '../data/chat_repository.dart';
 import '../models/types.dart';
 import '../settings/api_key_store.dart';
+import 'markdown_view.dart';
 
 /// 最小聊天页：可见路径、流式文本、停止、重新生成、续写。
 ///
@@ -252,8 +253,7 @@ class _ReplyView extends StatelessWidget {
             ),
           if (reply.stopReason == StopReason.refusal)
             Text('内容被安全策略拒绝', style: TextStyle(color: colors.error)),
-          if (reply.status == ReplyStatus.pending ||
-              reply.status == ReplyStatus.streaming)
+          if (reply.isInFlight)
             const Padding(
               padding: EdgeInsets.symmetric(vertical: 6),
               child: SizedBox(
@@ -288,10 +288,9 @@ class _ReplyView extends StatelessWidget {
   Widget _block(BuildContext context, ReplyBlock block, int? seconds) {
     if (block is TextBlock) {
       if (block.text.isEmpty) return const SizedBox.shrink();
-      // shortcut: 纯文本；Markdown、数学与 Mermaid 由票 08 / 10 接入。
       return Padding(
         padding: const EdgeInsets.symmetric(vertical: 4),
-        child: SelectableText(block.text),
+        child: MarkdownView(text: block.text),
       );
     }
     if (block is ThinkingBlock) {

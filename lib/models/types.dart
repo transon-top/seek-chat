@@ -401,6 +401,10 @@ final class AssistantMessage extends Message {
   final StopDetails? stopDetails;
   final Usage? usage;
   final ReplyError? error;
+
+  /// 已创建且尚未结束：`pending` 或 `streaming`。
+  bool get isInFlight =>
+      status == ReplyStatus.pending || status == ReplyStatus.streaming;
 }
 
 final class Attachment {
