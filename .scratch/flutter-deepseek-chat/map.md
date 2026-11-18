@@ -40,12 +40,12 @@
 - [会话、消息与分支数据模型](issues/06-data-model.md): drift 四表 `sessions`/`messages`/`attachments`/`message_attachments`，块存 JSON；UUID 主键 + epoch 毫秒；流式不写库、状态迁移落盘；详见 [`data-model.md`](data-model.md)，术语见根目录 `GLOSSARY.md`。
 - [应用架构与项目结构](issues/07-architecture.md): 功能优先 + `shared` 核心；`flutter_riverpod` 3.5 手写 Provider，聊天用 family + `keepAlive`；每会话单流、跨会话可并行（对齐 `chat-demo`）；设置走 `shared_preferences`，Key 走安全存储；`shadcn_ui` 0.60.x 为目标组件库；详见 [`architecture.md`](architecture.md)。
 - [Markdown / 数学 / Mermaid 方案锁定](issues/08-markdown-decision.md): `gpt_markdown` 1.4.1 + 内置 `val_latex_flutter` + `mermaid_flutter` 0.3.2；流式按帧耗时自适应节流（50 ms–2 s）；图片转链接不加载；单块超 200000 字符转纯文本；详见 [`markdown.md`](markdown.md)。
-- [shadcn_ui 聊天界面原型](issues/09-ui-prototype.md): 可运行原型在 [`prototype/`](../../prototype/README.md)；确定抽屉会话列表、非气泡助手/气泡用户、思考块折叠、来源卡与引用角标、分支与操作条、底部圆角输入区；截图与场景见票内。
+- [shadcn_ui 聊天界面原型](issues/09-ui-prototype.md): 可运行原型在 [`prototype/`](../../prototype/README.md)；确定抽屉会话列表、非气泡助手/气泡用户、思考块折叠、来源卡与引用角标、分支与操作条、底部圆角输入区；截图与场景见票内。原型中的正文下横向来源卡后续由票 12 改为「N 个网页」胶囊 + 底部抽屉。
+- [联网搜索、阅读链接与引用角标](issues/12-web-search-links.md): 两开关独立持久化、默认关；视图由块纯函数推导；角标点击外开；来源改为「N 个网页」胶囊 + 底部抽屉（取代原型横向来源卡）；详见 [`search.md`](search.md)。
 
 ## Not yet specified
 
 - 子版本切分与每版验收边界（等「子版本计划」票）
-- 搜索进度、引用抽屉与来源卡片的交互细节（等搜索票）
 - 图片审核失败与拒答的用户提示（等内容安全票）
 - 导入覆盖前的备份与回滚（等导入导出票）
 - 语言切换是否即时生效、是否影响已生成内容（等双语票）
