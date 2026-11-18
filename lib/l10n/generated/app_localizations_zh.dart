@@ -126,4 +126,19 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get missingAttachment => '原件已丢失';
+
+  @override
+  String get settingsLanguage => '语言';
+
+  @override
+  String get settingsLanguageZh => '简体中文';
+
+  @override
+  String get settingsLanguageEn => 'English';
+
+  @override
+  String get settingsLocation => '位置信息';
+
+  @override
+  String get settingsLocationNone => '不指定';
 }

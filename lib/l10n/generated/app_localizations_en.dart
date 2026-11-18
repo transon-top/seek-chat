@@ -129,4 +129,19 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get missingAttachment => 'The original file is missing';
+
+  @override
+  String get settingsLanguage => 'Language';
+
+  @override
+  String get settingsLanguageZh => 'Simplified Chinese';
+
+  @override
+  String get settingsLanguageEn => 'English';
+
+  @override
+  String get settingsLocation => 'Location';
+
+  @override
+  String get settingsLocationNone => 'Not specified';
 }

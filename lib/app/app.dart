@@ -8,6 +8,7 @@ import '../features/chat/chat_page.dart';
 import '../features/sessions/home_page.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/generated/app_localizations.dart';
+import '../shared/prefs/user_metadata_store.dart';
 import 'localization.dart';
 
 /// 应用壳：主题、双语、路由与生命周期接线。
@@ -49,10 +50,12 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
   @override
   Widget build(BuildContext context) {
     const seed = Color(0xFF4D6BFE);
+    final locale = ref.watch(userMetadataProvider).locale;
     return MaterialApp(
       title: 'Open Chat',
       theme: ThemeData(colorSchemeSeed: seed),
       darkTheme: ThemeData(colorSchemeSeed: seed, brightness: Brightness.dark),
+      locale: Locale(locale),
       localizationsDelegates: appLocalizationDelegates,
       supportedLocales: AppLocalizations.supportedLocales,
       home: HomePage(

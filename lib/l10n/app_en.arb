@@ -88,5 +88,10 @@
   "removeAttachment": "Remove attachment",
   "retry": "Retry",
   "previewImage": "View image",
-  "missingAttachment": "The original file is missing"
+  "missingAttachment": "The original file is missing",
+  "settingsLanguage": "Language",
+  "settingsLanguageZh": "Simplified Chinese",
+  "settingsLanguageEn": "English",
+  "settingsLocation": "Location",
+  "settingsLocationNone": "Not specified"
 }

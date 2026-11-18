@@ -11,8 +11,10 @@ import '../../shared/api/stream_events.dart';
 import '../../shared/data/attachment_store.dart';
 import '../../shared/data/chat_repository.dart';
 import '../../shared/logging.dart';
+import '../../shared/models/latest_reminder.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
+import '../../shared/prefs/user_metadata_store.dart';
 import '../../shared/security/api_key_store.dart';
 import 'upload_tasks.dart';
 
@@ -255,6 +257,7 @@ class ChatController extends Notifier<ChatState> {
         search: reply.search ?? search,
         prefix: reply,
         latestReminder: reply.latestReminder,
+        generateSnapshot: false,
         titleEnabled: state.title.isEmpty,
         model: reply.model ?? ChatModel.deepseekFlash,
       );
@@ -281,7 +284,9 @@ class ChatController extends Notifier<ChatState> {
       if (apiKey == null) return;
       if (_cancelled) return;
       await _repository.beginContinuation(reply.id);
-      _replace(_copyReply(reply, status: ReplyStatus.pending, clearError: true));
+      _replace(
+        _copyReply(reply, status: ReplyStatus.pending, clearError: true),
+      );
 
       await _stream(
         reply: reply,
@@ -355,6 +360,7 @@ class ChatController extends Notifier<ChatState> {
     required bool titleEnabled,
     AssistantMessage? prefix,
     String? latestReminder,
+    bool generateSnapshot = true,
     ChatModel model = ChatModel.deepseekFlash,
   }) async {
     final abort = _abort ?? Completer<void>();
@@ -368,7 +374,8 @@ class ChatController extends Notifier<ChatState> {
     Object? failure;
     for (var attempt = 0; ; attempt++) {
       try {
-        final request = await _requestFor(
+        final prepared = await _prepareRequest(
+          replyId: reply.id,
           questionId: questionId,
           apiKey: apiKey,
           thinking: thinking,
@@ -376,11 +383,20 @@ class ChatController extends Notifier<ChatState> {
           titleEnabled: titleEnabled,
           prefix: prefix,
           latestReminder: latestReminder,
+          generateSnapshot: generateSnapshot,
           model: model,
         );
+        if (prepared.latestReminder != reply.latestReminder) {
+          reply = _copyReply(
+            reply,
+            status: reply.status,
+            latestReminder: prepared.latestReminder,
+          );
+          _replace(reply);
+        }
         if (_stopRequested || abort.isCompleted) break;
         await _consume(
-          request: request,
+          request: prepared.request,
           reply: reply,
           accumulator: accumulator,
           apiKey: apiKey,
@@ -395,7 +411,8 @@ class ChatController extends Notifier<ChatState> {
       } on Object catch (error) {
         if (_stopRequested || abort.isCompleted) break;
         // 附件失效：清掉 serverId、重新补传后重发。收到过内容块后不自动重发。
-        final canRetry = attempt < _fileRetryLimit &&
+        final canRetry =
+            attempt < _fileRetryLimit &&
             !receivedContent &&
             await _reuploadInvalidatedFiles(error, questionId);
         if (!canRetry) {
@@ -411,8 +428,8 @@ class ChatController extends Notifier<ChatState> {
     final status = stopped
         ? ReplyStatus.stopped
         : failure == null
-            ? ReplyStatus.done
-            : ReplyStatus.error;
+        ? ReplyStatus.done
+        : ReplyStatus.error;
     ReplyError? replyError;
     if (failure is _UploadFailure) {
       final cause = failure.cause;
@@ -429,8 +446,11 @@ class ChatController extends Notifier<ChatState> {
   }
 
   /// 建立请求前补齐本轮与历史上下文的 serverId（`attachments.md` §5），
-  /// 然后用数据库里的最新消息构造请求。
-  Future<CreateMessageRequest> _requestFor({
+  /// 再用数据库里的最新消息构造请求。新回复在附件补齐后生成并落库本轮
+  /// 元信息快照；续写沿用原快照（`user-metadata.md` §4）。
+  Future<({CreateMessageRequest request, String? latestReminder})>
+  _prepareRequest({
+    required String replyId,
     required String questionId,
     required String apiKey,
     required bool thinking,
@@ -438,9 +458,20 @@ class ChatController extends Notifier<ChatState> {
     required bool titleEnabled,
     AssistantMessage? prefix,
     String? latestReminder,
+    required bool generateSnapshot,
     ChatModel model = ChatModel.deepseekFlash,
   }) async {
     await _ensureAttachments(questionId: questionId, apiKey: apiKey);
+    var snapshot = latestReminder;
+    if (snapshot == null && generateSnapshot) {
+      final metadata = ref.read(userMetadataProvider);
+      snapshot = buildLatestReminder(
+        languageCode: metadata.locale,
+        location: metadata.location,
+        platform: currentPlatformMarker(),
+      );
+      await _repository.setLatestReminder(replyId, snapshot);
+    }
     final path = await _repository.visiblePath(sessionId);
     final index = path.indexWhere((message) => message.id == questionId);
     if (index < 0) throw StateError('question $questionId not found');
@@ -448,15 +479,18 @@ class ChatController extends Notifier<ChatState> {
     if (question is! UserMessage) {
       throw StateError('message $questionId is not a user message');
     }
-    return buildMessageRequest(
-      history: path.sublist(0, index),
-      question: question,
-      thinking: thinking,
-      search: search,
-      prefix: prefix,
-      latestReminder: latestReminder,
-      titleEnabled: titleEnabled,
-      model: model,
+    return (
+      request: buildMessageRequest(
+        history: path.sublist(0, index),
+        question: question,
+        thinking: thinking,
+        search: search,
+        prefix: prefix,
+        latestReminder: snapshot,
+        titleEnabled: titleEnabled,
+        model: model,
+      ),
+      latestReminder: snapshot,
     );
   }
 
@@ -514,7 +548,9 @@ class ChatController extends Notifier<ChatState> {
     }
     final path = await _attachmentStore.absolutePath(attachment.localPath);
     if (path == null) return null;
-    return ref.read(uploadTasksProvider.notifier).upload(
+    return ref
+        .read(uploadTasksProvider.notifier)
+        .upload(
           id: attachment.id,
           path: path,
           name: attachment.name,
@@ -698,6 +734,7 @@ class ChatController extends Notifier<ChatState> {
     AssistantMessage base, {
     required ReplyStatus status,
     bool clearError = false,
+    String? latestReminder,
   }) => AssistantMessage(
     id: base.id,
     parentId: base.parentId,
@@ -708,7 +745,7 @@ class ChatController extends Notifier<ChatState> {
     model: base.model,
     thinking: base.thinking,
     search: base.search,
-    latestReminder: base.latestReminder,
+    latestReminder: latestReminder ?? base.latestReminder,
     prefix: base.prefix,
     stopReason: base.stopReason,
     stopDetails: base.stopDetails,
