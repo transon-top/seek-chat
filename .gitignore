@@ -22,6 +22,7 @@ coverage/
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/.kotlin/
 
 # 混淆与符号表
 app.*.symbols
