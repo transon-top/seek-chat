@@ -73,7 +73,7 @@ type CreateMessageRequest = {
 - 角色：`{ role: 'latest_reminder', content: string }`，位于对应 user 消息之前（`api/types.ts:156-161`）。
 - 快照在附件补齐成功后生成本轮值；续写沿用原回复快照（`store.ts:985-989`）。
 - 插入规则：仅在当前分支首次出现或内容与上一条快照不同时插入；历史消息缺快照则不插（`reply.ts:311-327`）。
-- 内容五项：日期、星期、所在地、平台、语言，逗号连接（`latestReminder.ts:18-30`）。具体取值与平台标记（Web → iOS/Android）由票 16 锁定；本票只锁定角色与插入语义。
+- 内容五项：日期、星期、所在地、平台、语言，逗号连接（`latestReminder.ts:18-30`）。具体取值与平台标记（Web → iOS/Android）见 [`user-metadata.md`](user-metadata.md) §2。
 
 ### 3.4 assistant 历史消息
 
@@ -708,7 +708,7 @@ bool isRetryable(Object error) => error is! ApiException || error.retryable;
 
 | 事项 | 交接 |
 | --- | --- |
-| `latest_reminder` 的平台标记（Web → iOS/Android）与语言文案；插入位置与快照语义已在 §3.3 锁定 | 票 16 |
+| `latest_reminder` 的平台标记（Web → iOS/Android）与内容模板；已定，见 [`user-metadata.md`](user-metadata.md) §2 | 已锁定 |
 | 附件大小/格式/并发/purpose 细节 | 票 13 |
 | 拒绝、审核失败的用户提示文案 | 已定，见 [`safety.md`](safety.md) |
 | 引用角标与来源抽屉展示 | 票 12 |

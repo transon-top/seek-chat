@@ -74,5 +74,10 @@
   "removeAttachment": "移除附件",
   "retry": "重试",
   "previewImage": "查看图片",
-  "missingAttachment": "原件已丢失"
+  "missingAttachment": "原件已丢失",
+  "settingsLanguage": "语言",
+  "settingsLanguageZh": "简体中文",
+  "settingsLanguageEn": "English",
+  "settingsLocation": "位置信息",
+  "settingsLocationNone": "不指定"
 }

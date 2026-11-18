@@ -14,10 +14,14 @@ import 'package:open_chat/shared/api/errors.dart';
 import 'package:open_chat/shared/data/attachment_store.dart';
 import 'package:open_chat/shared/data/chat_repository.dart';
 import 'package:open_chat/shared/data/database.dart';
+import 'package:open_chat/shared/models/location.dart';
 import 'package:open_chat/shared/models/reply_rules.dart';
 import 'package:open_chat/shared/models/types.dart';
+import 'package:open_chat/shared/prefs/preferences_provider.dart';
+import 'package:open_chat/shared/prefs/user_metadata_store.dart';
 import 'package:open_chat/shared/security/api_key_store.dart';
 import 'package:path/path.dart' as p;
+import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_key_store.dart';
 import '../../support/sse_fixtures.dart';
@@ -75,9 +79,11 @@ final class _ThrowingApiKeyStore implements ApiKeyStore {
 }
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
   late ChatRepository repository;
   late Directory support;
+  late SharedPreferences prefs;
   var tick = 1000;
 
   setUp(() async {
@@ -85,6 +91,8 @@ void main() {
     db = AppDatabase(NativeDatabase.memory());
     repository = ChatRepository(db, clock: () => tick++);
     support = await Directory.systemTemp.createTemp('chat-attachments-test');
+    SharedPreferences.setMockInitialValues({});
+    prefs = await SharedPreferences.getInstance();
   });
 
   tearDown(() async {
@@ -105,6 +113,7 @@ void main() {
       attachmentStoreProvider.overrideWithValue(
         AttachmentStore(supportDirectory: () async => support),
       ),
+      sharedPreferencesProvider.overrideWithValue(prefs),
     ],
   );
 
@@ -116,8 +125,7 @@ void main() {
       );
 
   File pickedFile(String name, {String content = 'data'}) {
-    final file = File(p.join(support.path, name))
-      ..writeAsStringSync(content);
+    final file = File(p.join(support.path, name))..writeAsStringSync(content);
     return file;
   }
 
@@ -161,13 +169,147 @@ void main() {
 
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
       expect(captured.headers['x-api-key'], 'secret');
-      expect(body['messages'], [
-        {'role': 'user', 'content': 'Hello'},
-      ]);
+      final wireMessages = body['messages'] as List<dynamic>;
+      expect(wireMessages.first['role'], 'latest_reminder');
+      expect(wireMessages.last, {'role': 'user', 'content': 'Hello'});
+      expect(wireMessages, hasLength(2));
       expect(body['title'], {'enabled': true});
 
       expect((await repository.getSession(session.id))!.title, 'Greeting');
       expect(controller.state.title, 'Greeting');
+    },
+  );
+
+  test(
+    'send injects the metadata snapshot and stores it on the reply',
+    () async {
+      final session = await newSession();
+      late http.Request captured;
+      final container = makeContainer(
+        client: DeepSeekApiClient(
+          origin: Uri.parse(origin),
+          httpClient: MockClient.streaming((request, body) async {
+            captured = request as http.Request;
+            return streamOf(simpleReply('ok'));
+          }),
+        ),
+      );
+      final metadata = container.read(userMetadataProvider.notifier);
+      await metadata.setLocale('zh');
+      await metadata.setLocation(
+        const UserLocation(region: 'CN', province: '330000', city: '330100'),
+      );
+      final controller = controllerFor(container, session.id);
+      await controller.load();
+
+      await controller.send(text: 'Hello', thinking: false, search: false);
+
+      final stored =
+          (await repository.visiblePath(session.id)).last as AssistantMessage;
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      final messages = body['messages'] as List<dynamic>;
+      expect(messages.first, {
+        'role': 'latest_reminder',
+        'content': stored.latestReminder,
+      });
+      expect(stored.latestReminder, contains(',杭州市,'));
+      expect(stored.latestReminder, endsWith(',Android,中文'));
+      expect(controller.state.messages.last, isA<AssistantMessage>());
+      expect(
+        (controller.state.messages.last as AssistantMessage).latestReminder,
+        stored.latestReminder,
+      );
+
+      // 切换语言不改写已生成回复的快照。
+      final original = stored.latestReminder;
+      await metadata.setLocale('en');
+      final reloaded =
+          (await repository.visiblePath(session.id)).last as AssistantMessage;
+      expect(reloaded.latestReminder, original);
+    },
+  );
+
+  test('continuation keeps the original metadata snapshot', () async {
+    final session = await newSession();
+    final bodies = <Map<String, dynamic>>[];
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) async {
+          bodies.add(
+            jsonDecode((request as http.Request).body) as Map<String, dynamic>,
+          );
+          return streamOf(simpleReply(' more'));
+        }),
+      ),
+    );
+    final metadata = container.read(userMetadataProvider.notifier);
+    await metadata.setLocale('zh');
+    await metadata.setLocation(
+      const UserLocation(region: 'CN', province: '330000', city: '330100'),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.send(text: 'Hello', thinking: false, search: false);
+    final sent = controller.state.messages.last as AssistantMessage;
+    final original = sent.latestReminder;
+    expect(original, isNotNull);
+
+    await metadata.setLocation(
+      const UserLocation(region: 'CN', province: '110000', city: '110100'),
+    );
+    await controller.continueReply(sent, thinking: false, search: false);
+
+    final messages = bodies.last['messages'] as List<dynamic>;
+    expect(messages.first, {'role': 'latest_reminder', 'content': original});
+    expect(
+      messages.where((item) => (item as Map)['role'] == 'latest_reminder'),
+      hasLength(1),
+    );
+    final stored =
+        (await repository.visiblePath(session.id)).last as AssistantMessage;
+    expect(stored.latestReminder, original);
+  });
+
+  test(
+    'regenerate saves a fresh snapshot without touching the old reply',
+    () async {
+      final session = await newSession();
+      final container = makeContainer(
+        client: DeepSeekApiClient(
+          origin: Uri.parse(origin),
+          httpClient: MockClient.streaming(
+            (request, body) async => streamOf(simpleReply('ok')),
+          ),
+        ),
+      );
+      final metadata = container.read(userMetadataProvider.notifier);
+      await metadata.setLocale('zh');
+      await metadata.setLocation(
+        const UserLocation(region: 'CN', province: '330000', city: '330100'),
+      );
+      final controller = controllerFor(container, session.id);
+      await controller.load();
+
+      await controller.send(text: 'Hello', thinking: false, search: false);
+      final first = controller.state.messages.last as AssistantMessage;
+      final original = first.latestReminder;
+
+      await metadata.setLocation(
+        const UserLocation(region: 'CN', province: '110000', city: '110100'),
+      );
+      await controller.regenerate(first, thinking: false, search: false);
+
+      final fresh = controller.state.messages.last as AssistantMessage;
+      expect(fresh.id, isNot(first.id));
+      expect(fresh.latestReminder, contains(',北京市,'));
+      expect(fresh.latestReminder, isNot(original));
+      final all = await repository.loadMessages(session.id);
+      final old = all.whereType<AssistantMessage>().firstWhere(
+        (message) => message.id == first.id,
+      );
+      expect(old.latestReminder, original);
     },
   );
 
@@ -490,27 +632,26 @@ void main() {
 
     expect(uploads, 1);
     final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    expect(body['messages'], [
-      {
-        'role': 'user',
-        'content': [
-          {
-            'type': 'image',
-            'source': {'type': 'file', 'file_id': 'file-1'},
-          },
-          {'type': 'text', 'text': '看看'},
-        ],
-      },
-    ]);
-    expect(
-      captured.headers['anthropic-beta'],
-      DeepSeekApiClient.filesApiBeta,
-    );
+    final messages = body['messages'] as List<dynamic>;
+    expect(messages, hasLength(2));
+    expect(messages.first['role'], 'latest_reminder');
+    expect(messages.last, {
+      'role': 'user',
+      'content': [
+        {
+          'type': 'image',
+          'source': {'type': 'file', 'file_id': 'file-1'},
+        },
+        {'type': 'text', 'text': '看看'},
+      ],
+    });
+    expect(captured.headers['anthropic-beta'], DeepSeekApiClient.filesApiBeta);
 
     final saved = File(p.join(support.path, 'attachments', 'att-1'));
     expect(saved.readAsStringSync(), 'png');
 
-    final stored = (await repository.visiblePath(session.id)).first as UserMessage;
+    final stored =
+        (await repository.visiblePath(session.id)).first as UserMessage;
     expect(stored.attachments.single.serverId, 'file-1');
     expect(stored.attachments.single.localPath, 'attachments/att-1');
     expect(
@@ -533,12 +674,9 @@ void main() {
         httpClient: MockClient.streaming((request, body) async {
           if (request.url.path.endsWith('/files')) {
             if (!uploadOk) {
-              return jsonResponse(
-                {
-                  'error': {'message': 'server exploded'},
-                },
-                status: 500,
-              );
+              return jsonResponse({
+                'error': {'message': 'server exploded'},
+              }, status: 500);
             }
             return jsonResponse({'id': 'file-1'});
           }
@@ -599,12 +737,9 @@ void main() {
           messageRequests++;
           lastRequest = request as http.Request;
           if (messageRequests == 2) {
-            return jsonResponse(
-              {
-                'error': {'message': 'file data not found for file_id file-1'},
-              },
-              status: 400,
-            );
+            return jsonResponse({
+              'error': {'message': 'file data not found for file_id file-1'},
+            }, status: 400);
           }
           return streamOf(simpleReply('ok'));
         }),
@@ -637,86 +772,88 @@ void main() {
     expect(uploads, 2);
     expect(messageRequests, 3);
     final body = jsonDecode(lastRequest.body) as Map<String, dynamic>;
-    final content = (body['messages'] as List<dynamic>).last['content']
-        as List<dynamic>;
-    expect(
-      (content.first as Map<String, dynamic>)['source'],
-      {'type': 'file', 'file_id': 'file-2'},
-    );
+    final content =
+        (body['messages'] as List<dynamic>).last['content'] as List<dynamic>;
+    expect((content.first as Map<String, dynamic>)['source'], {
+      'type': 'file',
+      'file_id': 'file-2',
+    });
     expect(
       (controller.state.messages.last as AssistantMessage).status,
       ReplyStatus.done,
     );
     final stored = await repository.visiblePath(session.id);
-    expect(
-      (stored.first as UserMessage).attachments.single.serverId,
-      'file-2',
-    );
+    expect((stored.first as UserMessage).attachments.single.serverId, 'file-2');
   });
 
-  test('history attachments without server id are backfilled silently',
-      () async {
-    final session = await newSession();
-    final attachments = Directory(p.join(support.path, 'attachments'))
-      ..createSync(recursive: true);
-    File(p.join(attachments.path, 'att-old')).writeAsStringSync('old');
-    final oldQuestion = await repository.addUserMessage(
-      sessionId: session.id,
-      text: '旧问题',
-      attachments: const [
-        Attachment(
-          id: 'att-old',
-          name: 'old.png',
-          size: 3,
-          isImage: true,
-          mimeType: 'image/png',
-          localPath: 'attachments/att-old',
+  test(
+    'history attachments without server id are backfilled silently',
+    () async {
+      final session = await newSession();
+      final attachments = Directory(p.join(support.path, 'attachments'))
+        ..createSync(recursive: true);
+      File(p.join(attachments.path, 'att-old')).writeAsStringSync('old');
+      final oldQuestion = await repository.addUserMessage(
+        sessionId: session.id,
+        text: '旧问题',
+        attachments: const [
+          Attachment(
+            id: 'att-old',
+            name: 'old.png',
+            size: 3,
+            isImage: true,
+            mimeType: 'image/png',
+            localPath: 'attachments/att-old',
+          ),
+        ],
+      );
+      final oldReply = await repository.createReply(
+        sessionId: session.id,
+        userMessageId: oldQuestion.id,
+        model: ChatModel.deepseekFlash,
+        thinking: false,
+        search: false,
+      );
+      await repository.updateReply(
+        messageId: oldReply.id,
+        status: ReplyStatus.done,
+        blocks: const [TextBlock(text: '旧回答')],
+      );
+
+      late http.Request captured;
+      final container = makeContainer(
+        client: DeepSeekApiClient(
+          origin: Uri.parse(origin),
+          httpClient: MockClient.streaming((request, body) async {
+            if (request.url.path.endsWith('/files')) {
+              return jsonResponse({'id': 'file-old'});
+            }
+            captured = request as http.Request;
+            return streamOf(simpleReply('新回答'));
+          }),
         ),
-      ],
-    );
-    final oldReply = await repository.createReply(
-      sessionId: session.id,
-      userMessageId: oldQuestion.id,
-      model: ChatModel.deepseekFlash,
-      thinking: false,
-      search: false,
-    );
-    await repository.updateReply(
-      messageId: oldReply.id,
-      status: ReplyStatus.done,
-      blocks: const [TextBlock(text: '旧回答')],
-    );
+      );
+      final controller = controllerFor(container, session.id);
+      await controller.load();
 
-    late http.Request captured;
-    final container = makeContainer(
-      client: DeepSeekApiClient(
-        origin: Uri.parse(origin),
-        httpClient: MockClient.streaming((request, body) async {
-          if (request.url.path.endsWith('/files')) {
-            return jsonResponse({'id': 'file-old'});
-          }
-          captured = request as http.Request;
-          return streamOf(simpleReply('新回答'));
-        }),
-      ),
-    );
-    final controller = controllerFor(container, session.id);
-    await controller.load();
+      await controller.send(text: '新问题', thinking: false, search: false);
 
-    await controller.send(text: '新问题', thinking: false, search: false);
+      final body = jsonDecode(captured.body) as Map<String, dynamic>;
+      final messages = body['messages'] as List<dynamic>;
+      expect(messages, hasLength(4));
+      // 旧回复没有快照，历史轮次不插；本轮快照插在新提问之前。
+      expect(messages[0]['role'], 'user');
+      expect(messages[2]['role'], 'latest_reminder');
+      expect((messages[0]['content'] as List<dynamic>).first, {
+        'type': 'image',
+        'source': {'type': 'file', 'file_id': 'file-old'},
+      });
 
-    final body = jsonDecode(captured.body) as Map<String, dynamic>;
-    final messages = body['messages'] as List<dynamic>;
-    expect(messages, hasLength(3));
-    expect((messages[0]['content'] as List<dynamic>).first, {
-      'type': 'image',
-      'source': {'type': 'file', 'file_id': 'file-old'},
-    });
-
-    final stored = await repository.visiblePath(session.id);
-    expect(
-      (stored.first as UserMessage).attachments.single.serverId,
-      'file-old',
-    );
-  });
+      final stored = await repository.visiblePath(session.id);
+      expect(
+        (stored.first as UserMessage).attachments.single.serverId,
+        'file-old',
+      );
+    },
+  );
 }

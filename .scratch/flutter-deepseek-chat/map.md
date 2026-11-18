@@ -44,12 +44,13 @@
 - [联网搜索、阅读链接与引用角标](issues/12-web-search-links.md): 两开关独立持久化、默认关；视图由块纯函数推导；角标点击外开；来源改为「N 个网页」胶囊 + 底部抽屉（取代原型横向来源卡）；详见 [`search.md`](search.md)。
 - [图片与文档上传](issues/13-attachments.md): `file_picker` 单一依赖，回形针 → 相册/文件面板；选中即上传（并发 3）、发送时复制原件；白名单 + 32/64 MB + 50 个；补传与失效重传对齐 `chat-demo`；详见 [`attachments.md`](attachments.md)。
 - [内容安全与图片审核](issues/14-content-safety.md): 所有请求恒 `safety_check: high`；拒答丢弃思考与正文、模板 > 图片审核 > 通用文案、正文样式、禁用续写与重新生成；仅 `400 Content Exists Risk` 单独归类；详见 [`safety.md`](safety.md)。
+- [用户元信息：语言与所在地](issues/16-user-metadata.md): 一个语言设置同时驱动界面与元信息；所在地选择器跟随系统语言，支持清除；快照在附件补齐后生成、续写复用；详见 [`user-metadata.md`](user-metadata.md)。
 
 ## Not yet specified
 
 - 子版本切分与每版验收边界（等「子版本计划」票）
 - 导入覆盖前的备份与回滚（等导入导出票）
-- 语言切换是否即时生效、是否影响已生成内容（等双语票）
+- 界面语言切换的即时刷新范围（等双语票 18；已生成内容不受影响由票 16 锁定）
 - 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
 
 ## Out of scope

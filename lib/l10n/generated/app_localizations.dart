@@ -296,6 +296,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The original file is missing'**
   String get missingAttachment;
+
+  /// No description provided for @settingsLanguage.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageZh.
+  ///
+  /// In en, this message translates to:
+  /// **'Simplified Chinese'**
+  String get settingsLanguageZh;
+
+  /// No description provided for @settingsLanguageEn.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get settingsLanguageEn;
+
+  /// No description provided for @settingsLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get settingsLocation;
+
+  /// No description provided for @settingsLocationNone.
+  ///
+  /// In en, this message translates to:
+  /// **'Not specified'**
+  String get settingsLocationNone;
 }
 
 class _AppLocalizationsDelegate

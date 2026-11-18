@@ -5,7 +5,10 @@ import '../../shared/error_text.dart';
 import '../../shared/providers.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/api/errors.dart';
+import '../../shared/models/location.dart';
+import '../../shared/models/location_data.dart';
 import '../../shared/models/types.dart';
+import '../../shared/prefs/user_metadata_store.dart';
 
 /// 最小设置页：填写并校验 DeepSeek API Key。界面规格见票 10 / 20。
 class SettingsPage extends ConsumerStatefulWidget {
@@ -92,6 +95,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
       body: ListView(
         padding: const EdgeInsets.all(16),
         children: [
+          const _UserMetadataSection(),
           Text(
             'DeepSeek API Key',
             style: Theme.of(context).textTheme.titleMedium,
@@ -132,6 +136,132 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
           ),
         ],
       ),
+    );
+  }
+}
+
+/// 语言与所在地：一起作为用户元信息写入 `latest_reminder`（`user-metadata.md`）。
+///
+/// 所在地选择器的形态跟随系统语言而不是应用语言；港澳台等固定名称由
+/// `location_data.dart` 提供。
+class _UserMetadataSection extends ConsumerWidget {
+  const _UserMetadataSection();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final l10n = AppLocalizations.of(context)!;
+    final metadata = ref.watch(userMetadataProvider);
+    final notifier = ref.read(userMetadataProvider.notifier);
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.settingsLanguage, style: titleStyle),
+        DropdownButton<String>(
+          key: const Key('settings-language'),
+          isExpanded: true,
+          value: metadata.locale,
+          items: [
+            DropdownMenuItem(value: 'zh', child: Text(l10n.settingsLanguageZh)),
+            DropdownMenuItem(value: 'en', child: Text(l10n.settingsLanguageEn)),
+          ],
+          onChanged: (value) {
+            if (value != null) notifier.setLocale(value);
+          },
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.settingsLocation, style: titleStyle),
+        if (metadata.systemChinese)
+          _chineseLocation(l10n, metadata, notifier)
+        else
+          _regionSelect(l10n, metadata, notifier),
+        const Divider(height: 32),
+      ],
+    );
+  }
+
+  /// 中文系统：省份 / 城市两级；「不指定」清空整个所在地。
+  Widget _chineseLocation(
+    AppLocalizations l10n,
+    UserMetadata metadata,
+    UserMetadataNotifier notifier,
+  ) {
+    final location = metadata.location;
+    final selected = location?.region == 'CN' ? location : null;
+    final province = provinceByCode(selected?.province);
+    return Column(
+      children: [
+        DropdownButton<String>(
+          key: const Key('settings-province'),
+          isExpanded: true,
+          value: selected?.province ?? '',
+          items: [
+            DropdownMenuItem(value: '', child: Text(l10n.settingsLocationNone)),
+            for (final item in provinces)
+              DropdownMenuItem(value: item.code, child: Text(item.name)),
+          ],
+          onChanged: (value) {
+            if (value == null || value == selected?.province) return;
+            notifier.setLocation(
+              value.isEmpty
+                  ? null
+                  : UserLocation(region: 'CN', province: value),
+            );
+          },
+        ),
+        DropdownButton<String>(
+          key: const Key('settings-city'),
+          isExpanded: true,
+          value: province == null ? '' : (selected?.city ?? ''),
+          items: [
+            DropdownMenuItem(value: '', child: Text(l10n.settingsLocationNone)),
+            for (final city in province?.cities ?? const <City>[])
+              DropdownMenuItem(value: city.code, child: Text(city.name)),
+          ],
+          onChanged: province == null
+              ? null
+              : (value) {
+                  if (value == null || value == (selected?.city ?? '')) return;
+                  notifier.setLocation(
+                    UserLocation(
+                      region: 'CN',
+                      province: province.code,
+                      city: value.isEmpty ? null : value,
+                    ),
+                  );
+                },
+        ),
+      ],
+    );
+  }
+
+  /// 非中文系统：单个国家 / 地区列表，名称按应用语言本地化。
+  Widget _regionSelect(
+    AppLocalizations l10n,
+    UserMetadata metadata,
+    UserMetadataNotifier notifier,
+  ) {
+    final options = [
+      for (final code in regionCodes)
+        (code: code, label: getRegionName(code, metadata.locale) ?? code),
+    ]..sort((a, b) => a.label.compareTo(b.label));
+    final current = metadata.location?.region ?? '';
+    return DropdownButton<String>(
+      key: const Key('settings-region'),
+      isExpanded: true,
+      value: current,
+      items: [
+        DropdownMenuItem(value: '', child: Text(l10n.settingsLocationNone)),
+        for (final option in options)
+          DropdownMenuItem(value: option.code, child: Text(option.label)),
+      ],
+      onChanged: (value) {
+        if (value == null || value == current) return;
+        notifier.setLocation(
+          value.isEmpty ? null : UserLocation(region: value),
+        );
+      },
     );
   }
 }
