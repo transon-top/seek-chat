@@ -1,13 +1,16 @@
 import 'dart:io';
 
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
-import 'api/client.dart';
-import 'app.dart';
-import 'data/attachment_store.dart';
-import 'data/chat_repository.dart';
-import 'data/database.dart';
-import 'settings/api_key_store.dart';
+import 'app/app.dart';
+import 'shared/providers.dart';
+import 'shared/data/attachment_store.dart';
+import 'shared/data/chat_repository.dart';
+import 'shared/data/database.dart';
+import 'shared/logging.dart';
+import 'shared/prefs/preferences_provider.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -18,13 +21,20 @@ Future<void> main() async {
   await repository.resetInterruptedReplies();
   try {
     await attachmentStore.cleanupOrphans(repository);
-  } on FileSystemException {
+  } on FileSystemException catch (error) {
     // 启动清理失败不阻塞应用，下次启动再试。
+    debugLog('attachment cleanup failed', error);
   }
-  runApp(OpenChatApp(
-    repository: repository,
-    client: DeepSeekApiClient(),
-    apiKeyStore: ApiKeyStore(),
-    attachmentStore: attachmentStore,
-  ));
+  final preferences = await SharedPreferences.getInstance();
+  runApp(
+    ProviderScope(
+      overrides: [
+        appDatabaseProvider.overrideWithValue(database),
+        chatRepositoryProvider.overrideWithValue(repository),
+        attachmentStoreProvider.overrideWithValue(attachmentStore),
+        sharedPreferencesProvider.overrideWithValue(preferences),
+      ],
+      child: const OpenChatApp(),
+    ),
+  );
 }

@@ -1,0 +1,29 @@
+{
+  "@@locale": "en",
+  "errorNoApiKey": "No API key set. Add one in Settings first.",
+  "errorSaveReplyFailed": "Could not save the reply: {error}",
+  "@errorSaveReplyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorApiKeyEmpty": "Enter an API key",
+  "apiErrorUnauthorized": "Invalid API key",
+  "apiErrorInsufficientBalance": "Insufficient balance",
+  "apiErrorTooLarge": "The request is too large",
+  "apiErrorRateLimited": "Too many requests. Try again later.",
+  "apiErrorServerBusy": "The server is busy. Try again later.",
+  "apiErrorNetwork": "Network error. Check your connection.",
+  "apiErrorOther": "Something went wrong. Please try again.",
+  "replyFailed": "Generation failed: {error}",
+  "@replyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "replyRefused": "The content was blocked by safety policy."
+}
