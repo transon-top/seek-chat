@@ -1,6 +1,6 @@
 # 内容安全与图片审核
 
-票 14 的决策。行为契约以 `~/ZoneCode/chat-demo` 为准，服务端行为以
+票 14 的决策。行为契约以 `https://github.com/deepseek-ai/chat-demo` 为准，服务端行为以
 [模型内容安全（DeepSeek API Docs）](https://api-docs.deepseek.com/zh-cn/guides/safety/) 为准。
 术语见根目录 `GLOSSARY.md`，请求体见 [`api.md`](api.md) §2，附件见 [`attachments.md`](attachments.md)。
 

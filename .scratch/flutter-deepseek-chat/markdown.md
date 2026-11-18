@@ -1,7 +1,7 @@
 # Markdown / 数学 / Mermaid 渲染规格
 
 本文锁定票 08 的决策，收口票 01、02、03 的调研结论。行为契约以
-`~/ZoneCode/chat-demo` 为准；实现位于 `lib/ui/markdown_view.dart`，
+`https://github.com/deepseek-ai/chat-demo` 为准；实现位于 `lib/ui/markdown_view.dart`，
 验收样例对应 `test/ui/markdown_view_test.dart`。
 
 核查日期：2026-11-18。

@@ -1,4 +1,4 @@
-// 数据移植自 `~/ZoneCode/chat-demo/src/services/locationData.ts`；地区名称
+// 数据移植自 `https://github.com/deepseek-ai/chat-demo/blob/main/src/services/locationData.ts`；地区名称
 // 取自同一 CLDR 来源（`Intl.DisplayNames`）。来源更新时重新提取，不随构建生成。
 
 /// 中国省级行政区，按 chat-demo 的显示顺序。

@@ -1,6 +1,6 @@
 # 数据模型：会话、消息与分支（drift）
 
-票：`06-data-model`。行为来源：`~/ZoneCode/chat-demo` 的 IndexedDB 实现（`db.ts`、`types.ts`、`branches.ts`、`store.ts`、`history/*`）。请求与流式语义见 [`api.md`](api.md)；导入导出细节见票 17。
+票：`06-data-model`。行为来源：`https://github.com/deepseek-ai/chat-demo` 的 IndexedDB 实现（`db.ts`、`types.ts`、`branches.ts`、`store.ts`、`history/*`）。请求与流式语义见 [`api.md`](api.md)；导入导出细节见票 17。
 
 ## 0. 决策摘要
 

@@ -2,7 +2,7 @@
 
 票：`12-web-search-links`。本文是规格的 `search.md` 章节草案，决策已收敛，可直接转实现。
 
-- 行为来源：`~/ZoneCode/chat-demo`（下文标注文件与行号）。
+- 行为来源：`https://github.com/deepseek-ai/chat-demo`（下文标注文件与行号）。
 - 关联：工具声明与历史回传已由 [`api.md`](api.md) 锁定；渲染管线见 [`markdown.md`](markdown.md)；块结构见 [`data-model.md`](data-model.md)；原型方向见票 09。
 - 与其他票的交接：视觉细节（角标、胶囊、抽屉、时间线图标与间距）→ 票 10；英文文案与 i18n key → 票 18；本章节并入总规格 → 票 11。
 

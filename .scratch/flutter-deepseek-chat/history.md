@@ -1,6 +1,6 @@
 # 历史对话导入与导出
 
-票 17 的决策。行为契约以 `~/ZoneCode/chat-demo/src/services/chat/history/` 为准；
+票 17 的决策。行为契约以 `https://github.com/deepseek-ai/chat-demo/tree/main/src/services/chat/history/` 为准；
 本文记录移动端的格式对齐、覆盖导入、失败一致性与内存取舍。
 术语见根目录 [`GLOSSARY.md`](../../GLOSSARY.md)，数据表见 [`data-model.md`](data-model.md)。
 

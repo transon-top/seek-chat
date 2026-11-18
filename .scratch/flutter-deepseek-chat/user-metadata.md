@@ -1,6 +1,6 @@
 # 用户元信息：语言与所在地
 
-票：`16-user-metadata`。行为契约以 `~/ZoneCode/chat-demo` 的
+票：`16-user-metadata`。行为契约以 `https://github.com/deepseek-ai/chat-demo` 的
 `services/chat/latestReminder.ts`、`services/location.ts`、`services/settings.ts` 与
 `components/settings/SettingsDialog.tsx` 为准。插入位置与快照语义已由
 [`api.md`](api.md) §3.3 锁定；本文锁定内容模板、设置交互与持久化。

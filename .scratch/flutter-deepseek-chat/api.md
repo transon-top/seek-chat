@@ -2,7 +2,7 @@
 
 票：`05-api-protocol`。本文是规格的 `api.md` 章节草案，类型与状态机可直接转为 Dart 实现。
 
-- 行为来源：`~/ZoneCode/chat-demo`（下文标注文件与行号）。
+- 行为来源：`https://github.com/deepseek-ai/chat-demo`（下文标注文件与行号）。
 - 数据模型与持久化：见票 06；界面：见票 10；附件上传细节：见票 13；内容安全提示：见票 14；引用展示：见票 12；用户元信息取值：见票 16。
 - API 文档：<https://api-docs.deepseek.com/zh-cn/api/create-message>。
 

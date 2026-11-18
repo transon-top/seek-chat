@@ -1,6 +1,6 @@
 # 图片与文档上传
 
-票 13 的决策。行为契约以 `~/ZoneCode/chat-demo` 为准；本文只记录与移动端相关的取舍。
+票 13 的决策。行为契约以 `https://github.com/deepseek-ai/chat-demo` 为准；本文只记录与移动端相关的取舍。
 术语见根目录 `GLOSSARY.md`，数据表见 [`data-model.md`](data-model.md)，接口前缀见 [`api.md`](api.md)。
 
 ## 1. 选型与入口

@@ -6,7 +6,7 @@
 
 ## Notes
 
-- 行为契约：`~/ZoneCode/chat-demo`（React 18 + rspack 纯静态应用）。
+- 行为契约：`https://github.com/deepseek-ai/chat-demo`（React 18 + rspack 纯静态应用）。
 - API：`https://api.deepseek.com` 的 Anthropic 兼容 Messages API（`/anthropic/v1/messages`，SSE），默认模型 `deepseek-flash`；Key 用 `x-api-key`，`GET /models` 校验。
 - 平台：iOS + Android 首发；桌面/Web 不在本图。
 - **v1 验收功能（截图原文）**：
