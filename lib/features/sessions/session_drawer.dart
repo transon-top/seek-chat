@@ -10,6 +10,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/logging.dart';
 import '../../shared/models/types.dart';
 import '../../shared/providers.dart';
+import '../../shared/widgets/scroll_edge_fade.dart';
 
 /// 会话列表的响应式来源：drift 在会话增删改后推送新列表。
 final sessionsProvider = StreamProvider.autoDispose<List<SessionSummary>>(
@@ -365,7 +366,7 @@ class _NewChatButton extends StatelessWidget {
   }
 }
 
-class _SessionList extends StatelessWidget {
+class _SessionList extends StatefulWidget {
   const _SessionList({
     required this.sessions,
     required this.currentSessionId,
@@ -381,50 +382,70 @@ class _SessionList extends StatelessWidget {
   final Future<void> Function(SessionSummary session) onDelete;
 
   @override
+  State<_SessionList> createState() => _SessionListState();
+}
+
+class _SessionListState extends State<_SessionList> {
+  final ScrollController _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = _sidebarColorsOf(context);
-    final groups = groupSessions(sessions, DateTime.now());
+    final groups = groupSessions(widget.sessions, DateTime.now());
     return Padding(
       padding: const EdgeInsets.only(top: 16),
-      child: CustomScrollView(
-        slivers: [
-          for (final (index, (group, items)) in groups.indexed) ...[
-            if (index > 0)
-              const SliverToBoxAdapter(child: SizedBox(height: 16)),
-            // 与 chat-demo 一致：每个分组标题上方留 4。
-            const SliverToBoxAdapter(child: SizedBox(height: 4)),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _GroupHeaderDelegate(
-                colors: colors,
-                label: switch (group) {
-                  SessionGroup.today => l10n.sessionGroupToday,
-                  SessionGroup.yesterday => l10n.sessionGroupYesterday,
-                  SessionGroup.last7Days => l10n.sessionGroupLast7Days,
-                  SessionGroup.earlier => l10n.sessionGroupEarlier,
+      child: ScrollEdgeFade(
+        controller: _controller,
+        color: colors.fill,
+        // 顶部渐隐从吸顶分组头下缘开始，分组头本身不参与渐隐。
+        topInset: _GroupHeaderDelegate._extent,
+        child: CustomScrollView(
+          controller: _controller,
+          slivers: [
+            for (final (index, (group, items)) in groups.indexed) ...[
+              if (index > 0)
+                const SliverToBoxAdapter(child: SizedBox(height: 16)),
+              // 与 chat-demo 一致：每个分组标题上方留 4。
+              const SliverToBoxAdapter(child: SizedBox(height: 4)),
+              SliverPersistentHeader(
+                pinned: true,
+                delegate: _GroupHeaderDelegate(
+                  colors: colors,
+                  label: switch (group) {
+                    SessionGroup.today => l10n.sessionGroupToday,
+                    SessionGroup.yesterday => l10n.sessionGroupYesterday,
+                    SessionGroup.last7Days => l10n.sessionGroupLast7Days,
+                    SessionGroup.earlier => l10n.sessionGroupEarlier,
+                  },
+                ),
+              ),
+              SliverList.builder(
+                itemCount: items.length,
+                itemBuilder: (context, index) {
+                  final session = items[index];
+                  return _SessionRow(
+                    session: session,
+                    current: session.id == widget.currentSessionId,
+                    onOpen: () {
+                      Navigator.of(context).pop();
+                      widget.onOpen(session.id);
+                    },
+                    onRename: (title) => widget.onRename(session, title),
+                    onDelete: () => widget.onDelete(session),
+                  );
                 },
               ),
-            ),
-            SliverList.builder(
-              itemCount: items.length,
-              itemBuilder: (context, index) {
-                final session = items[index];
-                return _SessionRow(
-                  session: session,
-                  current: session.id == currentSessionId,
-                  onOpen: () {
-                    Navigator.of(context).pop();
-                    onOpen(session.id);
-                  },
-                  onRename: (title) => onRename(session, title),
-                  onDelete: () => onDelete(session),
-                );
-              },
-            ),
+            ],
+            const SliverToBoxAdapter(child: SizedBox(height: 8)),
           ],
-          const SliverToBoxAdapter(child: SizedBox(height: 8)),
-        ],
+        ),
       ),
     );
   }
