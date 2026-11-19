@@ -66,6 +66,10 @@ chat-demo 版本 3 的 ZIP：清单、全部会话 JSON、索引与图片原件�
 
 从 `sessions.rootMessageId` 沿每行 `selectedChildId` 走出的消息序列。界面展示与请求上下文的唯一来源。
 
+## Sticky Bottom（跟随底部）
+
+消息列表的定位规则：内容不足一屏时，当前提问从视口顶部开始、回复向下增长；超过一屏后跟随最新内容；用户向上滚动离开底部后暂停跟随，重新贴近底部时恢复。
+
 ## Reply Status（回复状态）
 
 `pending`（已创建、请求未发出或未收到事件）、`streaming`（接收中）、`done`（正常结束）、`stopped`（用户停止、页面关闭、启动兜底）、`error`（请求或流出错）。启动时残留的 `pending`/`streaming` 统一按 `stopped` 收尾。

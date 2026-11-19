@@ -122,6 +122,42 @@ void main() {
     expect(text.style?.fontSize, 16);
   });
 
+  testWidgets('short chats start at the top and long chats follow the bottom', (
+    tester,
+  ) async {
+    await pumpMessages(tester, [
+      UserMessage(id: 'u1', createdAt: DateTime(2026), text: 'Hello'),
+      _reply(const [TextBlock(text: 'Hi')]),
+    ]);
+
+    // 内容不足一屏：提问从视口顶部开始。
+    expect(
+      tester.getTopLeft(find.byKey(const Key('user-bubble-u1'))).dy,
+      lessThan(50),
+    );
+
+    final many = <Message>[
+      for (var i = 0; i < 30; i++) ...[
+        UserMessage(
+          id: 'u${i + 1}',
+          createdAt: DateTime(2026),
+          text: 'Question $i',
+        ),
+        _reply(const [
+          TextBlock(
+            text: 'Answer\n\nAnswer\n\nAnswer\n\nAnswer\n\nAnswer\n\nAnswer',
+          ),
+        ], id: 'r$i'),
+      ],
+    ];
+    await pumpMessages(tester, many);
+
+    // 内容超过一屏：跟随底部，最新回复留在视口下沿。
+    final last = find.byKey(const Key('assistant-body-r29'));
+    expect(last, findsOneWidget);
+    expect(tester.getBottomLeft(last).dy, greaterThan(800));
+  });
+
   testWidgets('assistant body spans the column up to 760 wide', (tester) async {
     await pumpMessages(tester, [
       _reply(const [TextBlock(text: 'Answer')]),
@@ -256,7 +292,7 @@ void main() {
       UserMessage(id: 'u1', createdAt: DateTime(2026), text: 'Original'),
     ]);
 
-    await tester.tap(find.text('编辑'));
+    await tester.tap(find.byKey(const ValueKey('edit-message-u1')));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('edit-input')), 'Edited');
     await tester.pump();

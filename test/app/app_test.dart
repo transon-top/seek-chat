@@ -1019,7 +1019,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('编辑'));
+    await tester.tap(find.byTooltip('编辑'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('edit-input')), findsOneWidget);
 
@@ -1068,7 +1068,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.text('编辑'));
+    await tester.tap(find.byTooltip('编辑'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('edit-input')), 'Edited');
     await tester.pump();
