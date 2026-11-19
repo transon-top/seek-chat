@@ -41,7 +41,6 @@ class ChatMessageList extends StatefulWidget {
     this.onRegenerate,
     this.onContinue,
     this.onRetryUpload,
-    this.onStop,
   });
 
   final List<Message> messages;
@@ -54,7 +53,6 @@ class ChatMessageList extends StatefulWidget {
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
-  final VoidCallback? onStop;
 
   @override
   State<ChatMessageList> createState() => _ChatMessageListState();
@@ -148,7 +146,6 @@ class _ChatMessageListState extends State<ChatMessageList> {
                 onRegenerate: widget.onRegenerate,
                 onContinue: widget.onContinue,
                 onRetryUpload: widget.onRetryUpload,
-                onStop: widget.onStop,
               ),
             ),
           ),
@@ -172,7 +169,6 @@ class _MessageView extends StatelessWidget {
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
-    required this.onStop,
   });
 
   final Message message;
@@ -186,7 +182,6 @@ class _MessageView extends StatelessWidget {
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
-  final VoidCallback? onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -211,7 +206,6 @@ class _MessageView extends StatelessWidget {
       onRegenerate: onRegenerate,
       onContinue: onContinue,
       onRetryUpload: onRetryUpload,
-      onStop: onStop,
     );
   }
 }
@@ -505,7 +499,6 @@ class _AssistantMessageView extends StatelessWidget {
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
-    required this.onStop,
   });
 
   final AssistantMessage reply;
@@ -518,7 +511,6 @@ class _AssistantMessageView extends StatelessWidget {
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
-  final VoidCallback? onStop;
 
   @override
   Widget build(BuildContext context) {
@@ -575,29 +567,6 @@ class _AssistantMessageView extends StatelessWidget {
             if (reply.isInFlight && !refused) const _StreamingCursor(),
             if (!refused && !reply.isInFlight && view.searchResults.isNotEmpty)
               _SourcePill(sources: view.searchResults),
-            if (reply.status == ReplyStatus.stopped)
-              Padding(
-                padding: const EdgeInsets.only(top: 8),
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        strings.generationStopped,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: ShadTheme.of(context)
-                              .colorScheme
-                              .mutedForeground,
-                        ),
-                      ),
-                    ),
-                    if (continuing)
-                      _ContinueButton(
-                        onPressed: busy ? null : () => onContinue!(reply),
-                      ),
-                  ],
-                ),
-              ),
             Padding(
               padding: const EdgeInsets.only(top: 4),
               child: _ActionBar(
@@ -613,8 +582,7 @@ class _AssistantMessageView extends StatelessWidget {
                 onSelectVersion: onSelectVersion,
                 onRegenerate: onRegenerate,
                 onContinue: onContinue,
-                continuing: continuing && reply.status != ReplyStatus.stopped,
-                onStop: onStop,
+                continuing: continuing,
               ),
             ),
           ],
@@ -639,7 +607,6 @@ class _ActionBar extends StatelessWidget {
     required this.onRegenerate,
     required this.onContinue,
     required this.continuing,
-    required this.onStop,
   });
 
   final AssistantMessage reply;
@@ -655,62 +622,59 @@ class _ActionBar extends StatelessWidget {
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final bool continuing;
-  final VoidCallback? onStop;
 
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
-    if (reply.isInFlight) {
-      // pending 尚无正文，操作条隐藏；流式中才显示行内停止（§5.3）。
-      if (reply.status != ReplyStatus.streaming) return const SizedBox.shrink();
-      return Row(
-        children: [
-          ShadButton.outline(
-            key: const Key('inline-stop'),
-            onPressed: onStop,
-            child: Text(
-              strings.stopGeneration,
-              style: const TextStyle(fontSize: 13),
-            ),
-          ),
-        ],
-      );
-    }
+    // 生成中不显示操作条；停止入口只在输入区（与 chat-demo 一致，§5.3）。
+    if (reply.isInFlight) return const SizedBox.shrink();
     return Semantics(
       label: strings.messageActions,
       container: true,
-      // 窄屏或放大字号时按钮换行，避免操作条溢出（§4、§6.3）。
-      child: Wrap(
-        crossAxisAlignment: WrapCrossAlignment.center,
+      // 图标操作靠左，继续生成靠右（同 chat-demo）；窄屏或放大字号时图标换行。
+      child: Row(
         children: [
-          if (versions != null && versions!.hasMultiple)
-            _VersionSwitcher(versions: versions!, onSelect: onSelectVersion),
-          if (canCopy)
-            _IconAction(
-              key: Key('copy-${reply.id}'),
-              tooltip: strings.copy,
-              icon: LucideIcons.copy,
-              onPressed: () => Clipboard.setData(ClipboardData(text: copyText)),
+          Expanded(
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              children: [
+                if (versions != null && versions!.hasMultiple)
+                  _VersionSwitcher(
+                    versions: versions!,
+                    onSelect: onSelectVersion,
+                  ),
+                if (canCopy)
+                  _IconAction(
+                    key: Key('copy-${reply.id}'),
+                    tooltip: strings.copy,
+                    icon: LucideIcons.copy,
+                    onPressed: () =>
+                        Clipboard.setData(ClipboardData(text: copyText)),
+                  ),
+                if (!refused) ...[
+                  if (canReadAloud)
+                    ReadAloudButton(
+                      phase: speech.phase,
+                      active: speech.readingMessageId == reply.id,
+                      enabled: !speech.voiceBusy,
+                      onPressed: onReadAloud,
+                    ),
+                  _IconAction(
+                    key: Key('regenerate-${reply.id}'),
+                    tooltip: strings.regenerate,
+                    icon: LucideIcons.refreshCw,
+                    onPressed: busy || onRegenerate == null
+                        ? null
+                        : () => onRegenerate!(reply),
+                  ),
+                ],
+              ],
             ),
-          if (!refused) ...[
-            _IconAction(
-              key: Key('regenerate-${reply.id}'),
-              tooltip: strings.regenerate,
-              icon: LucideIcons.refreshCw,
-              onPressed: busy || onRegenerate == null
-                  ? null
-                  : () => onRegenerate!(reply),
-            ),
-            if (canReadAloud)
-              ReadAloudButton(
-                phase: speech.phase,
-                active: speech.readingMessageId == reply.id,
-                enabled: !speech.voiceBusy,
-                onPressed: onReadAloud,
-              ),
-          ],
-          if (continuing)
+          ),
+          if (continuing) ...[
+            const SizedBox(width: 10),
             _ContinueButton(onPressed: busy ? null : () => onContinue!(reply)),
+          ],
         ],
       ),
     );
@@ -726,12 +690,18 @@ class _ContinueButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
+    final colors = ShadTheme.of(context).colorScheme;
+    // chat-demo outlined：透明底、前景随正文（深色白 / 浅色黑）、常规字重。
     return ShadButton.outline(
       key: const Key('continue-reply'),
       onPressed: onPressed,
+      height: 32,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      foregroundColor: colors.foreground,
+      hoverForegroundColor: colors.foreground,
       child: Text(
         strings.continueGeneration,
-        style: const TextStyle(fontSize: 13),
+        style: const TextStyle(fontSize: 14, height: 22 / 14),
       ),
     );
   }

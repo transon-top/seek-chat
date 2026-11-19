@@ -486,7 +486,6 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             thinking: _thinking,
                             search: _search,
                           ),
-                    onStop: _stopGeneration,
                   ),
           ),
           if (messages.isNotEmpty) composer,

@@ -92,7 +92,6 @@ void main() {
             onRegenerate: (reply) => events.add('regenerate:${reply.id}'),
             onContinue: (reply) => events.add('continue:${reply.id}'),
             onRetryUpload: (reply) => events.add('retry:${reply.id}'),
-            onStop: () => events.add('stop'),
           ),
         ),
       ),
@@ -203,22 +202,43 @@ void main() {
       _reply(const [TextBlock(text: 'Cut off')], status: ReplyStatus.stopped),
     ]);
 
-    expect(find.text('已停止生成'), findsOneWidget);
+    // 图标顺序复制 → 朗读 → 重新生成；继续生成靠右、高约 32（同 chat-demo，
+    // ShadButton 的 1px 描边占 2px，渲染为 34）。
+    final copyX = tester.getCenter(find.byTooltip('复制')).dx;
+    final readX = tester.getCenter(find.byTooltip('朗读')).dx;
+    final regenerateX = tester.getCenter(find.byTooltip('重新生成')).dx;
+    expect(copyX, lessThan(readX));
+    expect(readX, lessThan(regenerateX));
+    final continueRect = tester.getRect(
+      find.byKey(const Key('continue-reply')),
+    );
+    expect(continueRect.height, inInclusiveRange(32, 34));
+    final continueButton = tester.widget<ShadButton>(
+      find.byKey(const Key('continue-reply')),
+    );
+    expect(
+      continueButton.foregroundColor,
+      ShadTheme.of(tester.element(find.byKey(const Key('continue-reply'))))
+          .colorScheme
+          .foreground,
+    );
+    expect(continueRect.right, greaterThan(regenerateX));
+    final body = tester.getRect(find.byKey(const Key('assistant-body-reply')));
+    expect(body.right - continueRect.right, lessThan(1));
+
     await tester.tap(find.text('继续生成'));
     expect(events, ['continue:reply']);
   });
 
-  testWidgets('a streaming reply shows inline stop and no other actions', (
-    tester,
-  ) async {
+  testWidgets('a streaming reply shows no actions', (tester) async {
     await pumpMessages(tester, [
       _reply(const [TextBlock(text: 'Partial')], status: ReplyStatus.streaming),
     ], settle: false);
 
     expect(find.byTooltip('复制'), findsNothing);
     expect(find.byTooltip('重新生成'), findsNothing);
-    await tester.tap(find.text('停止生成'));
-    expect(events, ['stop']);
+    expect(find.text('停止生成'), findsNothing);
+    expect(events, isEmpty);
   });
 
   testWidgets('regenerate disables while the session is generating', (
@@ -425,7 +445,7 @@ void main() {
     ], settle: false);
 
     expect(find.text('正在思考'), findsOneWidget);
-    expect(find.byKey(const Key('inline-stop')), findsNothing);
+    expect(find.text('停止生成'), findsNothing);
   });
 
   testWidgets('a browsing step reads as in progress until it finishes', (
@@ -443,7 +463,7 @@ void main() {
     expect(find.text('https://p.example'), findsOneWidget);
   });
 
-  testWidgets('a stopped reply without continuation still reports the stop', (
+  testWidgets('a stopped reply without continuation shows no notice', (
     tester,
   ) async {
     await pumpMessages(tester, [
@@ -452,8 +472,9 @@ void main() {
       ], status: ReplyStatus.stopped),
     ]);
 
-    expect(find.text('已停止生成'), findsOneWidget);
+    expect(find.text('已停止生成'), findsNothing);
     expect(find.byKey(const Key('continue-reply')), findsNothing);
+    expect(find.byTooltip('重新生成'), findsOneWidget);
   });
 
   testWidgets('an upload error offers retry only when retryable', (

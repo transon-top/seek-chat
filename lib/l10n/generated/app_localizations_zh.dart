@@ -285,9 +285,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get stopGeneration => '停止生成';
 
   @override
-  String get generationStopped => '已停止生成';
-
-  @override
   String get regenerate => '重新生成';
 
   @override
@@ -402,9 +399,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get composerPlaceholder => '给 Fleepseek 发送消息';
-
-  @override
-  String get stop => '停止';
 
   @override
   String get send => '发送';
