@@ -6,7 +6,8 @@ plugins {
 
 android {
     namespace = "com.example.open_chat"
-    compileSdk = flutter.compileSdkVersion
+    // permission_handler_android 14.x 要求客户端至少编译到 API 37。
+    compileSdk = 37
     ndkVersion = flutter.ndkVersion
 
     compileOptions {

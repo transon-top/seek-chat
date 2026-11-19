@@ -388,4 +388,81 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get historyErrorExportTooLarge => '文件过大，无法导出';
+
+  @override
+  String get voiceInput => '语音输入';
+
+  @override
+  String voiceInputRecording(int seconds) {
+    return '录音中 $seconds 秒';
+  }
+
+  @override
+  String get voiceInputStop => '结束录音并转写';
+
+  @override
+  String get voiceInputTranscribing => '正在转写…';
+
+  @override
+  String get voiceInputCancel => '正在转写，点击取消';
+
+  @override
+  String get voiceInputPermissionDenied => '无法使用麦克风，请在系统设置中允许访问';
+
+  @override
+  String get voiceInputNoDevice => '未检测到麦克风';
+
+  @override
+  String get voiceInputFailed => '语音识别失败，请稍后再试';
+
+  @override
+  String get voiceInputEmpty => '未识别到语音内容';
+
+  @override
+  String get voiceInputLimitReached => '已达到单次录音时长上限';
+
+  @override
+  String get voiceInputInterrupted => '录音已中断';
+
+  @override
+  String get ttsPlay => '朗读';
+
+  @override
+  String get ttsStop => '停止朗读';
+
+  @override
+  String get ttsUnavailable => '这条回答暂时无法朗读';
+
+  @override
+  String get ttsFailed => '朗读失败，请稍后再试';
+
+  @override
+  String get settingsTtsVoice => '朗读音色';
+
+  @override
+  String get settingsTtsVoiceStella => 'Stella · 女声';
+
+  @override
+  String get settingsTtsVoiceTide => 'Tide · 男声';
+
+  @override
+  String get settingsSpeech => '语音';
+
+  @override
+  String get settingsMicPermission => '麦克风权限';
+
+  @override
+  String get settingsMicNotRequested => '未请求';
+
+  @override
+  String get settingsMicGranted => '已允许';
+
+  @override
+  String get settingsMicDenied => '已拒绝';
+
+  @override
+  String get settingsSpeechDescription => '语音输入需要麦克风权限；朗读不需要。v1 只在前台工作。';
+
+  @override
+  String get settingsOpenSystemSettings => '打开系统设置';
 }

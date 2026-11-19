@@ -422,4 +422,84 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyErrorExportTooLarge => 'The file is too large to export.';
+
+  @override
+  String get voiceInput => 'Voice input';
+
+  @override
+  String voiceInputRecording(int seconds) {
+    return 'Recording ${seconds}s';
+  }
+
+  @override
+  String get voiceInputStop => 'Stop recording and transcribe';
+
+  @override
+  String get voiceInputTranscribing => 'Transcribing…';
+
+  @override
+  String get voiceInputCancel => 'Transcribing. Tap to cancel';
+
+  @override
+  String get voiceInputPermissionDenied =>
+      'Microphone access is denied. Allow it in system settings.';
+
+  @override
+  String get voiceInputNoDevice => 'No microphone detected';
+
+  @override
+  String get voiceInputFailed =>
+      'Speech recognition failed. Please try again later.';
+
+  @override
+  String get voiceInputEmpty => 'No speech detected';
+
+  @override
+  String get voiceInputLimitReached => 'Maximum recording length reached';
+
+  @override
+  String get voiceInputInterrupted => 'Recording interrupted';
+
+  @override
+  String get ttsPlay => 'Read aloud';
+
+  @override
+  String get ttsStop => 'Stop reading';
+
+  @override
+  String get ttsUnavailable => 'This answer cannot be read aloud right now';
+
+  @override
+  String get ttsFailed => 'Read-aloud failed. Please try again later.';
+
+  @override
+  String get settingsTtsVoice => 'Read-aloud voice';
+
+  @override
+  String get settingsTtsVoiceStella => 'Stella · female';
+
+  @override
+  String get settingsTtsVoiceTide => 'Tide · male';
+
+  @override
+  String get settingsSpeech => 'Speech';
+
+  @override
+  String get settingsMicPermission => 'Microphone access';
+
+  @override
+  String get settingsMicNotRequested => 'Not requested';
+
+  @override
+  String get settingsMicGranted => 'Allowed';
+
+  @override
+  String get settingsMicDenied => 'Denied';
+
+  @override
+  String get settingsSpeechDescription =>
+      'Voice input needs microphone access; read-aloud does not. Works in the foreground only.';
+
+  @override
+  String get settingsOpenSystemSettings => 'Open system settings';
 }

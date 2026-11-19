@@ -782,6 +782,156 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'The file is too large to export.'**
   String get historyErrorExportTooLarge;
+
+  /// No description provided for @voiceInput.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input'**
+  String get voiceInput;
+
+  /// No description provided for @voiceInputRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording {seconds}s'**
+  String voiceInputRecording(int seconds);
+
+  /// No description provided for @voiceInputStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop recording and transcribe'**
+  String get voiceInputStop;
+
+  /// No description provided for @voiceInputTranscribing.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribing…'**
+  String get voiceInputTranscribing;
+
+  /// No description provided for @voiceInputCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcribing. Tap to cancel'**
+  String get voiceInputCancel;
+
+  /// No description provided for @voiceInputPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access is denied. Allow it in system settings.'**
+  String get voiceInputPermissionDenied;
+
+  /// No description provided for @voiceInputNoDevice.
+  ///
+  /// In en, this message translates to:
+  /// **'No microphone detected'**
+  String get voiceInputNoDevice;
+
+  /// No description provided for @voiceInputFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech recognition failed. Please try again later.'**
+  String get voiceInputFailed;
+
+  /// No description provided for @voiceInputEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No speech detected'**
+  String get voiceInputEmpty;
+
+  /// No description provided for @voiceInputLimitReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum recording length reached'**
+  String get voiceInputLimitReached;
+
+  /// No description provided for @voiceInputInterrupted.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording interrupted'**
+  String get voiceInputInterrupted;
+
+  /// No description provided for @ttsPlay.
+  ///
+  /// In en, this message translates to:
+  /// **'Read aloud'**
+  String get ttsPlay;
+
+  /// No description provided for @ttsStop.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop reading'**
+  String get ttsStop;
+
+  /// No description provided for @ttsUnavailable.
+  ///
+  /// In en, this message translates to:
+  /// **'This answer cannot be read aloud right now'**
+  String get ttsUnavailable;
+
+  /// No description provided for @ttsFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-aloud failed. Please try again later.'**
+  String get ttsFailed;
+
+  /// No description provided for @settingsTtsVoice.
+  ///
+  /// In en, this message translates to:
+  /// **'Read-aloud voice'**
+  String get settingsTtsVoice;
+
+  /// No description provided for @settingsTtsVoiceStella.
+  ///
+  /// In en, this message translates to:
+  /// **'Stella · female'**
+  String get settingsTtsVoiceStella;
+
+  /// No description provided for @settingsTtsVoiceTide.
+  ///
+  /// In en, this message translates to:
+  /// **'Tide · male'**
+  String get settingsTtsVoiceTide;
+
+  /// No description provided for @settingsSpeech.
+  ///
+  /// In en, this message translates to:
+  /// **'Speech'**
+  String get settingsSpeech;
+
+  /// No description provided for @settingsMicPermission.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access'**
+  String get settingsMicPermission;
+
+  /// No description provided for @settingsMicNotRequested.
+  ///
+  /// In en, this message translates to:
+  /// **'Not requested'**
+  String get settingsMicNotRequested;
+
+  /// No description provided for @settingsMicGranted.
+  ///
+  /// In en, this message translates to:
+  /// **'Allowed'**
+  String get settingsMicGranted;
+
+  /// No description provided for @settingsMicDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Denied'**
+  String get settingsMicDenied;
+
+  /// No description provided for @settingsSpeechDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Voice input needs microphone access; read-aloud does not. Works in the foreground only.'**
+  String get settingsSpeechDescription;
+
+  /// No description provided for @settingsOpenSystemSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Open system settings'**
+  String get settingsOpenSystemSettings;
 }
 
 class _AppLocalizationsDelegate

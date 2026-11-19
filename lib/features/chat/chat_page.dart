@@ -12,11 +12,22 @@ import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
 import '../../shared/prefs/chat_options_store.dart';
 import '../../shared/providers.dart';
+import '../../shared/speech/permissions.dart';
+import 'speech/read_aloud_button.dart';
+import 'speech/recording_status.dart';
+import 'speech/speech_controller.dart';
+import 'speech/voice_button.dart';
 import 'upload_tasks.dart';
 import 'attachments_view.dart';
 import 'chat_controller.dart';
 import 'markdown_view.dart';
 import 'reply_view.dart';
+
+typedef _SpeechView = ({
+  SpeechPhase phase,
+  bool voiceBusy,
+  String? readingMessageId,
+});
 
 /// 最小聊天页：可见路径、流式文本、停止、重新生成、续写、搜索时间线与引用。
 ///
@@ -34,6 +45,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   final TextEditingController _input = TextEditingController();
   final List<DraftAttachment> _attachments = [];
   late final ChatOptionsStore _options;
+  late final SpeechController _speech;
   late bool _thinking;
   late bool _search;
 
@@ -41,6 +53,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void initState() {
     super.initState();
     _options = ref.read(chatOptionsStoreProvider);
+    _speech = ref.read(speechControllerProvider.notifier);
     _thinking = _options.thinking;
     _search = _options.search;
     unawaited(
@@ -50,14 +63,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   @override
   void dispose() {
+    unawaited(_speech.stopAll());
     _input.dispose();
     super.dispose();
+  }
+
+  /// 转写结果替换当前选区；光标落在插入内容之后（`speech.md` §3.4）。
+  void _insertTranscript(String text) {
+    _input.value = insertTranscript(_input.value, text);
+  }
+
+  void _stopReading() {
+    unawaited(_speech.stopReadAloud());
   }
 
   Future<void> _send() async {
     final text = _input.text;
     if (text.trim().isEmpty && _attachments.isEmpty) return;
     if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
+    await _speech.stopReadAloud();
     final sent = await _controller.send(
       text: text,
       thinking: _thinking,
@@ -176,8 +200,38 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
-  void _showSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(message)));
+  void _showSnackBar(
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        action: actionLabel != null && onAction != null
+            ? SnackBarAction(label: actionLabel, onPressed: onAction)
+            : null,
+      ),
+    );
+  }
+
+  void _regenerate(AssistantMessage reply) {
+    _stopReading();
+    unawaited(
+      _controller.regenerate(reply, thinking: _thinking, search: _search),
+    );
+  }
+
+  void _continue(AssistantMessage reply) {
+    _stopReading();
+    unawaited(
+      _controller.continueReply(reply, thinking: _thinking, search: _search),
+    );
+  }
+
+  void _stopGeneration() {
+    _stopReading();
+    _controller.stop();
   }
 
   /// 配额类上传失败：原因用 SnackBar 说明，并给出删除旧文件的文档入口。
@@ -214,8 +268,37 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   Widget build(BuildContext context) {
     final state = ref.watch(chatControllerProvider(widget.sessionId));
     final tasks = ref.watch(uploadTasksProvider);
+    // 只订阅按钮相关字段；电平与计时刷新由状态行单独重建（speech.md §7）。
+    final speech = ref.watch(
+      speechControllerProvider.select(
+        (state) => (
+          phase: state.phase,
+          voiceBusy: state.voiceBusy,
+          readingMessageId: state.readingMessageId,
+        ),
+      ),
+    );
     final messages = state.messages;
     final strings = AppLocalizations.of(context)!;
+    ref.listen<SpeechState>(speechControllerProvider, (previous, next) {
+      if (previous == null || previous.noticeId == next.noticeId) return;
+      final voice = next.voiceFailure;
+      if (voice != null) {
+        final needsSettings = voice == VoiceInputFailure.permissionDenied;
+        _showSnackBar(
+          voiceInputErrorText(strings, voice),
+          actionLabel: needsSettings
+              ? strings.settingsOpenSystemSettings
+              : null,
+          onAction: needsSettings
+              ? () => ref.read(microphonePermissionsProvider).openSettings()
+              : null,
+        );
+        return;
+      }
+      final tts = next.ttsFailure;
+      if (tts != null) _showSnackBar(ttsErrorText(strings, tts));
+    });
     ref.listen<Map<String, UploadTask>>(uploadTasksProvider, (previous, next) {
       for (final entry in next.entries) {
         final quota = entry.value.quota;
@@ -225,9 +308,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     });
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          state.title.isEmpty ? strings.untitledChat : state.title,
-        ),
+        title: Text(state.title.isEmpty ? strings.untitledChat : state.title),
       ),
       body: Column(
         children: [
@@ -250,20 +331,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                         message: messages[position],
                         isLast: position == messages.length - 1,
                         busy: state.busy,
-                        onRegenerate: state.busy
-                            ? null
-                            : (reply) => _controller.regenerate(
-                                reply,
-                                thinking: _thinking,
-                                search: _search,
-                              ),
-                        onContinue: state.busy
-                            ? null
-                            : (reply) => _controller.continueReply(
-                                reply,
-                                thinking: _thinking,
-                                search: _search,
-                              ),
+                        speech: speech,
+                        onReadAloud: (reply, text) => _speech.toggleReadAloud(
+                          messageId: reply.id,
+                          text: text,
+                        ),
+                        onRegenerate: state.busy ? null : _regenerate,
+                        onContinue: state.busy ? null : _continue,
                         onRetryUpload: state.busy
                             ? null
                             : (reply) => _controller.retryUpload(
@@ -278,6 +352,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           _Composer(
             input: _input,
             busy: state.busy,
+            speech: speech,
             thinking: _thinking,
             search: _search,
             attachments: _attachments,
@@ -288,7 +363,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             onRetryAttachment: _retryAttachment,
             onRemoveAttachment: _removeAttachment,
             onSend: _send,
-            onStop: _controller.stop,
+            onStop: _stopGeneration,
+            onVoice: () =>
+                _speech.toggleVoiceInput(onTranscript: _insertTranscript),
           ),
         ],
       ),
@@ -336,6 +413,8 @@ class _MessageView extends StatelessWidget {
     required this.message,
     required this.isLast,
     required this.busy,
+    required this.speech,
+    required this.onReadAloud,
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
@@ -344,6 +423,8 @@ class _MessageView extends StatelessWidget {
   final Message message;
   final bool isLast;
   final bool busy;
+  final _SpeechView speech;
+  final void Function(AssistantMessage reply, String text)? onReadAloud;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
@@ -382,6 +463,8 @@ class _MessageView extends StatelessWidget {
       reply: message,
       isLast: isLast,
       busy: busy,
+      speech: speech,
+      onReadAloud: onReadAloud,
       onRegenerate: onRegenerate,
       onContinue: onContinue,
       onRetryUpload: onRetryUpload,
@@ -394,6 +477,8 @@ class _ReplyView extends StatelessWidget {
     required this.reply,
     required this.isLast,
     required this.busy,
+    required this.speech,
+    required this.onReadAloud,
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
@@ -402,6 +487,8 @@ class _ReplyView extends StatelessWidget {
   final AssistantMessage reply;
   final bool isLast;
   final bool busy;
+  final _SpeechView speech;
+  final void Function(AssistantMessage reply, String text)? onReadAloud;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
@@ -415,6 +502,9 @@ class _ReplyView extends StatelessWidget {
     final refusal = refusalText(strings, reply);
     final continueEnabled =
         isLast && !busy && canContinueReply(reply) && onContinue != null;
+    // 朗读条件：不在生成中、非拒答、正文非空（`speech.md` §2.2）。
+    final answerText = view.answer?.text.trim() ?? '';
+    final canReadAloud = !reply.isInFlight && !refused && answerText.isNotEmpty;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4),
       child: Column(
@@ -457,9 +547,7 @@ class _ReplyView extends StatelessWidget {
               padding: const EdgeInsets.symmetric(vertical: 4),
               child: MarkdownView(text: refusal),
             ),
-          if (!refused &&
-              !reply.isInFlight &&
-              view.searchResults.isNotEmpty)
+          if (!refused && !reply.isInFlight && view.searchResults.isNotEmpty)
             _SearchSummary(sources: view.searchResults),
           if (reply.isInFlight)
             const Padding(
@@ -472,6 +560,13 @@ class _ReplyView extends StatelessWidget {
             ),
           Row(
             children: [
+              if (canReadAloud)
+                ReadAloudButton(
+                  phase: speech.phase,
+                  active: speech.readingMessageId == reply.id,
+                  enabled: !speech.voiceBusy && onReadAloud != null,
+                  onPressed: () => onReadAloud!(reply, answerText),
+                ),
               IconButton(
                 onPressed: busy || refused || onRegenerate == null
                     ? null
@@ -528,8 +623,7 @@ class _ReplyAreaState extends State<_ReplyArea> {
 
   /// 标题与思考用时每秒刷新；有正文后不再计时。
   void _syncTicker() {
-    final active =
-        widget.reply.isInFlight && widget.view.answer == null;
+    final active = widget.reply.isInFlight && widget.view.answer == null;
     if (active && _ticker == null) {
       _ticker = Timer.periodic(const Duration(seconds: 1), (_) {
         if (mounted) setState(() {});
@@ -563,7 +657,10 @@ class _ReplyAreaState extends State<_ReplyArea> {
                   const Icon(Icons.psychology_outlined, size: 18),
                   const SizedBox(width: 6),
                   Expanded(child: Text(title)),
-                  Icon(_open ? Icons.expand_more : Icons.chevron_right, size: 18),
+                  Icon(
+                    _open ? Icons.expand_more : Icons.chevron_right,
+                    size: 18,
+                  ),
                 ],
               ),
             ),
@@ -734,7 +831,9 @@ class _SearchRowState extends State<_SearchRow> {
     final step = widget.step;
     final failed = step.status == ToolStatus.failed;
     final interrupted =
-        failed && !widget.streaming && widget.replyStatus == ReplyStatus.stopped;
+        failed &&
+        !widget.streaming &&
+        widget.replyStatus == ReplyStatus.stopped;
     final clickable = step.status != ToolStatus.wip && step.results.isNotEmpty;
     final style = TextStyle(color: colors.onSurfaceVariant);
     final Widget text;
@@ -803,8 +902,9 @@ class _OpenRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final allFailed =
-        step.pages.every((page) => page.status == ToolStatus.failed);
+    final allFailed = step.pages.every(
+      (page) => page.status == ToolStatus.failed,
+    );
     return _ToolRow(
       icon: Icons.public,
       child: allFailed
@@ -825,8 +925,7 @@ class _OpenRow extends StatelessWidget {
                   _PageLink(page: page, failedTip: l10n.browseFailed),
                 if (step.pages.length > 5)
                   InkWell(
-                    onTap: () =>
-                        _showSourcesSheet(context, searchResults),
+                    onTap: () => _showSourcesSheet(context, searchResults),
                     child: Text(
                       l10n.viewAll,
                       style: TextStyle(color: colors.primary),
@@ -847,8 +946,9 @@ class _FindRow extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = Theme.of(context).colorScheme;
-    final allFailed =
-        step.patterns.every((item) => item.status == ToolStatus.failed);
+    final allFailed = step.patterns.every(
+      (item) => item.status == ToolStatus.failed,
+    );
     return _ToolRow(
       icon: Icons.public,
       child: allFailed
@@ -888,10 +988,7 @@ class _ReadLinkRow extends StatelessWidget {
         runSpacing: 4,
         crossAxisAlignment: WrapCrossAlignment.center,
         children: [
-          Text(
-            l10n.reading,
-            style: TextStyle(color: colors.onSurfaceVariant),
-          ),
+          Text(l10n.reading, style: TextStyle(color: colors.onSurfaceVariant)),
           for (final link in step.links) _PageLink(page: link),
         ],
       ),
@@ -1009,10 +1106,7 @@ class _SearchSummary extends StatelessWidget {
               const SizedBox(width: 6),
               Text(
                 l10n.pagesCount(sources.length),
-                style: TextStyle(
-                  color: colors.onSurfaceVariant,
-                  fontSize: 12,
-                ),
+                style: TextStyle(color: colors.onSurfaceVariant, fontSize: 12),
               ),
             ],
           ),
@@ -1069,10 +1163,9 @@ class _SiteIcon extends StatelessWidget {
             : Image.network(
                 uri.toString(),
                 fit: BoxFit.cover,
-                loadingBuilder: (context, child, progress) =>
-                    progress == null
-                        ? child
-                        : ColoredBox(color: colors.surfaceContainerHighest),
+                loadingBuilder: (context, child, progress) => progress == null
+                    ? child
+                    : ColoredBox(color: colors.surfaceContainerHighest),
                 errorBuilder: (context, error, stackTrace) => ColoredBox(
                   color: colors.surfaceContainerHighest,
                   child: Center(child: icon),
@@ -1083,10 +1176,7 @@ class _SiteIcon extends StatelessWidget {
   }
 }
 
-Future<void> _showSourcesSheet(
-  BuildContext context,
-  List<Source> sources,
-) {
+Future<void> _showSourcesSheet(BuildContext context, List<Source> sources) {
   return showModalBottomSheet<void>(
     context: context,
     showDragHandle: true,
@@ -1110,8 +1200,7 @@ Future<void> _showSourcesSheet(
                 itemCount: sources.length,
                 itemBuilder: (context, index) =>
                     _SourceCard(source: sources[index]),
-                separatorBuilder: (context, index) =>
-                    const SizedBox(height: 8),
+                separatorBuilder: (context, index) => const SizedBox(height: 8),
               ),
             ),
           ],
@@ -1189,6 +1278,7 @@ class _Composer extends StatelessWidget {
   const _Composer({
     required this.input,
     required this.busy,
+    required this.speech,
     required this.thinking,
     required this.search,
     required this.attachments,
@@ -1200,10 +1290,12 @@ class _Composer extends StatelessWidget {
     required this.onRemoveAttachment,
     required this.onSend,
     required this.onStop,
+    required this.onVoice,
   });
 
   final TextEditingController input;
   final bool busy;
+  final _SpeechView speech;
   final bool thinking;
   final bool search;
   final List<DraftAttachment> attachments;
@@ -1215,11 +1307,13 @@ class _Composer extends StatelessWidget {
   final ValueChanged<String> onRemoveAttachment;
   final VoidCallback onSend;
   final VoidCallback onStop;
+  final VoidCallback onVoice;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final ready = allUploadsDone(attachments, tasks);
+    final voiceBusy = speech.voiceBusy;
     return SafeArea(
       top: false,
       child: Padding(
@@ -1227,6 +1321,7 @@ class _Composer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            const _SpeechStatus(),
             DraftAttachmentStrip(
               attachments: attachments,
               tasks: tasks,
@@ -1253,7 +1348,7 @@ class _Composer extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 IconButton(
-                  onPressed: busy ? null : onAddAttachment,
+                  onPressed: busy || voiceBusy ? null : onAddAttachment,
                   icon: const Icon(Icons.attach_file),
                   tooltip: l10n.uploadFile,
                 ),
@@ -1268,11 +1363,14 @@ class _Composer extends StatelessWidget {
                     ),
                   ),
                 ),
-                const SizedBox(width: 8),
+                VoiceButton(phase: speech.phase, onPressed: onVoice),
+                const SizedBox(width: 4),
                 ValueListenableBuilder<TextEditingValue>(
                   valueListenable: input,
                   builder: (context, value, child) {
-                    final canSend = !busy &&
+                    final canSend =
+                        !busy &&
+                        !voiceBusy &&
                         ready &&
                         (value.text.trim().isNotEmpty ||
                             attachments.isNotEmpty);
@@ -1293,3 +1391,26 @@ class _Composer extends StatelessWidget {
 }
 
 enum _AttachmentSource { photos, files }
+
+/// 录音计时与电平只重建这一行，不触发整页重建（`speech.md` §7）。
+class _SpeechStatus extends ConsumerWidget {
+  const _SpeechStatus();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final status = ref.watch(
+      speechControllerProvider.select(
+        (state) => (
+          phase: state.phase,
+          seconds: state.recordingSeconds,
+          level: state.level,
+        ),
+      ),
+    );
+    return RecordingStatus(
+      phase: status.phase,
+      seconds: status.seconds,
+      level: status.level,
+    );
+  }
+}
