@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/localization.dart';
 import 'package:open_chat/features/chat/attachments_view.dart';
 import 'package:open_chat/shared/models/types.dart';
@@ -9,13 +10,14 @@ import 'package:open_chat/features/chat/upload_tasks.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(
-        localizationsDelegates: appLocalizationDelegates,
-        supportedLocales: const [Locale('zh')],
-        home: Scaffold(body: child),
-      );
+    localizationsDelegates: appLocalizationDelegates,
+    supportedLocales: const [Locale('zh')],
+    home: Scaffold(body: child),
+  );
 
-  testWidgets('draft strip shows uploading, retryable failure and remove',
-      (tester) async {
+  testWidgets('draft strip shows uploading, retryable failure and remove', (
+    tester,
+  ) async {
     final temp = Directory.systemTemp.createTempSync('draft-strip-test');
     final image = File('${temp.path}/photo.png')..writeAsBytesSync([1]);
     addTearDown(() => temp.deleteSync(recursive: true));
@@ -59,10 +61,10 @@ void main() {
     expect(find.text('上传中...'), findsNothing);
     expect(find.text('服务器繁忙'), findsOneWidget);
 
-    await tester.tap(find.byIcon(Icons.refresh));
+    await tester.tap(find.byIcon(LucideIcons.refreshCw));
     expect(retried, ['doc']);
 
-    await tester.tap(find.byIcon(Icons.close).first);
+    await tester.tap(find.byIcon(LucideIcons.x).first);
     expect(removed, ['img']);
   });
 }

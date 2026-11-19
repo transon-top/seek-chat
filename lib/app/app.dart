@@ -71,10 +71,6 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
       supportedLocales: AppLocalizations.supportedLocales,
       materialThemeBuilder: (context, theme) =>
           buildAppTheme(brightness: theme.brightness, chinese: chinese),
-      // shortcut: SnackBar 宿主迁移到 ShadToast 前保留第二个 Toast 宿主，
-      // 输入区迁移（§11 第 3 步）时删除。
-      builder: (context, child) =>
-          ScaffoldMessenger(child: child ?? const SizedBox.shrink()),
       home: const ChatHome(),
     );
   }

@@ -2,6 +2,7 @@ import 'dart:io';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import 'attachment_rules.dart';
@@ -11,6 +12,8 @@ import '../../shared/providers.dart';
 import 'upload_tasks.dart';
 
 const double _draftImageSize = 64;
+const double _draftStripHeight = 76;
+const double _draftDocumentWidth = 210;
 const double _singleImageSize = 120;
 const double _mixedImageSize = 64;
 
@@ -33,7 +36,7 @@ class DraftAttachmentStrip extends StatelessWidget {
   Widget build(BuildContext context) {
     if (attachments.isEmpty) return const SizedBox.shrink();
     return SizedBox(
-      height: _draftImageSize,
+      height: _draftStripHeight,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         padding: const EdgeInsets.only(bottom: 8),
@@ -80,8 +83,9 @@ class _DraftImage extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final failed = task?.status == UploadStatus.error;
     final uploading = task?.status == UploadStatus.uploading;
-    final errorText =
-        failed && task?.error != null ? localMessageText(l10n, task!.error!) : null;
+    final errorText = failed && task?.error != null
+        ? localMessageText(l10n, task!.error!)
+        : null;
     final retryable = failed && (task?.retryable ?? false);
 
     final tile = Container(
@@ -102,7 +106,7 @@ class _DraftImage extends StatelessWidget {
             fit: BoxFit.cover,
             errorBuilder: (context, error, stackTrace) => ColoredBox(
               color: colors.surfaceContainerHighest,
-              child: Icon(Icons.image_not_supported, color: colors.outline),
+              child: Icon(LucideIcons.imageOff, color: colors.outline),
             ),
           ),
           if (uploading)
@@ -129,10 +133,13 @@ class _DraftImage extends StatelessWidget {
                         tooltip: l10n.uploadRetry(
                           errorText ?? l10n.uploadFileStatusFailed,
                         ),
-                        icon: const Icon(Icons.refresh, color: Colors.white),
+                        icon: const Icon(
+                          LucideIcons.refreshCw,
+                          color: Colors.white,
+                        ),
                       )
                     : Icon(
-                        Icons.error_outline,
+                        LucideIcons.circleAlert,
                         color: colors.onErrorContainer,
                       ),
               ),
@@ -171,20 +178,7 @@ class _DraftImage extends StatelessWidget {
       child: Stack(
         clipBehavior: Clip.none,
         children: [
-          GestureDetector(
-            onTap: retryable
-                ? onRetry
-                : failed
-                    ? () => ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(
-                              errorText ?? l10n.uploadFileStatusFailed,
-                            ),
-                          ),
-                        )
-                    : null,
-            child: tile,
-          ),
+          GestureDetector(onTap: retryable ? onRetry : null, child: tile),
           Positioned(
             top: -6,
             right: -6,
@@ -218,8 +212,9 @@ class _DraftDocument extends StatelessWidget {
     final colors = Theme.of(context).colorScheme;
     final status = task?.status;
     final failed = status == UploadStatus.error;
-    final errorText =
-        failed && task?.error != null ? localMessageText(l10n, task!.error!) : null;
+    final errorText = failed && task?.error != null
+        ? localMessageText(l10n, task!.error!)
+        : null;
     final retryable = failed && (task?.retryable ?? false);
     final subtitle = switch (status) {
       UploadStatus.uploading => l10n.uploadFileStatusUploading,
@@ -228,7 +223,7 @@ class _DraftDocument extends StatelessWidget {
     };
 
     final card = Container(
-      width: 200,
+      width: _draftDocumentWidth,
       height: _draftImageSize,
       padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: BoxDecoration(
@@ -240,7 +235,7 @@ class _DraftDocument extends StatelessWidget {
       child: Row(
         children: [
           Icon(
-            retryable ? Icons.refresh : Icons.description_outlined,
+            retryable ? LucideIcons.refreshCw : LucideIcons.fileText,
             size: 20,
             color: failed ? colors.error : colors.onSurfaceVariant,
           ),
@@ -269,10 +264,7 @@ class _DraftDocument extends StatelessWidget {
               ],
             ),
           ),
-          _RemoveButton(
-            tooltip: l10n.removeAttachment,
-            onPressed: onRemove,
-          ),
+          _RemoveButton(tooltip: l10n.removeAttachment, onPressed: onRemove),
         ],
       ),
     );
@@ -281,10 +273,7 @@ class _DraftDocument extends StatelessWidget {
       message: failed
           ? l10n.uploadRetry(errorText ?? l10n.uploadFileStatusFailed)
           : attachment.name,
-      child: GestureDetector(
-        onTap: retryable ? onRetry : null,
-        child: card,
-      ),
+      child: GestureDetector(onTap: retryable ? onRetry : null, child: card),
     );
   }
 }
@@ -354,7 +343,9 @@ class _MessageImage extends StatelessWidget {
     return Tooltip(
       message: missing ? l10n.missingAttachment : attachment.name,
       child: GestureDetector(
-        onTap: missing ? null : () => _showImage(context, path!, attachment.name),
+        onTap: missing
+            ? null
+            : () => _showImage(context, path!, attachment.name),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(8),
           child: SizedBox(
@@ -446,7 +437,11 @@ class _RemoveButton extends StatelessWidget {
           message: tooltip,
           child: Padding(
             padding: const EdgeInsets.all(2),
-            child: Icon(Icons.close, size: 14, color: colors.onSurfaceVariant),
+            child: Icon(
+              LucideIcons.x,
+              size: 14,
+              color: colors.onSurfaceVariant,
+            ),
           ),
         ),
       ),
@@ -455,9 +450,9 @@ class _RemoveButton extends StatelessWidget {
 }
 
 String _documentMeta(String name, int size) => [
-      fileExtensionUpper(name),
-      formatFileSize(size),
-    ].where((part) => part.isNotEmpty).join(' ');
+  fileExtensionUpper(name),
+  formatFileSize(size),
+].where((part) => part.isNotEmpty).join(' ');
 
 void _showImage(BuildContext context, String path, String name) {
   final l10n = AppLocalizations.of(context)!;

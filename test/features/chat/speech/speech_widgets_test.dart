@@ -1,7 +1,9 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/localization.dart';
+import 'package:open_chat/app/theme.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
 import 'package:open_chat/features/chat/speech/recording_status.dart';
 import 'package:open_chat/features/chat/speech/speech_controller.dart';
@@ -21,9 +23,15 @@ void main() {
           locale: locale,
           localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: MediaQuery(
-            data: MediaQueryData(disableAnimations: disableAnimations),
-            child: Scaffold(body: Center(child: child)),
+          home: ShadTheme(
+            data: buildShadTheme(
+              brightness: Brightness.light,
+              chinese: locale.languageCode == 'zh',
+            ),
+            child: MediaQuery(
+              data: MediaQueryData(disableAnimations: disableAnimations),
+              child: Scaffold(body: Center(child: child)),
+            ),
           ),
         ),
       ),
@@ -39,7 +47,7 @@ void main() {
       VoiceButton(phase: SpeechPhase.idle, onPressed: () => taps++),
     );
     expect(find.byTooltip('语音输入'), findsOneWidget);
-    expect(find.byIcon(Icons.mic_none), findsOneWidget);
+    expect(find.byIcon(LucideIcons.mic), findsOneWidget);
     await tester.tap(find.byKey(const Key('voice-button')));
     expect(taps, 1);
 
@@ -48,6 +56,7 @@ void main() {
       VoiceButton(phase: SpeechPhase.recording, onPressed: () {}),
     );
     expect(find.byTooltip('结束录音并转写'), findsOneWidget);
+    expect(find.byIcon(LucideIcons.mic), findsOneWidget);
 
     await pumpHost(
       tester,
@@ -64,6 +73,19 @@ void main() {
       locale: const Locale('en'),
     );
     expect(find.byTooltip('Voice input'), findsOneWidget);
+  });
+
+  testWidgets('voice button is disabled while generating or reading aloud', (
+    tester,
+  ) async {
+    await pumpHost(
+      tester,
+      const VoiceButton(phase: SpeechPhase.idle, onPressed: null),
+    );
+    final button = tester.widget<ShadIconButton>(
+      find.byKey(const Key('voice-button')),
+    );
+    expect(button.onPressed, isNull);
   });
 
   testWidgets('recording status shows seconds and level bars', (tester) async {

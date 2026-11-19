@@ -8,7 +8,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/app.dart';
+import 'package:open_chat/features/chat/composer.dart';
 import 'package:open_chat/features/chat/speech/player.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
 import 'package:open_chat/features/chat/speech/speech_api.dart';
@@ -314,7 +316,7 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('新对话'), findsOneWidget);
 
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -417,7 +419,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -442,7 +444,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
@@ -492,7 +494,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
@@ -550,10 +552,10 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    final thinkingChip = find.widgetWithText(FilterChip, '深度思考');
-    final searchChip = find.widgetWithText(FilterChip, '智能搜索');
-    expect(tester.widget<FilterChip>(thinkingChip).selected, isFalse);
-    expect(tester.widget<FilterChip>(searchChip).selected, isFalse);
+    final thinkingChip = find.byKey(const Key('thinking-toggle'));
+    final searchChip = find.byKey(const Key('search-toggle'));
+    expect(tester.widget<ComposerToggle>(thinkingChip).selected, isFalse);
+    expect(tester.widget<ComposerToggle>(searchChip).selected, isFalse);
 
     await tester.tap(thinkingChip);
     await tester.tap(searchChip);
@@ -561,7 +563,7 @@ void main() {
     expect(prefs.getBool(ChatOptionsStore.thinkingKey), isTrue);
     expect(prefs.getBool(ChatOptionsStore.searchKey), isTrue);
 
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -579,13 +581,13 @@ void main() {
 
     expect(
       tester
-          .widget<FilterChip>(find.widgetWithText(FilterChip, '深度思考'))
+          .widget<ComposerToggle>(find.byKey(const Key('thinking-toggle')))
           .selected,
       isTrue,
     );
     expect(
       tester
-          .widget<FilterChip>(find.widgetWithText(FilterChip, '智能搜索'))
+          .widget<ComposerToggle>(find.byKey(const Key('search-toggle')))
           .selected,
       isTrue,
     );
@@ -605,7 +607,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -643,7 +645,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
@@ -685,7 +687,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -709,7 +711,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -766,7 +768,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -823,7 +825,7 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
@@ -864,7 +866,7 @@ void main() {
       );
       await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
       await tester.pumpAndSettle();
-      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
       await tester.pump();
       await tester.tap(find.byTooltip('发送'));
       await tester.pumpAndSettle();
@@ -1115,7 +1117,10 @@ void main() {
     expect(find.text('新对话'), findsOneWidget);
     expect(find.text('今天有什么可以帮到你？'), findsOneWidget);
     expect(
-      tester.widget<TextField>(find.byType(TextField)).focusNode?.hasFocus,
+      tester
+          .widget<ShadInput>(find.byKey(const Key('composer-input')))
+          .focusNode
+          ?.hasFocus,
       isTrue,
     );
 

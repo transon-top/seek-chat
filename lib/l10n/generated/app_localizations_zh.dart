@@ -334,6 +334,9 @@ class AppLocalizationsZh extends AppLocalizations {
   String get composerHint => '输入消息';
 
   @override
+  String get composerPlaceholder => '给 Fleepseek 发送消息';
+
+  @override
   String get stop => '停止';
 
   @override

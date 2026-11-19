@@ -5,7 +5,9 @@ import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/localization.dart';
+import 'package:open_chat/app/theme.dart';
 import 'package:open_chat/features/history/history_files.dart';
 import 'package:open_chat/features/history/history_section.dart';
 import 'package:open_chat/features/history/history_service.dart';
@@ -72,10 +74,15 @@ void main() {
           locale: const Locale('zh'),
           localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: Scaffold(
-            body: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: HistorySection(stopGeneration: () => stopped++),
+          home: ShadTheme(
+            data: buildShadTheme(brightness: Brightness.light, chinese: true),
+            child: ShadToaster(
+              child: Scaffold(
+                body: SingleChildScrollView(
+                  padding: const EdgeInsets.all(16),
+                  child: HistorySection(stopGeneration: () => stopped++),
+                ),
+              ),
             ),
           ),
         ),
@@ -190,10 +197,7 @@ void main() {
 
     expect(stopped, 0);
     expect((await repository.listSessions()).single.id, seeded.id);
-    expect(
-      find.text('无法识别该文件，请选择 DeepSeek 导出的历史对话 ZIP 文件'),
-      findsOneWidget,
-    );
+    expect(find.text('无法识别该文件，请选择 DeepSeek 导出的历史对话 ZIP 文件'), findsOneWidget);
   });
 }
 

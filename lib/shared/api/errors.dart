@@ -82,7 +82,7 @@ LocalMessage uploadErrorMessage(Object error) {
   return const LocalMessage(key: LocalMessageKeys.uploadFileStatusFailed);
 }
 
-/// 配额类上传失败的额外提示：附件上只放「上传失败」，原因用 SnackBar 说明。
+/// 配额类上传失败的额外提示：附件上只放「上传失败」，原因用 Toast 说明。
 LocalMessage? uploadQuotaMessage(Object error) {
   final info = uploadErrorInfo(error);
   return switch (info?.code) {
