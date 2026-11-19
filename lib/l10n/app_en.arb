@@ -19,6 +19,7 @@
   "apiErrorContentRejected": "The content did not pass safety review. Edit it and try again.",
   "apiErrorOther": "Something went wrong. Please try again.",
   "replyFailed": "Generation failed: {error}",
+  "replyFailedTitle": "Generation failed",
   "@replyFailed": {
     "placeholders": {
       "error": {
@@ -128,6 +129,33 @@
   },
   "save": "Save",
   "close": "Dismiss",
+  "copy": "Copy",
+  "edit": "Edit",
+  "userMessage": "Your message",
+  "assistantReply": "Assistant reply",
+  "messageActions": "Message actions",
+  "versionPosition": "Version {current} of {total}",
+  "@versionPosition": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sourceNumber": "Source {index}",
+  "@sourceNumber": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "openSource": "Open source",
+  "stopGeneration": "Stop generating",
+  "generationStopped": "Generation stopped",
   "regenerate": "Regenerate",
   "continueGeneration": "Continue",
   "editMessage": "Edit message",
@@ -137,6 +165,14 @@
   "deepThinking": "Deep thinking",
   "thoughtForSeconds": "Thought for {seconds}s",
   "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "thinkingForSeconds": "Thinking… {seconds}s",
+  "@thinkingForSeconds": {
     "placeholders": {
       "seconds": {
         "type": "int"

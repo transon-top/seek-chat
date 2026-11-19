@@ -621,7 +621,7 @@ void main() {
     expect(find.text('搜索结果'), findsOneWidget);
     expect(find.text('Page One'), findsWidgets);
     expect(find.text('Page Two'), findsWidgets);
-    expect(find.text('2026/01/02'), findsOneWidget);
+    expect(find.textContaining('2026/01/02'), findsOneWidget);
 
     await tester.tapAt(const Offset(10, 10));
     await tester.pumpAndSettle();
@@ -724,7 +724,7 @@ void main() {
     expect(find.text('查找关键词'), findsOneWidget);
     expect(find.text('alpha'), findsOneWidget);
     expect(find.text('beta'), findsOneWidget);
-    expect(find.byIcon(Icons.check), findsNWidgets(2));
+    expect(find.byIcon(LucideIcons.check), findsNWidgets(2));
 
     await tester.tap(find.text('查看全部'));
     await tester.pumpAndSettle();
@@ -786,12 +786,7 @@ void main() {
       findsNothing,
     );
     expect(find.textContaining('个网页'), findsNothing);
-    expect(
-      tester
-          .widget<IconButton>(find.widgetWithIcon(IconButton, Icons.refresh))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byIcon(LucideIcons.refreshCw), findsNothing);
 
     await unmountApp(tester);
   });
@@ -971,7 +966,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('编辑提问'));
+    await tester.tap(find.text('编辑'));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('edit-input')), findsOneWidget);
 
@@ -1020,7 +1015,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('编辑提问'));
+    await tester.tap(find.text('编辑'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byKey(const Key('edit-input')), 'Edited');
     await tester.pump();
@@ -1033,8 +1028,11 @@ void main() {
     expect(tester.takeException(), isNull);
     expect(find.text('Edited'), findsOneWidget);
     expect(find.text('2 / 2'), findsOneWidget);
-    final previous = tester.widget<IconButton>(
-      find.widgetWithIcon(IconButton, Icons.chevron_left),
+    final previous = tester.widget<ShadIconButton>(
+      find.descendant(
+        of: find.byKey(const Key('previous-version')),
+        matching: find.byType(ShadIconButton),
+      ),
     );
     expect(previous.onPressed, isNull);
 
@@ -1064,6 +1062,11 @@ void main() {
     final first = await repository.createSession();
     await repository.renameSession(first.id, 'First');
     await repository.addUserMessage(sessionId: first.id, text: 'a');
+    // 列表按 updatedAt 排序；同一毫秒创建的两个会话顺序不稳定。
+    // testWidgets 的假时钟不会推进真实 Timer，必须走 runAsync。
+    await tester.runAsync(
+      () => Future<void>.delayed(const Duration(milliseconds: 2)),
+    );
     final second = await repository.createSession();
     await repository.renameSession(second.id, 'Second');
     await repository.addUserMessage(sessionId: second.id, text: 'b');

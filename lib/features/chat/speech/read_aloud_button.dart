@@ -1,6 +1,7 @@
 import 'dart:math' as math;
 
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
@@ -76,18 +77,26 @@ class _ReadAloudButtonState extends State<ReadAloudButton>
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final colors = ShadTheme.of(context).colorScheme;
     final active = widget.active;
-    return IconButton(
-      key: const Key('read-aloud-button'),
-      onPressed: widget.enabled ? widget.onPressed : null,
-      tooltip: active ? l10n.ttsStop : l10n.ttsPlay,
-      icon: active
-          ? _ReadingBars(
-              animation: _animation,
-              playing: widget.phase == SpeechPhase.playing,
-              animate: _animate,
-            )
-          : const Icon(Icons.volume_up),
+    return Tooltip(
+      message: active ? l10n.ttsStop : l10n.ttsPlay,
+      child: ShadIconButton.ghost(
+        key: const Key('read-aloud-button'),
+        onPressed: widget.enabled ? widget.onPressed : null,
+        icon: active
+            ? _ReadingBars(
+                animation: _animation,
+                playing: widget.phase == SpeechPhase.playing,
+                animate: _animate,
+              )
+            : const Icon(LucideIcons.volume2),
+        iconSize: 18,
+        width: 44,
+        height: 44,
+        padding: EdgeInsets.zero,
+        foregroundColor: colors.mutedForeground,
+      ),
     );
   }
 }

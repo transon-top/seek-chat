@@ -12,6 +12,7 @@
   "apiErrorContentRejected": "内容未通过安全审核，请修改后重试",
   "apiErrorOther": "发生错误，请重试",
   "replyFailed": "生成失败：{error}",
+  "replyFailedTitle": "生成失败",
   "replyRefused": "你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。",
   "replyImageBlocked": "图片未通过内容安全审核，请移除后重试。",
   "errorSaveAttachmentFailed": "保存附件失败：{error}",
@@ -114,6 +115,33 @@
   },
   "save": "保存",
   "close": "关闭",
+  "copy": "复制",
+  "edit": "编辑",
+  "userMessage": "你的消息",
+  "assistantReply": "助手回复",
+  "messageActions": "消息操作",
+  "versionPosition": "第 {current} 个，共 {total} 个",
+  "@versionPosition": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sourceNumber": "来源 {index}",
+  "@sourceNumber": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "openSource": "打开来源",
+  "stopGeneration": "停止生成",
+  "generationStopped": "已停止生成",
   "regenerate": "重新生成",
   "continueGeneration": "继续生成",
   "editMessage": "编辑提问",
@@ -123,6 +151,14 @@
   "deepThinking": "深度思考",
   "thoughtForSeconds": "已思考（用时 {seconds} 秒）",
   "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "thinkingForSeconds": "思考中… {seconds} 秒",
+  "@thinkingForSeconds": {
     "placeholders": {
       "seconds": {
         "type": "int"

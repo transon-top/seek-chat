@@ -1,6 +1,5 @@
 import 'dart:async';
 
-import 'package:flutter/gestures.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:gpt_markdown/custom_widgets/code_field.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
@@ -9,6 +8,7 @@ import 'package:mermaid_core/mermaid_core.dart' as mermaid_core;
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../l10n/generated/app_localizations.dart';
 import 'reply_view.dart';
 
 /// 渲染回复中的 Markdown 文本。
@@ -26,6 +26,7 @@ class MarkdownView extends StatefulWidget {
     this.sources,
     this.dense = false,
     this.disableLinks = false,
+    this.textStyle,
   });
 
   final String text;
@@ -41,6 +42,9 @@ class MarkdownView extends StatefulWidget {
 
   /// 思考内容只保留链接文字，不渲染成可点击链接。
   final bool disableLinks;
+
+  /// 正文样式；为空时按 [dense] 取 Material 的 bodySmall / bodyMedium。
+  final TextStyle? textStyle;
 
   /// 单块超过此长度时不再解析 Markdown，按纯文本展示（票 08 的降级上限）。
   static const int plainTextLimit = 200000;
@@ -119,7 +123,8 @@ class _MarkdownViewState extends State<MarkdownView> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context).textTheme;
-    final style = widget.dense ? theme.bodySmall : theme.bodyMedium;
+    final style =
+        widget.textStyle ?? (widget.dense ? theme.bodySmall : theme.bodyMedium);
     return SelectionArea(
       child: _shown.length > MarkdownView.plainTextLimit
           ? Text(_shown, style: style)
@@ -205,16 +210,36 @@ InlinePattern _citationPattern(List<Source> sources) => InlinePattern(
     if (matchSource == null) return const TextSpan(text: '');
     final source = matchSource;
     final colors = Theme.of(context).colorScheme;
-    return TextSpan(
-      text: ' ${source.index} ',
-      style: style.copyWith(
-        color: colors.onSurfaceVariant,
-        backgroundColor: colors.surfaceContainerHighest,
-        fontSize: (style.fontSize ?? 14) * 0.75,
-        fontWeight: FontWeight.w600,
+    final l10n = AppLocalizations.of(context);
+    return WidgetSpan(
+      alignment: PlaceholderAlignment.middle,
+      child: Semantics(
+        button: true,
+        label: l10n == null
+            ? null
+            : '${l10n.sourceNumber(source.index)}: ${source.title}',
+        child: GestureDetector(
+          key: Key('citation-${source.index}'),
+          onTap: () => openExternalLink(source.url, source.title),
+          child: Container(
+            margin: const EdgeInsets.symmetric(horizontal: 1),
+            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
+            decoration: BoxDecoration(
+              color: colors.surfaceContainerHighest,
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '${source.index}',
+              style: TextStyle(
+                fontSize: 10,
+                height: 14 / 10,
+                fontWeight: FontWeight.w600,
+                color: colors.onSurfaceVariant,
+              ),
+            ),
+          ),
+        ),
       ),
-      recognizer: TapGestureRecognizer()
-        ..onTap = () => openExternalLink(source.url, source.title),
     );
   },
 );
