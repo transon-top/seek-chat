@@ -69,8 +69,9 @@
 
 ### 3.1 语言
 
-- 存 `shared_preferences` 的 `user.locale`，取值 `zh` / `en`；缺失或非法值按系统语言
-  取默认值（`settings.ts` 的 `initialLocale`）。
+- 存 `shared_preferences` 的 `user.locale`，取值 `system` / `zh` / `en`；缺失或非法值
+  按 `system` 处理。`system` 按系统语言解析：以 `zh` 开头为中文，其余英文
+  （`settings.ts` 的 `initialLocale`）。
 - 选择后立即生效：界面语言（`MaterialApp.locale`）与之后创建的请求一起切换。
 - 已生成的回复保留各自快照，切换语言不改写历史。
 

@@ -47,8 +47,9 @@
 - [用户元信息：语言与所在地](issues/16-user-metadata.md): 一个语言设置同时驱动界面与元信息；所在地选择器跟随系统语言，支持清除；快照在附件补齐后生成、续写复用；详见 [`user-metadata.md`](user-metadata.md)。
 - [历史对话导入与导出](issues/17-history-import-export.md): 对齐 chat-demo 归档版本 3；`archive` 整包内存读写、256 MiB 上限；单事务覆盖导入，保留设置与 Key，不自动备份；详见 [`history.md`](history.md)。
 - [中英双语与浅深主题](issues/18-i18n-theme.md): 官方 `gen_l10n` + ARB，全部客户端文案进 ARB，模型正文不翻译；语言已即时生效；主题三档存 `ui.themeMode`、首帧同步读取、浅深共用种子 `#4D6BFE`；详见 [`i18n-theme.md`](i18n-theme.md)。
-- [设置、语言与数据管理界面原型](issues/20-settings-prototype.md): 单页分组（账户 / 对话 / 外观 / 语言与位置 / 语音 / 数据管理）；语言与位置用行内弹层，位置按系统语言变形并保留「不指定」；导入走选择 → 覆盖确认 → 不可关闭进度 → 行内成败；语音只留静态态；详见 [`prototype/settings/`](../../prototype/settings/README.md)。
+- [设置、语言与数据管理界面原型](issues/20-settings-prototype.md): 单页分组（账户 / 对话 / 外观 / 语言与位置 / 语音 / 数据管理）；语言与位置用行内弹层，位置按系统语言变形并保留「不指定」；导入走选择 → 覆盖确认 → 不可关闭进度 → 行内成败；语音只留静态态；详见 [`prototype/settings/`](../../prototype/settings/README.md)。生产布局由票 10 改为三段导航 Sheet。
 - [语音输入与朗读行为规格](issues/21-speech-behavior.md): 语音输入 `idle/recording/transcribing`，ASR 请求错误折叠为一条；朗读 `idle/loading/playing`，首帧流式、同条停止、全局单通道；仅前台，v1 电平条；详见 [`speech.md`](speech.md)。
+- [shadcn_ui 界面规格](issues/10-ui-spec.md): 聊天页为根 + 分组会话抽屉（`Fleepseek` 文字标、底部设置）；系统设置为三段导航 Sheet；`#4D6BFE` 种子映射 `ShadColorScheme`；激活开关蓝色；来源胶囊 + 抽屉；完整 Markdown 不折叠；详见 [`ui.md`](ui.md)。
 
 ## Not yet specified
 
@@ -57,7 +58,7 @@
 
 ## Out of scope
 
-- 草稿、会话分组、会话置顶
+- 草稿、会话置顶
 - 桌面 / Web 平台适配
 - 应用商店签名与发布
 - 云同步、多账号、跨设备

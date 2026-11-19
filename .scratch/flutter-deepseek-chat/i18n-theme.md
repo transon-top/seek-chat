@@ -46,7 +46,7 @@
 | 模板拒答 / 图片审核文案 | 是 | 服务端模板在客户端有对应 ARB 文案，按模板 ID 选择 |
 | 模型正文、思考内容、搜索摘要 | 否 | 原样展示；语言由请求时的用户语言影响，不做后处理 |
 | 服务端错误 `message` | 否 | release 不展示；debug 仅显示原文，见架构 §5 |
-| 品牌名 `Open Chat`、`DeepSeek API Key` | 否 | 两种语言一致，保留字面量 |
+| 品牌显示名 `Fleepseek`（占位）、`DeepSeek API Key` | 否 | 两种语言一致，保留字面量 |
 | 星期、语言名、所在地名 | 是 | 按应用语言生成 `latest_reminder`（票 16） |
 
 ## 3. 文案清单结构
@@ -61,8 +61,10 @@ ARB 键按界面区域分组，新增文案必须同时补 `en` / `zh`：
 | `upload*` | 附件选择、大小 / 数量、上传状态、配额 | `uploadMaxFiles` |
 | `history*` | 导入导出、确认、错误码 | `historyImportConfirm` |
 | `newChat` / `rename*` / `delete*` / `noSessions` | 会话列表 | `deleteSessionConfirm` |
-| `regenerate` / `continueGeneration` / `chatEmpty` | 聊天操作与空态 | `chatEmpty` |
+| `session*` / `openSessionList` / `sessionActions` | 会话抽屉：分组、加载、语义 | `sessionGroupToday` |
+| `regenerate` / `continueGeneration` / `chatEmpty*` / `copy` / `edit` / `stopGeneration` / `generationStopped` | 聊天操作与空态 | `chatEmptyTitle` |
 | `deep*` / `search*` / `thinking` / `reading` / `stop*` / `find*` / `browse*` | 思考与搜索时间线 | `searchedPages` |
+| `webPages` / `sourceNumber` / `openSource` | 来源胶囊、角标与抽屉 | `webPages` |
 | `composerHint` / `send` / `stop` / `smartSearch` | 输入区 | `smartSearch` |
 
 规则：
