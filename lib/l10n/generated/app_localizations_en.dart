@@ -290,9 +290,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stopGeneration => 'Stop generating';
 
   @override
-  String get generationStopped => 'Generation stopped';
-
-  @override
   String get regenerate => 'Regenerate';
 
   @override
@@ -431,9 +428,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get composerPlaceholder => 'Enter a message';
-
-  @override
-  String get stop => 'Stop';
 
   @override
   String get send => 'Send';

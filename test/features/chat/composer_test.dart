@@ -142,6 +142,20 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('stop-button')), findsOneWidget);
     expect(find.byKey(const Key('send-button')), findsNothing);
+    // 停止与发送同底：主色圆 + 实心方块图标（照搬 chat-demo）。
+    final colors = ShadTheme.of(
+      tester.element(find.byKey(const Key('stop-button'))),
+    ).colorScheme;
+    final stopCircle = tester
+        .widgetList<Container>(
+          find.descendant(
+            of: find.byKey(const Key('stop-button')),
+            matching: find.byType(Container),
+          ),
+        )
+        .first;
+    expect((stopCircle.decoration! as BoxDecoration).color, colors.primary);
+    expect(find.byTooltip('停止生成'), findsOneWidget);
     final attach = tester.widget<ShadIconButton>(
       find.byKey(const Key('attach-button')),
     );

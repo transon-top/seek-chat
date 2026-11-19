@@ -33,7 +33,7 @@
 | 助手布局 | 通栏无气泡；用户消息右对齐浅灰气泡 |
 | 来源 | 回复底部「站点图标叠加 + N 个网页」胶囊；点击打开底部来源抽屉 |
 | 操作条 | v1 只保留复制、重新生成、朗读；点赞 / 点踩 / 分享不渲染 |
-| 顶部栏 | 菜单、居中的会话标题、新建对话；分享不渲染 |
+| 顶部栏 | 菜单、左对齐的会话标题、新建对话；分享不渲染 |
 | 输入区 | 大圆角容器、无阴影；附件、麦克风、发送 / 停止；朗读入口只在消息操作条 |
 | 超长消息 | 不做 8 行折叠；完整渲染 Markdown，单块超过 200000 字符按纯文本降级 |
 | 模型切换 | 不保留；v1 固定 `deepseek-flash` |
@@ -82,8 +82,8 @@
 
 从上到下：
 
-1. **顶部栏**：高 46；左侧菜单按钮（36×36，Lucide `menu`）；中间会话标题
-   （15sp / w500，单行省略；空标题显示「新对话」）；右侧新建对话按钮
+1. **顶部栏**：高 46；左侧菜单按钮（36×36，Lucide `menu`）；会话标题左对齐、
+   左右外边距 12（15sp / w500，单行省略；空标题显示「新对话」）；右侧新建对话按钮
    （36×36，Lucide `circlePlus`）。分享按钮不进入 v1。
 2. **消息区**：`ListView`，水平内边距 16，顶部 4，底部 8；消息间距 16；
    宽屏内容最大 760 并居中。
@@ -180,7 +180,7 @@
 | --- | --- | --- |
 | 应用壳 | `ShadApp` | 主题、locale、themeMode、Material 桥接 |
 | 主按钮 / 发送 | `ShadButton` | 高 34–44；主色底 |
-| 次按钮 / 描边 | `ShadButton.outline` | 停止生成、继续、重试、导入导出 |
+| 次按钮 / 描边 | `ShadButton.outline` | 继续、重试、导入导出 |
 | 危险按钮 | `ShadButton.destructive` | 清除 Key、删除全部 |
 | 文字按钮 | `ShadButton.link` | 编辑、展开全文（如需） |
 | 图标按钮 | `ShadIconButton.ghost` | 菜单、关闭、操作条；视觉 28–36，点击区 ≥44 |
@@ -225,8 +225,7 @@ Markdown / Mermaid 内容使用 `materialThemeBuilder` 提供的 Material 主题
 | `CitationBadge` | 自绘 `TextSpan` / `WidgetSpan` | `features/search/` | 行内引用角标 |
 | `BranchSwitcher` | 自绘 + `ShadIconButton` | `features/chat/` | 上一版 / 下一版 |
 | `MessageActions` | 自绘 + `ShadIconButton` | `features/chat/` | 复制 / 重新生成 / 朗读 |
-| `InlineStopButton` | `ShadButton.outline` | `features/chat/` | 流式中的行内停止 |
-| `StoppedNotice` | 自绘 + `ShadButton.outline` | `features/chat/` | 已停止 + 继续生成 |
+| `ContinueButton` | `ShadButton.outline` | `features/chat/` | 停止 / 超长后的继续生成 |
 | `ReplyError` | 自绘红字行（同 chat-demo `notice`） | `features/chat/` | 请求错误 + 重试 |
 | `AttachmentStrip` | 自绘 | `features/chat/` | 草稿附件条 |
 | `AttachmentChip` | 自绘 | `features/chat/` | 图片缩略图 / 文档卡 |
@@ -485,8 +484,8 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 空会话 | 空态标题 | 可输入；发送按条件启用 | 标题「新对话」 | 发送首条消息时创建会话 |
 | 加载会话 | 骨架 + 进度 + 「正在加载会话…」 | 禁用输入与发送 | 保留标题 | 加载完成或错误 |
 | 就绪 | 可见路径消息 | 正常 | 当前标题 | 可发送 / 附件 / 语音 |
-| 生成中 | 流式正文 / 思考 / 工具行 / 光标 | 发送变停止；附件与语音禁用；文本与开关可用 | 标题不变 | 停止、行内停止 |
-| 已停止 | 已有正文 + 「已停止生成」 | 正常 | 标题不变 | 继续生成（满足条件时） |
+| 生成中 | 流式正文 / 思考 / 工具行 / 光标 | 发送变停止；附件与语音禁用；文本与开关可用 | 标题不变 | 输入区停止 |
+| 已停止 | 已有正文 | 正常 | 标题不变 | 继续生成（满足条件时） |
 | 错误 | 已收正文（如有）+ 错误块 | 正常 | 标题不变 | 重试（仅上传错误）/ 重新生成 |
 | 拒答 | 拒答正文 | 正常 | 标题不变 | 无续写 / 无重新生成 / 无来源 |
 | 录音中 | 不变 | 语音按钮录音态；发送与附件禁用 | 标题不变 | 点击语音结束并转写 |
@@ -507,7 +506,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 无内容 | 禁用（主色 35%） | 可用 | 可用 | 可用 | 可用 |
 | 有文本 / 有附件 | 可用（主色） | 可用 | 可用 | 可用 | 可用 |
 | 附件上传中 | 禁用 | 可用（继续添加） | 可用 | 可用 | 可用 |
-| 生成中 | 变为停止（`foreground` 圆形） | 禁用 | 禁用 | 可用 | 可用 |
+| 生成中 | 变为停止（主色圆形 + 实心方块图标，同发送底） | 禁用 | 禁用 | 可用 | 可用 |
 | 录音中 | 禁用 | 禁用 | 录音态（可点击结束） | 可用 | 可用 |
 | 转写中 | 禁用 | 禁用 | 加载态（点击取消） | 可用 | 可用 |
 | 朗读中 | 可用（发送会先停朗读） | 可用 | 禁用 | 可用 | 可用 |
@@ -524,7 +523,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 回复状态 | 思考 / 时间线 | 正文 | 光标 | 分支 / 操作 | 朗读 | 继续 | 重新生成 |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `pending` | 有思考开关时显示标题「正在思考」 | 无 | 显示 | 隐藏 | 禁用 | 否 | 否 |
-| `streaming` | 实时更新 | 流式 | 显示 | 行内停止 | 禁用 | 否 | 否 |
+| `streaming` | 实时更新 | 流式 | 显示 | 隐藏 | 禁用 | 否 | 否 |
 | `done` | 可折叠 | 完整 | 无 | 显示 | 可用（非拒答且有正文） | 仅 `max_tokens` 且满足续写资格 | 可用 |
 | `stopped` | 保留 | 已收内容 | 无 | 显示 | 可用 | 满足续写资格 | 可用 |
 | `error` | 保留 | 已收内容 + 错误 | 无 | 显示 | 有正文时可用 | 否 | 可用 |
@@ -534,7 +533,11 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
   与首行顶端对齐，无标题无边框；`error_text.dart` 的本地化文案；仅 `upload`
   且 `retryable` 行内显示「重试」，其余通过「重新生成」重发。
 - 拒答：正文样式，不用红色、不显示标题；隐藏时间线、来源胶囊与继续 / 重新生成。
-- 停止后：显示「已停止生成」+「继续生成」描边按钮；继续后回到 `pending`。
+- 停止后：无额外提示行；「继续生成」描边按钮在操作条内（满足条件时），
+  图标靠左、继续生成靠右；继续后回到 `pending`。停止入口只在输入区，
+  内容区不放停止按钮（同 chat-demo）。
+- 操作条图标顺序：复制 → 朗读 → 重新生成；继续生成高 32、内边距 14、
+  14/22 常规字重；透明底、前景同正文、1px `border` 描边（同 chat-demo outlined）。
 - 分支切换器覆盖 user 与 assistant 消息；有兄弟版本时显示，格式 `当前 / 总数`，
   左右按钮 26×26；生成中禁用；切换会停止朗读。
 
@@ -759,8 +762,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | `chatEmptyTitle` | 今天有什么可以帮到你？ | What can I help you with? | 空态标题 |
 | `copy` | 复制 | Copy | 操作条 / 语义 |
 | `edit` | 编辑 | Edit | 用户消息编辑 |
-| `stopGeneration` | 停止生成 | Stop generating | 行内停止 |
-| `generationStopped` | 已停止生成 | Generation stopped | 停止提示 |
+| `stopGeneration` | 停止生成 | Stop generating | 输入区停止按钮 |
 | `thinkingForSeconds` | 思考中… {seconds} 秒 | Thinking… {seconds}s | 思考计时 |
 | `webPages` | {count} 个网页 | {count, plural, =1{1 page} other{{count} pages}} | 来源胶囊 |
 | `sourceNumber` | 来源 {index} | Source {index} | 角标语义 |

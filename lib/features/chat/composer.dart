@@ -339,7 +339,8 @@ class ComposerToggle extends StatelessWidget {
   }
 }
 
-/// 发送 / 停止圆形按钮：可用为主色，禁用为主色 35%，生成中换成停止（ui.md §5.2）。
+/// 发送 / 停止圆形按钮：可用为主色，禁用为主色 35%，生成中同底换成实心方块停止图标
+/// （照搬 chat-demo，ui.md §5.2）。
 class SendButton extends StatelessWidget {
   const SendButton({
     super.key,
@@ -360,24 +361,29 @@ class SendButton extends StatelessWidget {
     final colors = ShadTheme.of(context).colorScheme;
     if (busy) {
       return Tooltip(
-        message: l10n.stop,
+        message: l10n.stopGeneration,
         child: Semantics(
           button: true,
-          label: l10n.stop,
+          label: l10n.stopGeneration,
           child: GestureDetector(
             key: const Key('stop-button'),
             onTap: onStop,
             child: Container(
               width: 34,
               height: 34,
+              alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: colors.foreground,
+                color: colors.primary,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                LucideIcons.square,
-                size: 14,
-                color: colors.background,
+              // chat-demo IconStopFill16：16 画布内 12×12 实心圆角方块。
+              child: Container(
+                width: 12,
+                height: 12,
+                decoration: BoxDecoration(
+                  color: colors.primaryForeground,
+                  borderRadius: BorderRadius.circular(2.9),
+                ),
               ),
             ),
           ),

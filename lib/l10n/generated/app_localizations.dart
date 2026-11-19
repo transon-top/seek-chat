@@ -603,12 +603,6 @@ abstract class AppLocalizations {
   /// **'Stop generating'**
   String get stopGeneration;
 
-  /// No description provided for @generationStopped.
-  ///
-  /// In en, this message translates to:
-  /// **'Generation stopped'**
-  String get generationStopped;
-
   /// No description provided for @regenerate.
   ///
   /// In en, this message translates to:
@@ -812,12 +806,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Enter a message'**
   String get composerPlaceholder;
-
-  /// No description provided for @stop.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop'**
-  String get stop;
 
   /// No description provided for @send.
   ///

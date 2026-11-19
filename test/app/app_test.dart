@@ -708,7 +708,7 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 10));
 
-    await tester.tap(find.byTooltip('停止'));
+    await tester.tap(find.byTooltip('停止生成'));
     await body.close();
     await tester.pumpAndSettle();
 
