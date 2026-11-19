@@ -39,7 +39,7 @@ final class UploadTask {
   final LocalMessage? error;
   final bool retryable;
 
-  /// 配额类失败的额外提示，由界面转成 SnackBar。
+  /// 配额类失败的额外提示，由界面转成 Toast。
   final LocalMessage? quota;
 }
 

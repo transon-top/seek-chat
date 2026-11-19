@@ -160,6 +160,7 @@
   "pagesCount": "{count} 个网页",
   "searchResults": "搜索结果",
   "composerHint": "输入消息",
+  "composerPlaceholder": "给 Fleepseek 发送消息",
   "stop": "停止",
   "send": "发送",
   "smartSearch": "智能搜索",

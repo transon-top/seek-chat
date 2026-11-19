@@ -18,6 +18,14 @@ import 'speech_api.dart';
 /// 全局音频状态机的可见阶段（`speech.md` §3、§4）。
 enum SpeechPhase { idle, recording, transcribing, loading, playing }
 
+extension SpeechPhaseFlags on SpeechPhase {
+  bool get voiceBusy =>
+      this == SpeechPhase.recording || this == SpeechPhase.transcribing;
+
+  bool get reading =>
+      this == SpeechPhase.loading || this == SpeechPhase.playing;
+}
+
 /// 语音与朗读的共享状态；失败字段只用于提示，不改变按钮外观。
 class SpeechState {
   const SpeechState({
@@ -46,14 +54,12 @@ class SpeechState {
   final VoiceInputFailure? voiceFailure;
   final TtsFailure? ttsFailure;
 
-  /// 每次新提示递增；界面据此只展示一次 SnackBar。
+  /// 每次新提示递增；界面据此只展示一次 Toast。
   final int noticeId;
 
-  bool get voiceBusy =>
-      phase == SpeechPhase.recording || phase == SpeechPhase.transcribing;
+  bool get voiceBusy => phase.voiceBusy;
 
-  bool get reading =>
-      phase == SpeechPhase.loading || phase == SpeechPhase.playing;
+  bool get reading => phase.reading;
 
   SpeechState copyWith({
     SpeechPhase? phase,

@@ -681,6 +681,12 @@ abstract class AppLocalizations {
   /// **'Message'**
   String get composerHint;
 
+  /// No description provided for @composerPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Message Fleepseek'**
+  String get composerPlaceholder;
+
   /// No description provided for @stop.
   ///
   /// In en, this message translates to:

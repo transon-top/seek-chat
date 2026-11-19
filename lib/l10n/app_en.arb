@@ -202,6 +202,7 @@
   },
   "searchResults": "Search results",
   "composerHint": "Message",
+  "composerPlaceholder": "Message Fleepseek",
   "stop": "Stop",
   "send": "Send",
   "smartSearch": "Smart search",

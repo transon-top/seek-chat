@@ -6,6 +6,7 @@ import 'package:material_ui/material_ui.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
 import '../../shared/models/types.dart';
+import '../../shared/toast.dart';
 import 'history_files.dart';
 import 'history_service.dart';
 import 'history_zip.dart';
@@ -30,7 +31,7 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     try {
       bytes = await ref.read(historyFilesProvider).pickZip();
     } on Object {
-      if (mounted) _showMessage(l10n.historyImportFailed);
+      if (mounted) _showMessage(l10n.historyImportFailed, destructive: true);
       return;
     }
     if (!mounted || bytes == null) return;
@@ -68,11 +69,11 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     } on HistoryException catch (error) {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(_errorText(l10n, error.code));
+      _showMessage(_errorText(l10n, error.code), destructive: true);
     } on Object {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(l10n.historyImportFailed);
+      _showMessage(l10n.historyImportFailed, destructive: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -86,23 +87,25 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
       final exported = await ref
           .read(historyServiceProvider)
           .exportArchive(notice: (reply) => _notice(l10n, reply));
-      final saved = await ref.read(historyFilesProvider).saveZip(
-            fileName: exported.fileName,
-            bytes: exported.bytes,
-          );
+      final saved = await ref
+          .read(historyFilesProvider)
+          .saveZip(fileName: exported.fileName, bytes: exported.bytes);
       if (!mounted) return;
       _closeProgress();
       if (saved) _showMessage(l10n.historyExported);
     } on HistoryException catch (error) {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(error.code == HistoryError.tooLarge
-          ? l10n.historyErrorExportTooLarge
-          : _errorText(l10n, error.code));
+      _showMessage(
+        error.code == HistoryError.tooLarge
+            ? l10n.historyErrorExportTooLarge
+            : _errorText(l10n, error.code),
+        destructive: true,
+      );
     } on Object {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(l10n.historyExportFailed);
+      _showMessage(l10n.historyExportFailed, destructive: true);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -157,9 +160,8 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     Navigator.of(context, rootNavigator: true).pop();
   }
 
-  void _showMessage(String message) {
-    ScaffoldMessenger.of(context)
-        .showSnackBar(SnackBar(content: Text(message)));
+  void _showMessage(String message, {bool destructive = false}) {
+    showAppToast(context, message, destructive: destructive);
   }
 
   @override

@@ -361,6 +361,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composerHint => 'Message';
 
   @override
+  String get composerPlaceholder => 'Message Fleepseek';
+
+  @override
   String get stop => 'Stop';
 
   @override

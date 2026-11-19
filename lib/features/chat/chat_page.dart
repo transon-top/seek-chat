@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import 'attachment_rules.dart';
@@ -15,13 +16,13 @@ import '../../shared/models/types.dart';
 import '../../shared/prefs/chat_options_store.dart';
 import '../../shared/providers.dart';
 import '../../shared/speech/permissions.dart';
+import '../../shared/toast.dart';
 import 'speech/read_aloud_button.dart';
-import 'speech/recording_status.dart';
 import 'speech/speech_controller.dart';
-import 'speech/voice_button.dart';
 import 'upload_tasks.dart';
 import 'attachments_view.dart';
 import 'chat_controller.dart';
+import 'composer.dart';
 import 'markdown_view.dart';
 import 'reply_view.dart';
 
@@ -138,14 +139,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     if (text.trim().isEmpty && _attachments.isEmpty) return;
     if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
     final l10n = AppLocalizations.of(context)!;
+    final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
+    if (apiKey == null || apiKey.isEmpty) {
+      if (mounted) _showToast(l10n.errorNoApiKey);
+      return;
+    }
     var sessionId = _sessionId;
     var createdHere = false;
     if (sessionId == null) {
-      final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
-      if (apiKey == null || apiKey.isEmpty) {
-        if (mounted) _showSnackBar(l10n.errorNoApiKey);
-        return;
-      }
       final session = await ref.read(chatRepositoryProvider).createSession();
       if (!mounted) return;
       _sessionId = session.id;
@@ -193,28 +194,31 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final l10n = AppLocalizations.of(context)!;
     final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
     if (apiKey == null || apiKey.isEmpty) {
-      _showSnackBar(l10n.errorNoApiKey);
+      _showToast(l10n.errorNoApiKey);
       return;
     }
     if (!mounted) return;
-    final source = await showModalBottomSheet<_AttachmentSource>(
+    final source = await showShadSheet<_AttachmentSource>(
       context: context,
-      showDragHandle: true,
       builder: (context) => SafeArea(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ListTile(
-              leading: const Icon(Icons.photo_library_outlined),
-              title: Text(l10n.uploadFromPhotos),
-              onTap: () => Navigator.of(context).pop(_AttachmentSource.photos),
-            ),
-            ListTile(
-              leading: const Icon(Icons.attach_file),
-              title: Text(l10n.uploadFromFiles),
-              onTap: () => Navigator.of(context).pop(_AttachmentSource.files),
-            ),
-          ],
+        child: Padding(
+          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _AttachmentSourceRow(
+                icon: LucideIcons.image,
+                label: l10n.uploadFromPhotos,
+                onTap: () =>
+                    Navigator.of(context).pop(_AttachmentSource.photos),
+              ),
+              _AttachmentSourceRow(
+                icon: LucideIcons.paperclip,
+                label: l10n.uploadFromFiles,
+                onTap: () => Navigator.of(context).pop(_AttachmentSource.files),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -228,7 +232,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             : FileType.any,
       );
     } on Object {
-      if (mounted) _showSnackBar(l10n.uploadFileStatusFailed);
+      if (mounted) _showToast(l10n.uploadFileStatusFailed);
       return;
     }
     if (files.isEmpty || !mounted) return;
@@ -259,7 +263,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       currentCount: _attachments.length,
     );
     if (error != null) {
-      _showSnackBar(localMessageText(l10n, error));
+      _showToast(localMessageText(l10n, error));
       return;
     }
 
@@ -296,18 +300,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
-  void _showSnackBar(
+  void _showToast(
     String message, {
     String? actionLabel,
     VoidCallback? onAction,
   }) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        action: actionLabel != null && onAction != null
-            ? SnackBarAction(label: actionLabel, onPressed: onAction)
-            : null,
-      ),
+    showAppToast(
+      context,
+      message,
+      actionLabel: actionLabel,
+      onAction: onAction,
     );
   }
 
@@ -345,20 +347,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _controller.stop();
   }
 
-  /// 配额类上传失败：原因用 SnackBar 说明，并给出删除旧文件的文档入口。
-  void _showQuotaSnackBar(LocalMessage quota) {
+  /// 配额类上传失败：原因用 Toast 说明，并给出删除旧文件的文档入口。
+  void _showQuotaToast(LocalMessage quota) {
     final l10n = AppLocalizations.of(context)!;
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(localMessageText(l10n, quota)),
-        action: SnackBarAction(
-          label: l10n.uploadDeleteFiles,
-          onPressed: () => openExternalLink(
-            'https://api-docs.deepseek.com/api/delete-file',
-            '',
-          ),
-        ),
-      ),
+    _showToast(
+      localMessageText(l10n, quota),
+      actionLabel: l10n.uploadDeleteFiles,
+      onAction: () =>
+          openExternalLink('https://api-docs.deepseek.com/api/delete-file', ''),
     );
   }
 
@@ -399,7 +395,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       final voice = next.voiceFailure;
       if (voice != null) {
         final needsSettings = voice == VoiceInputFailure.permissionDenied;
-        _showSnackBar(
+        _showToast(
           voiceInputErrorText(strings, voice),
           actionLabel: needsSettings
               ? strings.settingsOpenSystemSettings
@@ -411,13 +407,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         return;
       }
       final tts = next.ttsFailure;
-      if (tts != null) _showSnackBar(ttsErrorText(strings, tts));
+      if (tts != null) _showToast(ttsErrorText(strings, tts));
     });
     ref.listen<Map<String, UploadTask>>(uploadTasksProvider, (previous, next) {
       for (final entry in next.entries) {
         final quota = entry.value.quota;
         if (quota == null || previous?[entry.key]?.quota != null) continue;
-        _showQuotaSnackBar(quota);
+        _showQuotaToast(quota);
       }
     });
     return Scaffold(
@@ -482,11 +478,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     },
                   ),
           ),
-          _Composer(
+          Composer(
             input: _input,
             inputFocus: _inputFocus,
             busy: state.busy,
-            speech: speech,
+            phase: speech.phase,
             thinking: _thinking,
             search: _search,
             attachments: _attachments,
@@ -1609,146 +1605,43 @@ String _displayDate(String? value) {
   return '${date.year}/${two(date.month)}/${two(date.day)}';
 }
 
-class _Composer extends StatelessWidget {
-  const _Composer({
-    required this.input,
-    required this.inputFocus,
-    required this.busy,
-    required this.speech,
-    required this.thinking,
-    required this.search,
-    required this.attachments,
-    required this.tasks,
-    required this.onThinkingChanged,
-    required this.onSearchChanged,
-    required this.onAddAttachment,
-    required this.onRetryAttachment,
-    required this.onRemoveAttachment,
-    required this.onSend,
-    required this.onStop,
-    required this.onVoice,
+enum _AttachmentSource { photos, files }
+
+/// 附件来源行：图标 + 文案，整行可点（ui.md §1.2 附件来源）。
+class _AttachmentSourceRow extends StatelessWidget {
+  const _AttachmentSourceRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
   });
 
-  final TextEditingController input;
-  final FocusNode inputFocus;
-  final bool busy;
-  final _SpeechView speech;
-  final bool thinking;
-  final bool search;
-  final List<DraftAttachment> attachments;
-  final Map<String, UploadTask> tasks;
-  final ValueChanged<bool> onThinkingChanged;
-  final ValueChanged<bool> onSearchChanged;
-  final VoidCallback onAddAttachment;
-  final ValueChanged<String> onRetryAttachment;
-  final ValueChanged<String> onRemoveAttachment;
-  final VoidCallback onSend;
-  final VoidCallback onStop;
-  final VoidCallback onVoice;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final ready = allUploadsDone(attachments, tasks);
-    final voiceBusy = speech.voiceBusy;
-    return SafeArea(
-      top: false,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(12, 4, 12, 8),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            const _SpeechStatus(),
-            DraftAttachmentStrip(
-              attachments: attachments,
-              tasks: tasks,
-              onRetry: onRetryAttachment,
-              onRemove: onRemoveAttachment,
-            ),
-            Row(
-              children: [
-                FilterChip(
-                  label: Text(l10n.deepThinking),
-                  selected: thinking,
-                  onSelected: onThinkingChanged,
-                ),
-                const SizedBox(width: 8),
-                FilterChip(
-                  label: Text(l10n.smartSearch),
-                  selected: search,
-                  onSelected: onSearchChanged,
-                ),
-              ],
-            ),
-            const SizedBox(height: 4),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                IconButton(
-                  onPressed: busy || voiceBusy ? null : onAddAttachment,
-                  icon: const Icon(Icons.attach_file),
-                  tooltip: l10n.uploadFile,
-                ),
-                Expanded(
-                  child: TextField(
-                    controller: input,
-                    focusNode: inputFocus,
-                    minLines: 1,
-                    maxLines: 5,
-                    decoration: InputDecoration(
-                      hintText: l10n.composerHint,
-                      border: const OutlineInputBorder(),
-                    ),
-                  ),
-                ),
-                VoiceButton(phase: speech.phase, onPressed: onVoice),
-                const SizedBox(width: 4),
-                ValueListenableBuilder<TextEditingValue>(
-                  valueListenable: input,
-                  builder: (context, value, child) {
-                    final canSend =
-                        !busy &&
-                        !voiceBusy &&
-                        ready &&
-                        (value.text.trim().isNotEmpty ||
-                            attachments.isNotEmpty);
-                    return IconButton.filled(
-                      onPressed: busy ? onStop : (canSend ? onSend : null),
-                      icon: Icon(busy ? Icons.stop : Icons.send),
-                      tooltip: busy ? l10n.stop : l10n.send,
-                    );
-                  },
-                ),
-              ],
-            ),
-          ],
+    final colors = ShadTheme.of(context).colorScheme;
+    return Semantics(
+      button: true,
+      label: label,
+      child: GestureDetector(
+        onTap: onTap,
+        behavior: HitTestBehavior.opaque,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
+          child: Row(
+            children: [
+              Icon(icon, size: 18, color: colors.mutedForeground),
+              const SizedBox(width: 12),
+              Text(
+                label,
+                style: TextStyle(fontSize: 15, color: colors.foreground),
+              ),
+            ],
+          ),
         ),
       ),
-    );
-  }
-}
-
-enum _AttachmentSource { photos, files }
-
-/// 录音计时与电平只重建这一行，不触发整页重建（`speech.md` §7）。
-class _SpeechStatus extends ConsumerWidget {
-  const _SpeechStatus();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(
-      speechControllerProvider.select(
-        (state) => (
-          phase: state.phase,
-          seconds: state.recordingSeconds,
-          level: state.level,
-        ),
-      ),
-    );
-    return RecordingStatus(
-      phase: status.phase,
-      seconds: status.seconds,
-      level: status.level,
     );
   }
 }
