@@ -242,12 +242,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get delete => '删除';
 
   @override
-  String get deleteSession => '删除会话';
+  String get deleteSession => '永久删除对话';
 
   @override
-  String deleteSessionConfirm(String title) {
-    return '删除「$title」？';
-  }
+  String get deleteSessionDescription => '删除后，该对话及其中上传的文件将不可恢复。确认删除吗？';
 
   @override
   String get save => '保存';

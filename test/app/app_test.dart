@@ -1,8 +1,8 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:typed_data';
 
 import 'package:drift/native.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
@@ -366,9 +366,7 @@ void main() {
     await repository.addUserMessage(sessionId: old.id, text: 'old question');
 
     final gated = _GatedRepository(db);
-    await tester.pumpWidget(
-      appWith(apiKey: 'sk-good', chatRepository: gated),
-    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', chatRepository: gated));
     await tester.pumpAndSettle();
     expect(find.text('Old'), findsOneWidget);
 
@@ -1148,10 +1146,16 @@ void main() {
     await tester.tap(find.byKey(ValueKey('session-menu-${first.id}')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('重命名'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byKey(const Key('rename-input')), 'Renamed');
-    await tester.tap(find.text('保存'));
-    await tester.pumpAndSettle();
+    // 行内输入框自动聚焦后光标定时闪烁，pumpAndSettle 永不结束。
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+    await tester.enterText(
+      find.byKey(ValueKey('session-rename-${first.id}')),
+      'Renamed',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
     expect(
       find.descendant(of: find.byType(Drawer), matching: find.text('Renamed')),
       findsOneWidget,

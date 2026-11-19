@@ -1,9 +1,11 @@
 import 'dart:math' as math;
 
+import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../app/theme.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/logging.dart';
 import '../../shared/models/types.dart';
@@ -43,7 +45,30 @@ List<(SessionGroup, List<SessionSummary>)> groupSessions(
   ];
 }
 
+AppSidebarColors _sidebarColorsOf(BuildContext context) =>
+    Theme.of(context).brightness == Brightness.dark
+    ? AppSidebarColors.dark
+    : AppSidebarColors.light;
+
+const _newChatLightShadows = [
+  BoxShadow(color: Color(0x0A4868B2), offset: Offset(0, -2), blurRadius: 2),
+  BoxShadow(color: Color(0x176A6F75), offset: Offset(0, 2), blurRadius: 2),
+  BoxShadow(color: Color(0x144868B2), offset: Offset(0, 1), blurRadius: 2),
+];
+
+const _newChatDarkShadows = [
+  BoxShadow(color: Color(0x146A6F75), offset: Offset(0, 2), blurRadius: 4),
+];
+
+const _menuShadows = [
+  BoxShadow(color: Color(0x33000000), blurRadius: 1),
+  BoxShadow(color: Color(0x05000000), blurRadius: 4),
+  BoxShadow(color: Color(0x14000000), offset: Offset(0, 12), blurRadius: 32),
+];
+
 /// 左侧会话抽屉：分组列表、当前会话高亮、新建、重命名、删除与设置入口。
+///
+/// 外观照搬 chat-demo 侧边栏的移动端形态（ui.md §1.4）。
 class SessionDrawer extends ConsumerWidget {
   const SessionDrawer({
     super.key,
@@ -67,153 +92,163 @@ class SessionDrawer extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
+    final colors = _sidebarColorsOf(context);
     final sessions = ref.watch(sessionsProvider);
-    final width = math.min(320.0, MediaQuery.sizeOf(context).width * 0.82);
+    final width = math.min(300.0, MediaQuery.sizeOf(context).width - 48);
     return Drawer(
       width: width,
       elevation: 0,
-      backgroundColor: colors.background,
+      backgroundColor: colors.fill,
       shape: const RoundedRectangleBorder(),
-      child: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
-          child: Column(
-            children: [
-              SizedBox(
-                height: 48,
-                child: Row(
-                  children: [
-                    const SizedBox(width: 4),
-                    Text(
-                      'Fleepseek',
-                      style: TextStyle(
-                        fontSize: 22,
-                        height: 28 / 22,
-                        fontWeight: FontWeight.w700,
-                        color: colors.primary,
-                      ),
-                    ),
-                    const Spacer(),
-                    Semantics(
-                      button: true,
-                      label: l10n.close,
-                      child: ShadIconButton.ghost(
-                        key: const Key('drawer-close'),
-                        onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(LucideIcons.panelLeftClose),
-                        iconSize: 18,
-                        width: 44,
-                        height: 44,
-                        padding: EdgeInsets.zero,
-                        foregroundColor: colors.foreground,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 8),
-              _NewChatButton(onPressed: onNewChat),
-              Expanded(
-                child: sessions.when(
-                  data: (items) => items.isEmpty
-                      ? Center(
-                          child: Text(
-                            l10n.noSessions,
-                            style: TextStyle(
-                              fontSize: 13,
-                              color: colors.mutedForeground,
-                            ),
-                          ),
-                        )
-                      : _SessionList(
-                          sessions: items,
-                          currentSessionId: currentSessionId,
-                          onOpen: onOpen,
-                          onRename: (session, title) => ref
-                              .read(chatRepositoryProvider)
-                              .renameSession(session.id, title.trim()),
-                          onDelete: (session) => _delete(context, ref, session),
-                        ),
-                  loading: () => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        SizedBox(
-                          width: 80,
-                          child: ShadProgress(
-                            minHeight: 2,
-                            backgroundColor: colors.muted,
-                            color: colors.primary,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          l10n.sessionLoading,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  error: (error, stackTrace) => Center(
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          l10n.sessionsLoadFailed,
-                          style: TextStyle(
-                            fontSize: 13,
-                            color: colors.mutedForeground,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        ShadButton.outline(
-                          onPressed: () => ref.invalidate(sessionsProvider),
-                          child: Text(l10n.retry),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              InkWell(
-                key: const Key('drawer-settings'),
-                onTap: () {
-                  Navigator.of(context).pop();
-                  onOpenSettings();
-                },
-                child: SizedBox(
-                  height: 52,
+      child: DecoratedBox(
+        decoration: BoxDecoration(
+          border: Border(right: BorderSide(color: colors.border)),
+        ),
+        child: SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+            child: Column(
+              children: [
+                SizedBox(
+                  height: 48,
                   child: Row(
                     children: [
-                      const SizedBox(width: 4),
-                      Icon(
-                        LucideIcons.settings,
-                        size: 18,
-                        color: colors.foreground,
-                      ),
                       const SizedBox(width: 8),
                       Text(
-                        l10n.settingsEntry,
+                        'Fleepseek',
                         style: TextStyle(
-                          fontSize: 15,
-                          color: colors.foreground,
+                          fontSize: 20,
+                          height: 22 / 20,
+                          fontWeight: FontWeight.w600,
+                          color: colors.brand,
                         ),
                       ),
                       const Spacer(),
-                      Icon(
-                        LucideIcons.chevronRight,
-                        size: 16,
-                        color: colors.mutedForeground,
+                      Semantics(
+                        button: true,
+                        label: l10n.close,
+                        child: ShadIconButton.ghost(
+                          key: const Key('drawer-close'),
+                          onPressed: () => Navigator.of(context).pop(),
+                          icon: const Icon(LucideIcons.panelLeft),
+                          iconSize: 16,
+                          width: 44,
+                          height: 44,
+                          padding: EdgeInsets.zero,
+                          foregroundColor: colors.labelPrimary,
+                        ),
                       ),
                     ],
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 16),
+                _NewChatButton(onPressed: onNewChat),
+                Expanded(
+                  child: sessions.when(
+                    data: (items) => items.isEmpty
+                        ? Center(
+                            child: Text(
+                              l10n.noSessions,
+                              style: TextStyle(
+                                fontSize: 14,
+                                color: colors.labelTertiary,
+                              ),
+                            ),
+                          )
+                        : _SessionList(
+                            sessions: items,
+                            currentSessionId: currentSessionId,
+                            onOpen: onOpen,
+                            onRename: (session, title) => ref
+                                .read(chatRepositoryProvider)
+                                .renameSession(session.id, title.trim()),
+                            onDelete: (session) =>
+                                _delete(context, ref, session),
+                          ),
+                    loading: () => Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          SizedBox(
+                            width: 80,
+                            child: ShadProgress(
+                              minHeight: 2,
+                              backgroundColor: colors.border,
+                              color: colors.brand,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            l10n.sessionLoading,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colors.labelTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    error: (error, stackTrace) => Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            l10n.sessionsLoadFailed,
+                            style: TextStyle(
+                              fontSize: 14,
+                              color: colors.labelTertiary,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          ShadButton.outline(
+                            onPressed: () => ref.invalidate(sessionsProvider),
+                            child: Text(l10n.retry),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      key: const Key('drawer-settings'),
+                      borderRadius: BorderRadius.circular(12),
+                      onTap: () {
+                        Navigator.of(context).pop();
+                        onOpenSettings();
+                      },
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 9,
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              LucideIcons.settings,
+                              size: 20,
+                              color: colors.labelPrimary,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              l10n.settingsEntry,
+                              style: TextStyle(
+                                fontSize: 16,
+                                height: 22 / 16,
+                                color: colors.labelPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -227,12 +262,11 @@ class SessionDrawer extends ConsumerWidget {
   ) async {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
-    final title = session.title.isEmpty ? l10n.untitledChat : session.title;
     final confirmed = await showShadDialog<bool>(
       context: context,
       builder: (context) => ShadDialog.alert(
         title: Text(l10n.deleteSession),
-        description: Text(l10n.deleteSessionConfirm(title)),
+        description: Text(l10n.deleteSessionDescription),
         actions: [
           ShadButton.outline(
             onPressed: () => Navigator.of(context).pop(false),
@@ -271,34 +305,59 @@ class _NewChatButton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
+    final colors = _sidebarColorsOf(context);
+    final dark = Theme.of(context).brightness == Brightness.dark;
     return InkWell(
       key: const Key('drawer-new-chat'),
-      borderRadius: BorderRadius.circular(999),
+      borderRadius: BorderRadius.circular(100),
       onTap: () {
         Navigator.of(context).pop();
         onPressed();
       },
-      child: Container(
-        height: 44,
-        decoration: BoxDecoration(
-          color: colors.card,
-          border: Border.all(color: colors.border),
-          borderRadius: BorderRadius.circular(999),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(100),
+        child: Stack(
           children: [
-            Icon(LucideIcons.circlePlus, size: 18, color: colors.foreground),
-            const SizedBox(width: 8),
-            Text(
-              l10n.newChat,
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w500,
-                color: colors.foreground,
+            Container(
+              height: 40,
+              width: double.infinity,
+              decoration: BoxDecoration(
+                color: colors.elevatedFill,
+                borderRadius: BorderRadius.circular(100),
+                border: dark
+                    ? null
+                    : Border.all(color: const Color(0x00679EFE)),
+                boxShadow: dark ? _newChatDarkShadows : _newChatLightShadows,
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    LucideIcons.messageCirclePlus,
+                    size: 16,
+                    color: colors.labelPrimary,
+                  ),
+                  const SizedBox(width: 6),
+                  Text(
+                    l10n.newChat,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 22 / 14,
+                      fontWeight: FontWeight.w500,
+                      color: colors.labelPrimary,
+                    ),
+                  ),
+                ],
               ),
             ),
+            // 深色的 inset 顶部高光：Flutter 无 inset 阴影，用 1px 高亮条近似。
+            if (dark)
+              Positioned(
+                top: 0,
+                left: 0,
+                right: 0,
+                child: Container(height: 1, color: const Color(0x1AFFFFFF)),
+              ),
           ],
         ),
       ),
@@ -324,36 +383,94 @@ class _SessionList extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
+    final colors = _sidebarColorsOf(context);
     final groups = groupSessions(sessions, DateTime.now());
-    return ListView(
-      padding: const EdgeInsets.only(bottom: 8),
-      children: [
-        for (final (group, items) in groups) ...[
-          Padding(
-            padding: const EdgeInsets.only(top: 24, bottom: 8),
-            child: Text(switch (group) {
-              SessionGroup.today => l10n.sessionGroupToday,
-              SessionGroup.yesterday => l10n.sessionGroupYesterday,
-              SessionGroup.last7Days => l10n.sessionGroupLast7Days,
-              SessionGroup.earlier => l10n.sessionGroupEarlier,
-            }, style: TextStyle(fontSize: 13, color: colors.mutedForeground)),
-          ),
-          for (final session in items)
-            _SessionRow(
-              session: session,
-              current: session.id == currentSessionId,
-              onOpen: () {
-                Navigator.of(context).pop();
-                onOpen(session.id);
-              },
-              onRename: (title) => onRename(session, title),
-              onDelete: () => onDelete(session),
+    return Padding(
+      padding: const EdgeInsets.only(top: 16),
+      child: CustomScrollView(
+        slivers: [
+          for (final (index, (group, items)) in groups.indexed) ...[
+            if (index > 0)
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // 与 chat-demo 一致：每个分组标题上方留 4。
+            const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _GroupHeaderDelegate(
+                colors: colors,
+                label: switch (group) {
+                  SessionGroup.today => l10n.sessionGroupToday,
+                  SessionGroup.yesterday => l10n.sessionGroupYesterday,
+                  SessionGroup.last7Days => l10n.sessionGroupLast7Days,
+                  SessionGroup.earlier => l10n.sessionGroupEarlier,
+                },
+              ),
             ),
+            SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final session = items[index];
+                return _SessionRow(
+                  session: session,
+                  current: session.id == currentSessionId,
+                  onOpen: () {
+                    Navigator.of(context).pop();
+                    onOpen(session.id);
+                  },
+                  onRename: (title) => onRename(session, title),
+                  onDelete: () => onDelete(session),
+                );
+              },
+            ),
+          ],
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
         ],
-      ],
+      ),
     );
   }
+}
+
+/// 分组标题吸顶；高度 = 上 4 + 行高 22 + 下 3。
+class _GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
+  const _GroupHeaderDelegate({required this.colors, required this.label});
+
+  static const _extent = 29.0;
+
+  final AppSidebarColors colors;
+  final String label;
+
+  @override
+  double get minExtent => _extent;
+
+  @override
+  double get maxExtent => _extent;
+
+  @override
+  Widget build(
+    BuildContext context,
+    double shrinkOffset,
+    bool overlapsContent,
+  ) {
+    return ColoredBox(
+      color: colors.fill,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(10, 4, 10, 3),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            height: 22 / 14,
+            fontWeight: FontWeight.w500,
+            color: colors.labelTertiary,
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
+  bool shouldRebuild(covariant _GroupHeaderDelegate oldDelegate) =>
+      oldDelegate.label != label || oldDelegate.colors != colors;
 }
 
 class _SessionRow extends StatefulWidget {
@@ -377,41 +494,51 @@ class _SessionRow extends StatefulWidget {
 
 class _SessionRowState extends State<_SessionRow> {
   final _menu = ShadPopoverController();
+  final _rename = TextEditingController();
+  final _renameFocus = FocusNode();
+  bool _editing = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _renameFocus.addListener(_onRenameFocusChanged);
+  }
 
   @override
   void dispose() {
     _menu.dispose();
+    _rename.dispose();
+    _renameFocus.dispose();
     super.dispose();
   }
 
-  Future<void> _rename() async {
+  String get _displayTitle => widget.session.title.isEmpty
+      ? AppLocalizations.of(context)!.untitledChat
+      : widget.session.title;
+
+  void _onRenameFocusChanged() {
+    if (!mounted) return;
+    if (!_renameFocus.hasFocus && _editing) _finishEditing();
+  }
+
+  void _startEditing() {
     _menu.hide();
-    final l10n = AppLocalizations.of(context)!;
-    final input = TextEditingController(text: widget.session.title);
-    final title = await showShadDialog<String>(
-      context: context,
-      builder: (context) => ShadDialog(
-        title: Text(l10n.renameSession),
-        actions: [
-          ShadButton.outline(
-            onPressed: () => Navigator.of(context).pop(),
-            child: Text(l10n.cancel),
-          ),
-          ShadButton(
-            onPressed: () => Navigator.of(context).pop(input.text),
-            child: Text(l10n.save),
-          ),
-        ],
-        child: ShadInput(
-          key: const Key('rename-input'),
-          controller: input,
-          autofocus: true,
-        ),
-      ),
+    _rename.text = _displayTitle;
+    _rename.selection = TextSelection(
+      baseOffset: 0,
+      extentOffset: _displayTitle.length,
     );
-    input.dispose();
-    if (title == null) return;
-    widget.onRename(title);
+    setState(() => _editing = true);
+  }
+
+  /// 提交规则同 chat-demo：空输入或未改动不写库。
+  void _finishEditing({bool commit = true}) {
+    if (!_editing) return;
+    final title = _rename.text.trim();
+    setState(() => _editing = false);
+    if (commit && title.isNotEmpty && title != _displayTitle) {
+      widget.onRename(title);
+    }
   }
 
   Future<void> _delete() async {
@@ -422,90 +549,178 @@ class _SessionRowState extends State<_SessionRow> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
-    final dark = Theme.of(context).brightness == Brightness.dark;
-    final title = widget.session.title.isEmpty
-        ? l10n.untitledChat
-        : widget.session.title;
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 2),
-      child: InkWell(
-        key: ValueKey('session-row-${widget.session.id}'),
-        borderRadius: BorderRadius.circular(10),
-        onTap: widget.onOpen,
-        child: Container(
-          height: 44,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
-          decoration: BoxDecoration(
-            color: widget.current
-                ? colors.primary.withValues(alpha: dark ? 0.18 : 0.10)
-                : null,
-            borderRadius: BorderRadius.circular(10),
+    final colors = _sidebarColorsOf(context);
+    if (_editing) {
+      return SizedBox(
+        height: 44,
+        child: CallbackShortcuts(
+          bindings: {
+            const SingleActivator(LogicalKeyboardKey.escape): () =>
+                _finishEditing(commit: false),
+          },
+          child: TextField(
+            key: ValueKey('session-rename-${widget.session.id}'),
+            controller: _rename,
+            focusNode: _renameFocus,
+            autofocus: true,
+            style: TextStyle(
+              fontSize: 16,
+              height: 22 / 16,
+              color: colors.labelPrimary,
+            ),
+            cursorColor: colors.brand,
+            decoration: InputDecoration(
+              isDense: true,
+              contentPadding: const EdgeInsets.symmetric(
+                horizontal: 12,
+                vertical: 10,
+              ),
+              filled: true,
+              fillColor: colors.inputFill,
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.brand),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(16),
+                borderSide: BorderSide(color: colors.brand),
+              ),
+            ),
+            onSubmitted: (_) => _finishEditing(),
+            onTapOutside: (_) => _finishEditing(),
           ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 15,
-                    height: 20 / 15,
-                    fontWeight: widget.current
-                        ? FontWeight.w500
-                        : FontWeight.w400,
-                    color: widget.current ? colors.primary : colors.foreground,
+        ),
+      );
+    }
+    return InkWell(
+      key: ValueKey('session-row-${widget.session.id}'),
+      borderRadius: BorderRadius.circular(16),
+      onTap: widget.onOpen,
+      child: Container(
+        height: 44,
+        padding: const EdgeInsets.only(left: 12, right: 6),
+        decoration: BoxDecoration(
+          color: widget.current ? colors.activeItemFill : null,
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Expanded(
+              child: Text(
+                _displayTitle,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontSize: 16,
+                  height: 22 / 16,
+                  color: widget.current
+                      ? colors.activeItemForeground
+                      : colors.labelPrimary,
+                ),
+              ),
+            ),
+            ShadPopover(
+              controller: _menu,
+              padding: EdgeInsets.zero,
+              decoration: ShadDecoration(
+                color: colors.menuFill,
+                shadows: _menuShadows,
+                border: ShadBorder.fromBorderSide(
+                  const ShadBorderSide(),
+                  radius: BorderRadius.circular(12),
+                ),
+                focusedBorder: ShadBorder.fromBorderSide(
+                  const ShadBorderSide(),
+                  radius: BorderRadius.circular(12),
+                ),
+                secondaryBorder: ShadBorder.none,
+                secondaryFocusedBorder: ShadBorder.none,
+              ),
+              popover: (context) => SizedBox(
+                width: 124,
+                child: Material(
+                  type: MaterialType.transparency,
+                  child: Padding(
+                    padding: const EdgeInsets.all(4),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MenuOption(
+                          icon: LucideIcons.pencil,
+                          label: l10n.rename,
+                          onPressed: _startEditing,
+                        ),
+                        _MenuOption(
+                          key: ValueKey('session-delete-${widget.session.id}'),
+                          icon: LucideIcons.trash2,
+                          label: l10n.delete,
+                          color: colors.danger,
+                          onPressed: _delete,
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               ),
-              ShadPopover(
-                controller: _menu,
-                popover: (context) => SizedBox(
-                  width: 140,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      ShadButton.ghost(
-                        width: double.infinity,
-                        onPressed: _rename,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(l10n.rename),
-                        ),
-                      ),
-                      ShadButton.ghost(
-                        key: ValueKey('session-delete-${widget.session.id}'),
-                        width: double.infinity,
-                        onPressed: _delete,
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            l10n.delete,
-                            style: TextStyle(color: colors.destructive),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                child: Semantics(
-                  button: true,
-                  label: l10n.sessionActions,
-                  child: ShadIconButton.ghost(
-                    key: ValueKey('session-menu-${widget.session.id}'),
-                    onPressed: _menu.toggle,
-                    icon: const Icon(LucideIcons.ellipsis),
-                    iconSize: 20,
-                    width: 44,
-                    height: 44,
-                    padding: EdgeInsets.zero,
-                    foregroundColor: colors.mutedForeground,
-                  ),
+              child: Semantics(
+                button: true,
+                label: l10n.sessionActions,
+                child: ShadIconButton.ghost(
+                  key: ValueKey('session-menu-${widget.session.id}'),
+                  onPressed: _menu.toggle,
+                  icon: const Icon(LucideIcons.ellipsis),
+                  iconSize: 16,
+                  width: 44,
+                  height: 44,
+                  padding: EdgeInsets.zero,
+                  foregroundColor: colors.labelPrimary,
                 ),
               ),
-            ],
-          ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+/// 菜单项：图标 16 + 文案 14，危险项整体变红（chat-demo Menu）。
+class _MenuOption extends StatelessWidget {
+  const _MenuOption({
+    super.key,
+    required this.icon,
+    required this.label,
+    required this.onPressed,
+    this.color,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onPressed;
+  final Color? color;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = _sidebarColorsOf(context);
+    final foreground = color ?? colors.labelPrimary;
+    return InkWell(
+      borderRadius: BorderRadius.circular(8),
+      onTap: onPressed,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+        child: Row(
+          children: [
+            Icon(icon, size: 16, color: foreground),
+            const SizedBox(width: 8),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 14,
+                height: 24 / 14,
+                color: foreground,
+              ),
+            ),
+          ],
         ),
       ),
     );

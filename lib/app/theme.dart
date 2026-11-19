@@ -8,6 +8,63 @@ const appThemeSeed = Color(0xFF4D6BFE);
 /// 主按钮色；种子生成的主色不等于品牌色，按钮显式指定。
 const appPrimaryColor = Color(0xFF3964FE);
 
+/// 会话抽屉配色：照搬 chat-demo 侧边栏令牌，仅供抽屉使用，不并入全局色表。
+class AppSidebarColors {
+  const AppSidebarColors({
+    required this.fill,
+    required this.border,
+    required this.labelPrimary,
+    required this.labelTertiary,
+    required this.brand,
+    required this.activeItemFill,
+    required this.activeItemForeground,
+    required this.elevatedFill,
+    required this.inputFill,
+    required this.menuFill,
+    required this.danger,
+  });
+
+  static const light = AppSidebarColors(
+    fill: Color(0xFFF9FAFB),
+    border: Color(0x0A000000),
+    labelPrimary: Color(0xFF0F1115),
+    labelTertiary: Color(0xFF81858C),
+    brand: Color(0xFF3964FE),
+    activeItemFill: Color(0xFFE4EDFD),
+    activeItemForeground: Color(0xFF3964FE),
+    elevatedFill: Color(0xFFFFFFFF),
+    inputFill: Color(0xFFFFFFFF),
+    menuFill: Color(0xFFFFFFFF),
+    danger: Color(0xFFEC1313),
+  );
+
+  static const dark = AppSidebarColors(
+    fill: Color(0xFF1B1B1C),
+    border: Color(0x0FFFFFFF),
+    labelPrimary: Color(0xFFF9FAFB),
+    labelTertiary: Color(0xFFADB2B8),
+    brand: Color(0xFF5686FE),
+    activeItemFill: Color(0xFF353638),
+    activeItemForeground: Color(0xFFFFFFFF),
+    elevatedFill: Color(0xFF43454A),
+    inputFill: Color(0xFF2C2C2E),
+    menuFill: Color(0xFF353638),
+    danger: Color(0xFFF25A5A),
+  );
+
+  final Color fill;
+  final Color border;
+  final Color labelPrimary;
+  final Color labelTertiary;
+  final Color brand;
+  final Color activeItemFill;
+  final Color activeItemForeground;
+  final Color elevatedFill;
+  final Color inputFill;
+  final Color menuFill;
+  final Color danger;
+}
+
 /// Material 主题：供 Markdown / Mermaid / 原生控件使用。
 ///
 /// 中文正文用稍高行高，英文保持 Material 默认。
