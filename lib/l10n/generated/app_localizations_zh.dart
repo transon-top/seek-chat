@@ -52,6 +52,9 @@ class AppLocalizationsZh extends AppLocalizations {
   }
 
   @override
+  String get replyFailedTitle => '生成失败';
+
+  @override
   String get replyRefused => '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。';
 
   @override
@@ -226,6 +229,40 @@ class AppLocalizationsZh extends AppLocalizations {
   String get close => '关闭';
 
   @override
+  String get copy => '复制';
+
+  @override
+  String get edit => '编辑';
+
+  @override
+  String get userMessage => '你的消息';
+
+  @override
+  String get assistantReply => '助手回复';
+
+  @override
+  String get messageActions => '消息操作';
+
+  @override
+  String versionPosition(int current, int total) {
+    return '第 $current 个，共 $total 个';
+  }
+
+  @override
+  String sourceNumber(int index) {
+    return '来源 $index';
+  }
+
+  @override
+  String get openSource => '打开来源';
+
+  @override
+  String get stopGeneration => '停止生成';
+
+  @override
+  String get generationStopped => '已停止生成';
+
+  @override
   String get regenerate => '重新生成';
 
   @override
@@ -249,6 +286,11 @@ class AppLocalizationsZh extends AppLocalizations {
   @override
   String thoughtForSeconds(int seconds) {
     return '已思考（用时 $seconds 秒）';
+  }
+
+  @override
+  String thinkingForSeconds(int seconds) {
+    return '思考中… $seconds 秒';
   }
 
   @override

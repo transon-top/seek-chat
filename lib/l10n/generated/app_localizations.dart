@@ -171,6 +171,12 @@ abstract class AppLocalizations {
   /// **'Generation failed: {error}'**
   String replyFailed(String error);
 
+  /// No description provided for @replyFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation failed'**
+  String get replyFailedTitle;
+
   /// No description provided for @replyRefused.
   ///
   /// In en, this message translates to:
@@ -489,6 +495,66 @@ abstract class AppLocalizations {
   /// **'Dismiss'**
   String get close;
 
+  /// No description provided for @copy.
+  ///
+  /// In en, this message translates to:
+  /// **'Copy'**
+  String get copy;
+
+  /// No description provided for @edit.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get edit;
+
+  /// No description provided for @userMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Your message'**
+  String get userMessage;
+
+  /// No description provided for @assistantReply.
+  ///
+  /// In en, this message translates to:
+  /// **'Assistant reply'**
+  String get assistantReply;
+
+  /// No description provided for @messageActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Message actions'**
+  String get messageActions;
+
+  /// No description provided for @versionPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Version {current} of {total}'**
+  String versionPosition(int current, int total);
+
+  /// No description provided for @sourceNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Source {index}'**
+  String sourceNumber(int index);
+
+  /// No description provided for @openSource.
+  ///
+  /// In en, this message translates to:
+  /// **'Open source'**
+  String get openSource;
+
+  /// No description provided for @stopGeneration.
+  ///
+  /// In en, this message translates to:
+  /// **'Stop generating'**
+  String get stopGeneration;
+
+  /// No description provided for @generationStopped.
+  ///
+  /// In en, this message translates to:
+  /// **'Generation stopped'**
+  String get generationStopped;
+
   /// No description provided for @regenerate.
   ///
   /// In en, this message translates to:
@@ -536,6 +602,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Thought for {seconds}s'**
   String thoughtForSeconds(int seconds);
+
+  /// No description provided for @thinkingForSeconds.
+  ///
+  /// In en, this message translates to:
+  /// **'Thinking… {seconds}s'**
+  String thinkingForSeconds(int seconds);
 
   /// No description provided for @stopped.
   ///

@@ -53,6 +53,9 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
+  String get replyFailedTitle => 'Generation failed';
+
+  @override
   String get replyRefused =>
       'Sorry, that\'s beyond my current scope. Let\'s talk about something else.';
 
@@ -229,6 +232,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get close => 'Dismiss';
 
   @override
+  String get copy => 'Copy';
+
+  @override
+  String get edit => 'Edit';
+
+  @override
+  String get userMessage => 'Your message';
+
+  @override
+  String get assistantReply => 'Assistant reply';
+
+  @override
+  String get messageActions => 'Message actions';
+
+  @override
+  String versionPosition(int current, int total) {
+    return 'Version $current of $total';
+  }
+
+  @override
+  String sourceNumber(int index) {
+    return 'Source $index';
+  }
+
+  @override
+  String get openSource => 'Open source';
+
+  @override
+  String get stopGeneration => 'Stop generating';
+
+  @override
+  String get generationStopped => 'Generation stopped';
+
+  @override
   String get regenerate => 'Regenerate';
 
   @override
@@ -252,6 +289,11 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String thoughtForSeconds(int seconds) {
     return 'Thought for ${seconds}s';
+  }
+
+  @override
+  String thinkingForSeconds(int seconds) {
+    return 'Thinking… ${seconds}s';
   }
 
   @override

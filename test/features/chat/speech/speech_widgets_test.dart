@@ -183,7 +183,7 @@ void main() {
         onPressed: () {},
       ),
     );
-    final button = tester.widget<IconButton>(
+    final button = tester.widget<ShadIconButton>(
       find.byKey(const Key('read-aloud-button')),
     );
     expect(button.onPressed, isNull);
