@@ -528,14 +528,14 @@ abstract class AppLocalizations {
   /// No description provided for @deleteSession.
   ///
   /// In en, this message translates to:
-  /// **'Delete chat'**
+  /// **'Delete chat?'**
   String get deleteSession;
 
-  /// No description provided for @deleteSessionConfirm.
+  /// No description provided for @deleteSessionDescription.
   ///
   /// In en, this message translates to:
-  /// **'Delete \"{title}\"?'**
-  String deleteSessionConfirm(String title);
+  /// **'This chat and its uploaded files will be permanently deleted and cannot be recovered. Delete this chat?'**
+  String get deleteSessionDescription;
 
   /// No description provided for @save.
   ///

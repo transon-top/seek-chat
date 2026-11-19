@@ -246,12 +246,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get delete => 'Delete';
 
   @override
-  String get deleteSession => 'Delete chat';
+  String get deleteSession => 'Delete chat?';
 
   @override
-  String deleteSessionConfirm(String title) {
-    return 'Delete \"$title\"?';
-  }
+  String get deleteSessionDescription =>
+      'This chat and its uploaded files will be permanently deleted and cannot be recovered. Delete this chat?';
 
   @override
   String get save => 'Save';

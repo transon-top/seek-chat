@@ -60,7 +60,7 @@
 | 界面 | 入口 | 呈现 | 关闭 | 说明 |
 | --- | --- | --- | --- | --- |
 | 聊天页 | 应用启动 | 根页面 | 系统返回退出 | 顶部栏 + 消息区 + 输入区 |
-| 会话抽屉 | 顶部菜单按钮；右滑 | 左侧 Sheet，宽 `min(320, 屏宽×0.82)` | 遮罩、返回、面板收起按钮 | 新建 / 打开 / 重命名 / 删除 / 设置入口 |
+| 会话抽屉 | 顶部菜单按钮；右滑 | 左侧 Sheet，宽 `min(300, 屏宽-48)` | 遮罩、返回、面板收起按钮 | 新建 / 打开 / 重命名 / 删除 / 设置入口 |
 | 系统设置 | 抽屉底部设置行 | 底部 Sheet，高 92% | 关闭按钮、返回、遮罩 | 两段导航：通用 / 数据管理 |
 | 数据管理 | 设置导航「数据管理」 | 设置 Sheet 内视图 | 关闭按钮、遮罩 | API Key、导入 / 导出 / 删除全部对话 |
 | 来源抽屉 | 「N 个网页」胶囊、搜索行、查看全部 | 底部 Sheet，最高 85% | 下拉、遮罩、关闭按钮 | 全局去重来源列表 |
@@ -100,24 +100,32 @@
 
 ### 1.4 会话抽屉
 
-- 全高、贴左侧、右侧不留圆角；宽度 `min(320, 屏宽×0.82)`；背景 `background`；
-  左右内边距 12；安全区。若 `ShadSheet` 默认外观不符，用自绘左侧抽屉路由，
-  不引入新依赖。
-- 顶部行：高 48；左侧 `Fleepseek` 文字标（22sp / w700 / `primary`）；
-  右侧面板收起按钮（Lucide `panelLeftClose`，36×36）。搜索按钮不进入 v1。
-- 新建对话：全宽胶囊按钮，高 44，圆角 999，`card` 底 + `border` 描边；
-  左侧 `circlePlus` 18，文案「开启新对话」15sp / w500。
-- 会话分组：`今天` / `昨天` / `7 天内` / `更早`；组标题 13sp / `mutedForeground`，
-  上 24 / 下 8。组内按 `updatedAt` 倒序。
-- 会话行：高 44，水平内边距 10，圆角 10；标题 15sp，单行省略。
-  - 当前会话：背景 `primary` 10% 透明度，文字与图标 `primary`，字重 w500；
-    深色下透明度 18%。
-  - 其他会话：透明底，文字 `foreground`。
-  - 右侧三点菜单（Lucide `ellipsis`，20，`mutedForeground`），打开
-    重命名 / 删除菜单。菜单使用 `ShadPopover` 锚定。
-- 底部设置行：高 52，顶部 1px 分隔线；左侧 `settings` 18，文案「设置」15，
-  右侧 `chevronRight` 16；点击关闭抽屉并打开系统设置 Sheet。
-- 空态：居中「还没有会话」13sp / `mutedForeground`。加载失败：错误文案 + 重试。
+外观照搬 chat-demo 侧边栏的移动端形态（`AppSidebarColors`，见 §3.2）：
+
+- 全高、贴左侧、右侧不留圆角；宽度 `min(300, 屏宽-48)`；背景 `AppSidebarColors.fill`；
+  右缘 1px `AppSidebarColors.border` 描边；上 6 / 左右 12 内边距；安全区。
+- 顶部行：高 48，下距 16；左侧 `Fleepseek` 文字标（20sp / 22 / w600 /
+  `AppSidebarColors.brand`）；右侧面板收起按钮（Lucide `panelLeft`，图标 16，
+  点击区 44）。搜索按钮不进入 v1。
+- 新建对话：全宽胶囊按钮，高 40，圆角 999，`AppSidebarColors.elevatedFill` 底；
+  浅色带三重投影与 1px 透明描边，深色为外投影 + 顶部 1px 内高光；
+  左侧 `messageCirclePlus` 16，间距 6，文案「开启新对话」14sp / w500 / `labelPrimary`。
+- 会话分组：`今天` / `昨天` / `7 天内` / `更早`；组标题移动端 14sp / 22 / w500 /
+  `AppSidebarColors.labelTertiary`，内边距 4 / 10 / 3，滚动时吸顶，
+  底色同 `AppSidebarColors.fill`；组间 16。组内按 `updatedAt` 倒序。
+- 会话行：高 44，内边距 左 12 / 右 6，圆角 16；标题 16sp / 22，单行省略。
+  - 当前会话：浅色底 `#E4EDFD` + 蓝字 `#3964FE`；深色底 `#353638` + 白字。
+  - 其他会话：透明底，文字 `AppSidebarColors.labelPrimary`。
+  - 右侧三点菜单（Lucide `ellipsis`，16，`labelPrimary`），打开重命名 / 删除菜单；
+    菜单用 `ShadPopover` 锚定，外壳为自绘：宽 124，圆角 12，内边距 4，
+    `AppSidebarColors.menuFill` 底 + 三层投影；菜单项带图标（`pencil` / `trash2`，16），
+    内边距 8 / 10，圆角 8，文案 14sp / 24；删除项文字与图标 `danger`。
+  - 重命名：整行变输入框（高 44，圆角 16，`brand` 1px 描边，`inputFill` 底，
+    16sp）；回车或失焦提交，`Escape` 取消；`trim` 后为空或未改动不写库。
+- 底部设置行：上下留白 12；左侧 `settings` 20，间距 10，文案「设置」16sp / 22 /
+  `labelPrimary`；内边距 9 / 10，圆角 12；点击关闭抽屉并打开系统设置 Sheet。
+- 空态：居中「还没有会话」14sp / `labelTertiary`。加载：进度条 `brand` + 14sp 文案；
+  失败：14sp 文案 + 重试按钮。
 
 ### 1.5 系统设置 Sheet
 
@@ -185,7 +193,7 @@
 | 弹出菜单 | `ShadPopover` | 会话行重命名 / 删除 |
 | 工具提示 | `ShadTooltip` | 图标按钮的长按 / 悬停提示 |
 | Toast | `ShadToast` + `ShadToaster` | 全局提示 |
-| 分隔线 | `ShadSeparator` | 设置卡片行分隔、抽屉底部分隔 |
+| 分隔线 | `ShadSeparator` | 设置卡片行分隔 |
 
 所有图标使用 `lucide_icons_flutter`，不混用 Material Icons；该包由 `shadcn_ui`
 重新导出，不新增直接依赖。仍由渲染包绘制的
@@ -302,13 +310,21 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 引用角标 | `muted` 底 + `mutedForeground` 字 | 见 §8.3 |
 | 搜索缩略图占位 | `muted` 底 + `mutedForeground` 图标 | 站点图标缺失时 |
 
-聊天专用颜色全部由上述 token 派生，不新增 `custom` 颜色：
+聊天专用颜色全部由上述 token 派生，不新增 `custom` 颜色；
+唯一例外是会话抽屉：照搬 chat-demo 的独立侧栏色组 `AppSidebarColors`，
+只被抽屉引用：
 
 - 用户气泡：`muted`；
 - 助手区域：`background`；
 - 思考 / 工具行：`mutedForeground`；
 - 来源胶囊：`card` 底 + `border` 描边；
-- 抽屉当前会话：`primary` 10%（深色 18%）；
+- 会话抽屉：独立色组 `AppSidebarColors`（照搬 chat-demo），浅深各一套：
+  侧栏底 `#F9FAFB` / `#1B1B1C`、右缘描边 黑 4% / 白 6%、
+  主文字 `#0F1115` / `#F9FAFB`、三级灰 `#81858C` / `#ADB2B8`、
+  品牌蓝 `#3964FE` / `#5686FE`、高亮底 `#E4EDFD` / `#353638`、
+  高亮字 `#3964FE` / `#FFFFFF`、浮起底 `#FFFFFF` / `#43454A`、
+  输入底 `#FFFFFF` / `#2C2C2E`、菜单底 `#FFFFFF` / `#353638`、
+  危险红 `#EC1313` / `#F25A5A`；不并入全局色表；
 - 输入区激活开关：`primary` 10%（深色 16%）底，`primary` 45% 描边，
   图标 / 文字 `primary`；
 - 录音状态点：`destructive`；
@@ -320,10 +336,11 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | --- | --- | --- |
 | `radiusXs` | 4 | 行内代码 |
 | `radiusBadge` | 6 | 引用角标 |
-| `radiusSm` | 8 | 小按钮、代码块复制按钮 |
-| `radiusMd` | 10 | 抽屉会话行、菜单项 |
-| `radiusLg` | 12 | 附件缩略图、代码块、工具行 |
+| `radiusSm` | 8 | 小按钮、代码块复制按钮、抽屉菜单项 |
+| `radiusMd` | 10 | 菜单项 |
+| `radiusLg` | 12 | 附件缩略图、代码块、工具行、抽屉菜单外壳、底部设置行 |
 | `radiusXl` | 14 | 来源卡、主题卡 |
+| `radiusRow` | 16 | 抽屉会话行、重命名输入框 |
 | `radius2xl` | 18 | 设置卡片、Dialog |
 | `radius3xl` | 20 | 用户气泡 |
 | `radiusSheet` | 24 | 底部 Sheet 顶部 |
@@ -373,9 +390,11 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 助手思考正文 | 13 / 1.6 | w400 |
 | 思考标题 / 工具行 | 12.5–13 / 18 | w400–500 |
 | 顶部栏标题 | 15 / 20 | w500 |
-| 会话抽屉品牌 | 22 / 28 | w700 |
-| 会话行 | 15 / 20 | w400（当前 w500） |
-| 抽屉分组标题 | 13 / 18 | w400 |
+| 会话抽屉品牌 | 20 / 22 | w600 |
+| 会话行 | 16 / 22 | w400 |
+| 抽屉分组标题 | 14 / 22 | w500 |
+| 抽屉菜单项 | 14 / 24 | w400 |
+| 抽屉新建对话 / 空态 | 14 / 22 | w500 / w400 |
 | 输入框 / 占位 | 16 / 1.6 | w400 |
 | 开关胶囊 | 12.5 / 16 | w500（激活）/ w400 |
 | 来源胶囊 | 13 / 18 | w500 |
@@ -444,7 +463,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 宽屏 | `>= 600` | 平板 / 折叠屏展开；聊天内容最大 760 居中；设置内容最大 640 居中 |
 
 - v1 不做双栏主从布局；抽屉始终为覆盖层，不常驻。
-- 抽屉宽 `min(320, 屏宽×0.82)`；宽屏下仍为 320。
+- 抽屉宽 `min(300, 屏宽-48)`；宽屏下仍为 300。
 - 设置 Sheet 宽 100%，内容居中；横屏时高度 92%，内部滚动。
 - 手机横屏：单列，键盘弹出时输入区贴键盘上方，消息区保持可滚动；
   空态改为顶部对齐，不使用固定 430 高。
@@ -639,9 +658,11 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 - 打开：菜单按钮；关闭：遮罩、返回、面板收起按钮。
 - 新建对话：若当前为空会话，仅聚焦输入框；否则创建空白聊天状态，不写库。
 - 打开会话：替换当前聊天内容并关闭抽屉；不叠加路由栈。
-- 重命名：Dialog 输入，空标题保存为 `''`，列表显示「新对话」。
-- 删除：确认后停止该会话生成、删除数据库记录与孤儿附件；若删除当前会话，
-  切到下一个最近会话；没有则回到空聊天。
+- 重命名：行内输入框，回车或失焦提交，`Escape` 取消；`trim` 后为空或未改动不写库；
+  空标题列表显示「新对话」。
+- 删除：确认弹窗（「永久删除对话」+ 附件不可恢复说明）后停止该会话生成、
+  删除数据库记录与孤儿附件；若删除当前会话，切到下一个最近会话；
+  没有则回到空聊天。
 - 当前会话高亮；列表随 drift `watchSessions()` 实时更新。
 - 加载：骨架 / 进度；失败：错误文案 + 重试。
 
