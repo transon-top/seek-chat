@@ -20,7 +20,6 @@ lib/
     settings/        # 设置页
     attachments/     # 图片与文档上传（票 13）
     search/          # 搜索进度、引用抽屉与来源卡片（票 12）
-    speech/          # 语音输入与朗读（票 21）
     history/         # 导入导出（票 17）
   shared/
     api/             # DeepSeekApiClient、SSE、request、errors
@@ -28,6 +27,7 @@ lib/
     models/          # 领域与协议类型、JSON 编解码
     prefs/           # shared_preferences 封装
     security/        # ApiKeyStore
+    speech/          # 语音权限与朗读偏好（票 21，聊天与设置共用）
     providers.dart   # 基础设施 Provider，features 与 main 共用
     error_text.dart  # 本地化错误文案的唯一映射点
     logging.dart     # 仅 debug 构建输出的日志
@@ -82,7 +82,7 @@ lib/
 - App 进入 `paused` / `hidden` 时把各控制器内存中的回复补写一次
   （`data-model.md` §4）。v1 不申请 iOS 后台执行权限；系统挂起或杀掉进程后，
   下次启动把残留 `pending`/`streaming` 置为 `stopped`。
-- 音频同一时刻只有一个通道：录音与朗读互斥，具体行为由票 21 定。
+- 音频同一时刻只有一个通道：录音与朗读互斥，规则见 [`speech.md`](speech.md) §4.3。
 
 ## 4. 数据层边界
 
@@ -208,6 +208,9 @@ flutter test
 | `url_launcher` | `^6.3.3` | 外部链接 |
 | `file_picker` | `^13.4.0`（新增） | 相册、文件选择与导出保存（票 13、17） |
 | `archive` | `^3.6.1`（新增） | 历史归档 ZIP 读写（票 17） |
+| `record` | `^7.2.0`（票 21，待接入） | 语音输入录音 |
+| `flutter_soloud` | `^5.3.0`（票 21，待接入） | 朗读 PCM 流式播放 |
+| `permission_handler` | `^13.0.2`（票 21，待接入） | 麦克风权限状态与跳系统设置 |
 | `drift_dev` | `^2.35.3`（dev） | drift 代码生成 |
 | `build_runner` | `^2.17.1`（dev） | 代码生成入口 |
 | `flutter_test` | SDK（dev） | 单元与 widget 测试 |
@@ -232,4 +235,4 @@ flutter test
 - 票 16 / 18：设置字段、语言切换与主题行为。
 - 票 17：导出格式与覆盖导入；导出包不含 API Key。
 - 票 20：设置与数据管理界面。
-- 票 21：语音输入与朗读的互斥细节。
+- 票 21：语音输入与朗读已定稿，见 [`speech.md`](speech.md)。

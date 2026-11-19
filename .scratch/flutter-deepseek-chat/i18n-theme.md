@@ -55,7 +55,8 @@ ARB 键按界面区域分组，新增文案必须同时补 `en` / `zh`：
 
 | 前缀 | 范围 | 示例 |
 | --- | --- | --- |
-| `settings*` | 设置页：标题、主题、语言、所在地、数据管理 | `settingsTheme` |
+| `settings*` | 设置页：标题、主题、语言、所在地、语音、数据管理 | `settingsTheme` |
+| `voiceInput*` / `tts*` | 语音输入与朗读：按钮、状态、错误 | `voiceInputFailed` |
 | `apiError*` / `error*` / `reply*` | 请求与回复错误 | `apiErrorRateLimited` |
 | `upload*` | 附件选择、大小 / 数量、上传状态、配额 | `uploadMaxFiles` |
 | `history*` | 导入导出、确认、错误码 | `historyImportConfirm` |
