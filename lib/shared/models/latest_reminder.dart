@@ -1,5 +1,3 @@
-import 'dart:io';
-
 import 'location.dart';
 
 const _weekdaysZh = ['星期一', '星期二', '星期三', '星期四', '星期五', '星期六', '星期日'];
@@ -45,8 +43,8 @@ String locationName(UserLocation? location, String languageCode) {
   return getRegionName(location.region, languageCode) ?? '';
 }
 
-/// 移动端平台标记；v1 只有 iOS 与 Android。
-String currentPlatformMarker() => Platform.isIOS ? 'iOS' : 'Android';
+/// 平台标记；服务端只接受 `App` 与 `Web`，移动端即 `App`。
+String currentPlatformMarker() => 'App';
 
 String _formatDate(DateTime value) =>
     '${value.year.toString().padLeft(4, '0')}-'

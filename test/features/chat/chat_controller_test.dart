@@ -213,7 +213,7 @@ void main() {
         'content': stored.latestReminder,
       });
       expect(stored.latestReminder, contains(',杭州市,'));
-      expect(stored.latestReminder, endsWith(',Android,中文'));
+      expect(stored.latestReminder, endsWith(',App,中文'));
       expect(controller.state.messages.last, isA<AssistantMessage>());
       expect(
         (controller.state.messages.last as AssistantMessage).latestReminder,
