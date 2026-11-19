@@ -87,6 +87,8 @@
   "settingsApiKeySaved": "已保存",
   "settingsApiKeyPrompt": "输入 API Key 开始使用",
   "settingsApiKeyPlaceholder": "请输入 API Key",
+  "settingsApiKeyConfirm": "确定",
+  "settingsApiKeyVerifying": "正在验证…",
   "settingsLanguage": "语言",
   "settingsLanguageSystem": "跟随系统",
   "settingsLanguageZh": "简体中文",

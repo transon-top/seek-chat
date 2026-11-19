@@ -101,6 +101,8 @@
   "settingsApiKeySaved": "Saved",
   "settingsApiKeyPrompt": "Enter an API key to get started",
   "settingsApiKeyPlaceholder": "Enter API key",
+  "settingsApiKeyConfirm": "Confirm",
+  "settingsApiKeyVerifying": "Verifying…",
   "settingsLanguage": "Language",
   "settingsLanguageSystem": "System",
   "settingsLanguageZh": "Simplified Chinese",

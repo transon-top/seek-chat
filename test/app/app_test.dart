@@ -336,7 +336,9 @@ void main() {
   testWidgets('creates a session and streams a reply into it', (tester) async {
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
     await tester.pumpAndSettle();
-    expect(find.text('新对话'), findsOneWidget);
+    // 首屏不展示标题与新建按钮，进入对话后才有。
+    expect(find.text('新对话'), findsNothing);
+    expect(find.byKey(const Key('chat-new')), findsNothing);
 
     await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
     await tester.pump();
@@ -378,7 +380,7 @@ void main() {
     await tester.pump();
 
     // 消息尚未落库：列表里还没有新会话，页面不能跳回旧会话。
-    expect(find.text('新对话'), findsOneWidget);
+    expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
     expect(find.text('Old'), findsNothing);
 
     gated.gate.complete();
@@ -394,10 +396,10 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('New chat'), findsOneWidget);
-    expect(find.text('Hi! What would you like to chat about?'), findsOneWidget);
-    expect(find.text('Deep thinking'), findsOneWidget);
-    expect(find.text('Smart search'), findsOneWidget);
+    expect(find.text('New chat'), findsNothing);
+    expect(find.text('How can I help you?'), findsOneWidget);
+    expect(find.text('DeepThink'), findsOneWidget);
+    expect(find.text('Search'), findsOneWidget);
     expect(find.byTooltip('Send'), findsOneWidget);
 
     await openDrawer(tester);
@@ -449,7 +451,7 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     await tester.tap(find.byKey(const Key('settings-close')));
     await tester.pumpAndSettle();
-    expect(find.text('New chat'), findsOneWidget);
+    expect(find.text('How can I help you?'), findsOneWidget);
     expect(prefs.getString('user.locale'), 'en');
 
     await unmountApp(tester);
@@ -461,8 +463,8 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('New chat'), findsOneWidget);
-    final context = tester.element(find.text('New chat'));
+    expect(find.text('How can I help you?'), findsOneWidget);
+    final context = tester.element(find.text('How can I help you?'));
     expect(Theme.of(context).brightness, Brightness.dark);
 
     await unmountApp(tester);
@@ -516,7 +518,7 @@ void main() {
     await tester.tap(find.byKey(const Key('drawer-new-chat')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    expect(find.text('新对话'), findsOneWidget);
+    expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
 
     body.add(utf8.encode(messageStop));
     await body.close();
@@ -1170,7 +1172,7 @@ void main() {
 
     await tester.tap(find.byKey(const Key('chat-new')));
     await tester.pumpAndSettle();
-    expect(find.text('新对话'), findsOneWidget);
+    expect(find.byKey(const Key('chat-new')), findsNothing);
     expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
     expect(
       tester
