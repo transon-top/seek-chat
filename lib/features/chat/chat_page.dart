@@ -6,7 +6,9 @@ import 'package:material_ui/material_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import 'attachment_rules.dart';
+import 'chat_header.dart';
 import '../../shared/error_text.dart';
+import '../../shared/logging.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
@@ -29,13 +31,31 @@ typedef _SpeechView = ({
   String? readingMessageId,
 });
 
-/// 最小聊天页：可见路径、流式文本、停止、重新生成、续写、搜索时间线与引用。
+/// 聊天页：顶部栏、可见路径、流式文本、停止、重新生成、续写、搜索与引用。
 ///
-/// 外观与完整控件由 UI 规格票 10 / 原型票 09 重做；这里只保证行为闭环。
+/// 会话为空时停在新对话草稿上；首条消息发出时创建会话（ui.md §5.10）。
+/// 抽屉由 `app/` 注入，聊天功能不直接 import 会话功能。
 class ChatPage extends ConsumerStatefulWidget {
-  const ChatPage({super.key, required this.sessionId});
+  const ChatPage({
+    super.key,
+    required this.sessionId,
+    this.drawer,
+    this.onNewChat,
+    this.onSessionCreated,
+    this.onSessionDiscarded,
+    this.focusRequest = 0,
+  });
 
-  final String sessionId;
+  final String? sessionId;
+  final Widget? drawer;
+  final VoidCallback? onNewChat;
+  final ValueChanged<String>? onSessionCreated;
+
+  /// 首条消息未发出时回滚刚创建的空会话。
+  final VoidCallback? onSessionDiscarded;
+
+  /// 每次递增表示外部要求聚焦输入框（新对话）。
+  final int focusRequest;
 
   @override
   ConsumerState<ChatPage> createState() => _ChatPageState();
@@ -43,11 +63,16 @@ class ChatPage extends ConsumerStatefulWidget {
 
 class _ChatPageState extends ConsumerState<ChatPage> {
   final TextEditingController _input = TextEditingController();
+  final FocusNode _inputFocus = FocusNode();
   final List<DraftAttachment> _attachments = [];
   late final ChatOptionsStore _options;
   late final SpeechController _speech;
   late bool _thinking;
   late bool _search;
+  String? _sessionId;
+
+  /// 草稿会话创建后，先占住控制器，避免自动销毁丢掉首轮流式状态。
+  ProviderSubscription<ChatState>? _controllerHold;
 
   @override
   void initState() {
@@ -56,15 +81,46 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _speech = ref.read(speechControllerProvider.notifier);
     _thinking = _options.thinking;
     _search = _options.search;
-    unawaited(
-      ref.read(chatControllerProvider(widget.sessionId).notifier).load(),
-    );
+    _sessionId = widget.sessionId;
+    _holdController(_sessionId);
+    if (_sessionId != null) _load(_sessionId!);
+  }
+
+  @override
+  void didUpdateWidget(ChatPage oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.focusRequest != oldWidget.focusRequest) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) _inputFocus.requestFocus();
+      });
+    }
+    if (widget.sessionId == _sessionId) return;
+    unawaited(_speech.stopAll());
+    _sessionId = widget.sessionId;
+    _holdController(_sessionId);
+    _input.clear();
+    _attachments.clear();
+    if (_sessionId != null) _load(_sessionId!);
+  }
+
+  /// 空回调只用于在页面开始 watch 前钉住 autoDispose 控制器。
+  void _holdController(String? sessionId) {
+    _controllerHold?.close();
+    _controllerHold = sessionId == null
+        ? null
+        : ref.listenManual(chatControllerProvider(sessionId), (_, _) {});
+  }
+
+  void _load(String sessionId) {
+    unawaited(ref.read(chatControllerProvider(sessionId).notifier).load());
   }
 
   @override
   void dispose() {
+    _controllerHold?.close();
     unawaited(_speech.stopAll());
     _input.dispose();
+    _inputFocus.dispose();
     super.dispose();
   }
 
@@ -81,16 +137,56 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final text = _input.text;
     if (text.trim().isEmpty && _attachments.isEmpty) return;
     if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
+    final l10n = AppLocalizations.of(context)!;
+    var sessionId = _sessionId;
+    var createdHere = false;
+    if (sessionId == null) {
+      final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
+      if (apiKey == null || apiKey.isEmpty) {
+        if (mounted) _showSnackBar(l10n.errorNoApiKey);
+        return;
+      }
+      final session = await ref.read(chatRepositoryProvider).createSession();
+      if (!mounted) return;
+      _sessionId = session.id;
+      _holdController(session.id);
+      widget.onSessionCreated?.call(session.id);
+      setState(() {});
+      sessionId = session.id;
+      createdHere = true;
+    }
     await _speech.stopReadAloud();
-    final sent = await _controller.send(
-      text: text,
-      thinking: _thinking,
-      search: _search,
-      attachments: List.of(_attachments),
-    );
-    if (!sent || !mounted) return;
+    final sent = await ref
+        .read(chatControllerProvider(sessionId).notifier)
+        .send(
+          text: text,
+          thinking: _thinking,
+          search: _search,
+          attachments: List.of(_attachments),
+        );
+    if (!sent) {
+      if (createdHere) await _discardEmptySession(sessionId);
+      return;
+    }
+    if (!mounted) return;
     _input.clear();
     setState(_attachments.clear);
+  }
+
+  /// 请求未发出时不留下空会话；发送失败的空会话直接删除。
+  Future<void> _discardEmptySession(String sessionId) async {
+    _holdController(null);
+    try {
+      final orphaned = await ref
+          .read(chatRepositoryProvider)
+          .deleteSession(sessionId);
+      await ref.read(attachmentStoreProvider).deleteAttachments(orphaned);
+    } on Object catch (error) {
+      debugLog('discarding empty session failed', error);
+    }
+    if (!mounted) return;
+    widget.onSessionDiscarded?.call();
+    setState(() => _sessionId = null);
   }
 
   Future<void> _addAttachments() async {
@@ -277,11 +373,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   ChatController get _controller =>
-      ref.read(chatControllerProvider(widget.sessionId).notifier);
+      ref.read(chatControllerProvider(_sessionId!).notifier);
 
   @override
   Widget build(BuildContext context) {
-    final state = ref.watch(chatControllerProvider(widget.sessionId));
+    final sessionId = _sessionId;
+    final state = sessionId == null
+        ? const ChatState()
+        : ref.watch(chatControllerProvider(sessionId));
     final tasks = ref.watch(uploadTasksProvider);
     // 只订阅按钮相关字段；电平与计时刷新由状态行单独重建（speech.md §7）。
     final speech = ref.watch(
@@ -322,11 +421,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       }
     });
     return Scaffold(
-      appBar: AppBar(
-        title: Text(state.title.isEmpty ? strings.untitledChat : state.title),
-      ),
+      drawer: widget.drawer,
       body: Column(
         children: [
+          SafeArea(
+            bottom: false,
+            child: ChatHeader(
+              title: state.title.isEmpty ? strings.untitledChat : state.title,
+              onNewChat: widget.onNewChat,
+            ),
+          ),
           if (state.error != null)
             _ErrorBanner(
               message: localMessageText(strings, state.error!),
@@ -334,7 +438,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
           Expanded(
             child: messages.isEmpty
-                ? Center(child: Text(strings.chatEmpty))
+                ? Center(
+                    child: Text(
+                      strings.chatEmptyTitle,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 20,
+                        height: 28 / 20,
+                        fontWeight: FontWeight.w500,
+                        color: Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
+                  )
                 : ListView.builder(
                     reverse: true,
                     padding: const EdgeInsets.all(12),
@@ -369,6 +484,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           ),
           _Composer(
             input: _input,
+            inputFocus: _inputFocus,
             busy: state.busy,
             speech: speech,
             thinking: _thinking,
@@ -1496,6 +1612,7 @@ String _displayDate(String? value) {
 class _Composer extends StatelessWidget {
   const _Composer({
     required this.input,
+    required this.inputFocus,
     required this.busy,
     required this.speech,
     required this.thinking,
@@ -1513,6 +1630,7 @@ class _Composer extends StatelessWidget {
   });
 
   final TextEditingController input;
+  final FocusNode inputFocus;
   final bool busy;
   final _SpeechView speech;
   final bool thinking;
@@ -1574,6 +1692,7 @@ class _Composer extends StatelessWidget {
                 Expanded(
                   child: TextField(
                     controller: input,
+                    focusNode: inputFocus,
                     minLines: 1,
                     maxLines: 5,
                     decoration: InputDecoration(

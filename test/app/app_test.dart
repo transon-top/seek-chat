@@ -43,36 +43,31 @@ final replyFixture =
 String searchToolStart({
   int index = 0,
   List<String> queries = const ['flutter'],
-}) =>
-    frame('content_block_start', {
-      'type': 'content_block_start',
-      'index': index,
-      'content_block': {
-        'type': 'server_tool_use',
-        'id': 'toolu_1',
-        'name': 'deepseek_web_search',
-        'input': {
-          'action': 'search',
-          'queries': queries,
-        },
-        'kind': 'search',
-      },
-    });
+}) => frame('content_block_start', {
+  'type': 'content_block_start',
+  'index': index,
+  'content_block': {
+    'type': 'server_tool_use',
+    'id': 'toolu_1',
+    'name': 'deepseek_web_search',
+    'input': {'action': 'search', 'queries': queries},
+    'kind': 'search',
+  },
+});
 
 String searchResultStart({
   int index = 1,
   List<Map<String, dynamic>> content = const [],
-}) =>
-    frame('content_block_start', {
-      'type': 'content_block_start',
-      'index': index,
-      'content_block': {
-        'type': 'web_search_tool_result',
-        'tool_use_id': 'toolu_1',
-        'kind': 'search',
-        'content': content,
-      },
-    });
+}) => frame('content_block_start', {
+  'type': 'content_block_start',
+  'index': index,
+  'content_block': {
+    'type': 'web_search_tool_result',
+    'tool_use_id': 'toolu_1',
+    'kind': 'search',
+    'content': content,
+  },
+});
 
 String blockStop(int index) =>
     frame('content_block_stop', {'type': 'content_block_stop', 'index': index});
@@ -81,39 +76,37 @@ String toolUseStart({
   required int index,
   required String id,
   required Map<String, dynamic> input,
-}) =>
-    frame('content_block_start', {
-      'type': 'content_block_start',
-      'index': index,
-      'content_block': {
-        'type': 'server_tool_use',
-        'id': id,
-        'name': 'deepseek_web_search',
-        'input': input,
-        'kind': 'deep_search',
-      },
-    });
+}) => frame('content_block_start', {
+  'type': 'content_block_start',
+  'index': index,
+  'content_block': {
+    'type': 'server_tool_use',
+    'id': id,
+    'name': 'deepseek_web_search',
+    'input': input,
+    'kind': 'deep_search',
+  },
+});
 
 String fetchResultStart({
   required int index,
   required String toolUseId,
   required String url,
   String? title,
-}) =>
-    frame('content_block_start', {
-      'type': 'content_block_start',
-      'index': index,
-      'content_block': {
-        'type': 'web_fetch_tool_result',
-        'tool_use_id': toolUseId,
-        'kind': 'deep_search',
-        'content': {
-          'type': 'web_fetch_result',
-          'url': url,
-          'content': {'title': ?title},
-        },
-      },
-    });
+}) => frame('content_block_start', {
+  'type': 'content_block_start',
+  'index': index,
+  'content_block': {
+    'type': 'web_fetch_tool_result',
+    'tool_use_id': toolUseId,
+    'kind': 'deep_search',
+    'content': {
+      'type': 'web_fetch_result',
+      'url': url,
+      'content': {'title': ?title},
+    },
+  },
+});
 
 /// 一次深度搜索浏览：6 个打开的页面与 2 个页内查找。
 String pagesReplyFixture() {
@@ -250,6 +243,23 @@ Future<void> unmountApp(WidgetTester tester) async {
   await tester.pump(const Duration(milliseconds: 1));
 }
 
+Future<void> openDrawer(WidgetTester tester) async {
+  await tester.tap(find.byKey(const Key('chat-open-drawer')));
+  await tester.pumpAndSettle();
+}
+
+Future<void> openSettings(WidgetTester tester) async {
+  await openDrawer(tester);
+  await tester.tap(find.byKey(const Key('drawer-settings')));
+  await tester.pumpAndSettle();
+}
+
+Future<void> startNewChat(WidgetTester tester) async {
+  await openDrawer(tester);
+  await tester.tap(find.byKey(const Key('drawer-new-chat')));
+  await tester.pumpAndSettle();
+}
+
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -302,10 +312,6 @@ void main() {
   testWidgets('creates a session and streams a reply into it', (tester) async {
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
     await tester.pumpAndSettle();
-    expect(find.text('Open Chat'), findsOneWidget);
-
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     expect(find.text('新对话'), findsOneWidget);
 
     await tester.enterText(find.byType(TextField), 'Hello');
@@ -317,9 +323,11 @@ void main() {
     expect(find.text('Hi there'), findsOneWidget);
     expect(find.text('Greeting'), findsOneWidget);
 
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.text('Greeting'), findsOneWidget);
+    await openDrawer(tester);
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Greeting')),
+      findsOneWidget,
+    );
 
     await unmountApp(tester);
   });
@@ -329,15 +337,14 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('No chats yet'), findsOneWidget);
-    await tester.tap(find.byTooltip('New chat'));
-    await tester.pumpAndSettle();
-
     expect(find.text('New chat'), findsOneWidget);
-    expect(find.text('Send a message to start chatting'), findsOneWidget);
+    expect(find.text('What can I help you with?'), findsOneWidget);
     expect(find.text('Deep thinking'), findsOneWidget);
     expect(find.text('Smart search'), findsOneWidget);
     expect(find.byTooltip('Send'), findsOneWidget);
+
+    await openDrawer(tester);
+    expect(find.text('No chats yet'), findsOneWidget);
 
     await unmountApp(tester);
   });
@@ -347,8 +354,10 @@ void main() {
   ) async {
     await prefs.setString('ui.themeMode', 'dark');
     await tester.pumpWidget(appWith(apiKey: null));
+    // 中文 Material 委托异步加载；首帧内容出现时主题必须已是深色。
+    await tester.pumpAndSettle();
 
-    final context = tester.element(find.text('Open Chat'));
+    final context = tester.element(find.byType(Scaffold));
     expect(Theme.of(context).brightness, Brightness.dark);
 
     await tester.pumpAndSettle();
@@ -359,14 +368,13 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('设置'));
-    await tester.pumpAndSettle();
+    await openSettings(tester);
     await tester.tap(find.byKey(const Key('settings-theme')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('深色').last);
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.text('设置'));
+    final context = tester.element(find.text('系统设置'));
     expect(Theme.of(context).brightness, Brightness.dark);
     expect(prefs.getString('ui.themeMode'), 'dark');
 
@@ -377,8 +385,7 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('设置'));
-    await tester.pumpAndSettle();
+    await openSettings(tester);
     await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('English').last);
@@ -387,7 +394,7 @@ void main() {
     expect(find.text('Settings'), findsOneWidget);
     await tester.tap(find.byType(BackButton));
     await tester.pumpAndSettle();
-    expect(find.text('No chats yet'), findsOneWidget);
+    expect(find.text('New chat'), findsOneWidget);
     expect(prefs.getString('user.locale'), 'en');
 
     await unmountApp(tester);
@@ -399,8 +406,8 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    expect(find.text('No chats yet'), findsOneWidget);
-    final context = tester.element(find.text('No chats yet'));
+    expect(find.text('New chat'), findsOneWidget);
+    final context = tester.element(find.text('New chat'));
     expect(Theme.of(context).brightness, Brightness.dark);
 
     await unmountApp(tester);
@@ -410,8 +417,6 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
@@ -420,6 +425,8 @@ void main() {
     expect(find.textContaining('未设置 API Key'), findsOneWidget);
     // 发送失败时保留输入内容，与 chat-demo 一致。
     expect(find.text('Hello'), findsOneWidget);
+    // 首条消息未发出，不留下空会话。
+    expect(await repository.listSessions(), isEmpty);
 
     await unmountApp(tester);
   });
@@ -428,34 +435,41 @@ void main() {
     final body = StreamController<List<int>>();
     final client = DeepSeekApiClient(
       origin: Uri.parse(origin),
-      httpClient: MockClient.streaming((_, _) async => sseResponse(body.stream)),
+      httpClient: MockClient.streaming(
+        (_, _) async => sseResponse(body.stream),
+      ),
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pump();
     await tester.pump();
 
-    body.add(utf8.encode(messageStart + textStart(0) + textDelta(0, 'partial')));
+    body.add(
+      utf8.encode(messageStart + textStart(0) + textDelta(0, 'partial')),
+    );
     await tester.pump();
     await tester.pump();
 
-    await tester.tap(find.byType(BackButton));
-    await tester.pumpAndSettle();
-    expect(find.text('Open Chat'), findsOneWidget);
+    // 流式中的进度指示器持续动画，不能用 pumpAndSettle。
+    await tester.tap(find.byKey(const Key('chat-open-drawer')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('drawer-new-chat')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(find.text('新对话'), findsOneWidget);
 
     body.add(utf8.encode(messageStop));
     await body.close();
     await tester.pumpAndSettle();
 
     final session = (await repository.listSessions()).single;
-    final stored = (await repository.visiblePath(session.id)).last
-        as AssistantMessage;
+    final stored =
+        (await repository.visiblePath(session.id)).last as AssistantMessage;
     expect(stored.status, ReplyStatus.done);
     expect(
       stored.blocks.whereType<TextBlock>().map((block) => block.text).join(),
@@ -478,8 +492,6 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
 
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
@@ -537,8 +549,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
 
     final thinkingChip = find.widgetWithText(FilterChip, '深度思考');
     final searchChip = find.widgetWithText(FilterChip, '智能搜索');
@@ -565,8 +575,6 @@ void main() {
 
     await unmountApp(tester);
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
 
     expect(
@@ -597,8 +605,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
@@ -606,10 +612,7 @@ void main() {
 
     expect(find.text('已阅读 2 个网页'), findsOneWidget);
     expect(find.text('2 个网页'), findsOneWidget);
-    expect(
-      find.textContaining('[citation:', findRichText: true),
-      findsNothing,
-    );
+    expect(find.textContaining('[citation:', findRichText: true), findsNothing);
 
     await tester.tap(find.text('2 个网页'));
     await tester.pumpAndSettle();
@@ -639,8 +642,6 @@ void main() {
       ),
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
@@ -684,8 +685,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
@@ -709,8 +708,6 @@ void main() {
       ),
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
     await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
@@ -769,18 +766,13 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
     expect(
-      find.textContaining(
-        '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。',
-        findRichText: true,
-      ),
+      find.textContaining('你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。', findRichText: true),
       findsOneWidget,
     );
     expect(
@@ -831,8 +823,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
     await tester.enterText(find.byType(TextField), 'Hello');
     await tester.pump();
     await tester.tap(find.byTooltip('发送'));
@@ -842,44 +832,49 @@ void main() {
       find.textContaining('图片未通过内容安全审核，请移除后重试。', findRichText: true),
       findsOneWidget,
     );
-    expect(find.textContaining('must not appear', findRichText: true), findsNothing);
-    expect(find.textContaining('messages.1.content.0', findRichText: true), findsNothing);
-
-    await unmountApp(tester);
-  });
-
-  testWidgets('a content-review 400 shows localized copy without the raw error', (
-    tester,
-  ) async {
-    final client = DeepSeekApiClient(
-      origin: Uri.parse(origin),
-      httpClient: MockClient.streaming(
-        (_, _) async => http.StreamedResponse(
-          Stream.value(
-            utf8.encode(
-              '{"type":"error","error":{"type":"invalid_request_error",'
-              '"message":"Content Exists Risk"}}',
-            ),
-          ),
-          400,
-          headers: {'content-type': 'application/json'},
-        ),
-      ),
+    expect(
+      find.textContaining('must not appear', findRichText: true),
+      findsNothing,
     );
-    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
-    await tester.pumpAndSettle();
-    await tester.tap(find.byTooltip('新建会话'));
-    await tester.pumpAndSettle();
-    await tester.enterText(find.byType(TextField), 'Hello');
-    await tester.pump();
-    await tester.tap(find.byTooltip('发送'));
-    await tester.pumpAndSettle();
-
-    expect(find.textContaining('内容未通过安全审核'), findsOneWidget);
-    expect(find.textContaining('Content Exists Risk'), findsNothing);
+    expect(
+      find.textContaining('messages.1.content.0', findRichText: true),
+      findsNothing,
+    );
 
     await unmountApp(tester);
   });
+
+  testWidgets(
+    'a content-review 400 shows localized copy without the raw error',
+    (tester) async {
+      final client = DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming(
+          (_, _) async => http.StreamedResponse(
+            Stream.value(
+              utf8.encode(
+                '{"type":"error","error":{"type":"invalid_request_error",'
+                '"message":"Content Exists Risk"}}',
+              ),
+            ),
+            400,
+            headers: {'content-type': 'application/json'},
+          ),
+        ),
+      );
+      await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+      await tester.pumpAndSettle();
+      await tester.enterText(find.byType(TextField), 'Hello');
+      await tester.pump();
+      await tester.tap(find.byTooltip('发送'));
+      await tester.pumpAndSettle();
+
+      expect(find.textContaining('内容未通过安全审核'), findsOneWidget);
+      expect(find.textContaining('Content Exists Risk'), findsNothing);
+
+      await unmountApp(tester);
+    },
+  );
 
   testWidgets('reopens the selected branch and switches versions', (
     tester,
@@ -915,8 +910,6 @@ void main() {
     );
 
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('新对话'));
     await tester.pumpAndSettle();
 
     // 打开会话只显示选中分支，不把旧版本拼进消息流。
@@ -975,8 +968,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('新对话'));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('编辑提问'));
     await tester.pumpAndSettle();
@@ -1026,8 +1017,6 @@ void main() {
     );
     await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('新对话'));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('编辑提问'));
     await tester.pumpAndSettle();
@@ -1064,6 +1053,127 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('edited answer'), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('roots on the latest chat and manages sessions from the drawer', (
+    tester,
+  ) async {
+    final first = await repository.createSession();
+    await repository.renameSession(first.id, 'First');
+    await repository.addUserMessage(sessionId: first.id, text: 'a');
+    final second = await repository.createSession();
+    await repository.renameSession(second.id, 'Second');
+    await repository.addUserMessage(sessionId: second.id, text: 'b');
+
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+    expect(find.text('Second'), findsOneWidget);
+
+    await openDrawer(tester);
+    final currentRow = find.byKey(ValueKey('session-row-${second.id}'));
+    final currentTitle = tester.widget<Text>(
+      find.descendant(of: currentRow, matching: find.text('Second')),
+    );
+    expect(
+      currentTitle.style?.color,
+      Theme.of(tester.element(currentRow)).colorScheme.primary,
+    );
+
+    await tester.tap(find.byKey(ValueKey('session-row-${first.id}')));
+    await tester.pumpAndSettle();
+    expect(find.text('First'), findsOneWidget);
+
+    await openDrawer(tester);
+    await tester.tap(find.byKey(ValueKey('session-menu-${first.id}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('重命名'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('rename-input')), 'Renamed');
+    await tester.tap(find.text('保存'));
+    await tester.pumpAndSettle();
+    expect(
+      find.descendant(of: find.byType(Drawer), matching: find.text('Renamed')),
+      findsOneWidget,
+    );
+
+    await tester.tap(find.byKey(ValueKey('session-menu-${first.id}')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('删除'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('删除').last);
+    await tester.pumpAndSettle();
+    expect(find.text('Renamed'), findsNothing);
+    expect(await repository.listSessions(), hasLength(1));
+
+    await tester.tap(find.byKey(const Key('drawer-close')));
+    await tester.pumpAndSettle();
+    expect(find.text('Second'), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('chat-new')));
+    await tester.pumpAndSettle();
+    expect(find.text('新对话'), findsOneWidget);
+    expect(find.text('今天有什么可以帮到你？'), findsOneWidget);
+    expect(
+      tester.widget<TextField>(find.byType(TextField)).focusNode?.hasFocus,
+      isTrue,
+    );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('switching sessions stops read-aloud', (tester) async {
+    final first = await repository.createSession();
+    await repository.renameSession(first.id, 'First');
+    final question = await repository.addUserMessage(
+      sessionId: first.id,
+      text: 'Hello',
+    );
+    final reply = await repository.createReply(
+      sessionId: first.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: reply.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'first answer')],
+    );
+    final second = await repository.createSession();
+    await repository.renameSession(second.id, 'Second');
+
+    final api = FakeSpeechApi();
+    final player = FakePlayer();
+    await tester.pumpWidget(
+      appWith(apiKey: 'sk-good', speechApi: api, speechPlayer: player),
+    );
+    await tester.pumpAndSettle();
+    await openDrawer(tester);
+    await tester.tap(find.byKey(ValueKey('session-row-${first.id}')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('朗读'));
+    await tester.pump();
+    await tester.pump();
+    api.ttsController!.add(Uint8List.fromList([1, 2, 3, 4]));
+    await tester.pump();
+    expect(player.sessions, hasLength(1));
+    expect(find.byTooltip('停止朗读'), findsOneWidget);
+
+    // 朗读动画持续刷新，不能用 pumpAndSettle。
+    await tester.tap(find.byKey(const Key('chat-open-drawer')));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(ValueKey('session-row-${second.id}')));
+    await tester.pump();
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+
+    expect(player.sessions.single.stopped, isTrue);
+    expect(find.byTooltip('停止朗读'), findsNothing);
+
     await unmountApp(tester);
   });
 
@@ -1104,8 +1214,6 @@ void main() {
       appWith(apiKey: 'sk-good', speechApi: api, speechPlayer: player),
     );
     await tester.pumpAndSettle();
-    await tester.tap(find.text('新对话'));
-    await tester.pumpAndSettle();
 
     await tester.tap(find.byTooltip('朗读'));
     await tester.pump();
@@ -1123,9 +1231,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('first answer'), findsOneWidget);
-    final button = tester.widget<ReadAloudButton>(
-      find.byType(ReadAloudButton),
-    );
+    final button = tester.widget<ReadAloudButton>(find.byType(ReadAloudButton));
     expect(button.phase, SpeechPhase.idle);
     expect(player.sessions.single.stopped, isTrue);
     expect(find.byTooltip('朗读'), findsOneWidget);

@@ -134,6 +134,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsTitle => 'Settings';
 
   @override
+  String get settingsEntry => 'Settings';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override
@@ -168,6 +171,33 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get newChat => 'New chat';
+
+  @override
+  String get openSessionList => 'Open chat list';
+
+  @override
+  String get sessionActions => 'Chat actions';
+
+  @override
+  String get sessionGroupToday => 'Today';
+
+  @override
+  String get sessionGroupYesterday => 'Yesterday';
+
+  @override
+  String get sessionGroupLast7Days => 'Last 7 days';
+
+  @override
+  String get sessionGroupEarlier => 'Earlier';
+
+  @override
+  String get sessionLoading => 'Loading chats…';
+
+  @override
+  String get sessionsLoadFailed => 'Could not load chats';
+
+  @override
+  String get chatEmptyTitle => 'What can I help you with?';
 
   @override
   String get noSessions => 'No chats yet';
@@ -215,9 +245,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get nextVersion => 'Next version';
-
-  @override
-  String get chatEmpty => 'Send a message to start chatting';
 
   @override
   String get deepThinking => 'Deep thinking';

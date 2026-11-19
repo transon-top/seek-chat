@@ -303,6 +303,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsTitle;
 
+  /// No description provided for @settingsEntry.
+  ///
+  /// In en, this message translates to:
+  /// **'Settings'**
+  String get settingsEntry;
+
   /// No description provided for @settingsTheme.
   ///
   /// In en, this message translates to:
@@ -374,6 +380,60 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'New chat'**
   String get newChat;
+
+  /// No description provided for @openSessionList.
+  ///
+  /// In en, this message translates to:
+  /// **'Open chat list'**
+  String get openSessionList;
+
+  /// No description provided for @sessionActions.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat actions'**
+  String get sessionActions;
+
+  /// No description provided for @sessionGroupToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Today'**
+  String get sessionGroupToday;
+
+  /// No description provided for @sessionGroupYesterday.
+  ///
+  /// In en, this message translates to:
+  /// **'Yesterday'**
+  String get sessionGroupYesterday;
+
+  /// No description provided for @sessionGroupLast7Days.
+  ///
+  /// In en, this message translates to:
+  /// **'Last 7 days'**
+  String get sessionGroupLast7Days;
+
+  /// No description provided for @sessionGroupEarlier.
+  ///
+  /// In en, this message translates to:
+  /// **'Earlier'**
+  String get sessionGroupEarlier;
+
+  /// No description provided for @sessionLoading.
+  ///
+  /// In en, this message translates to:
+  /// **'Loading chats…'**
+  String get sessionLoading;
+
+  /// No description provided for @sessionsLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not load chats'**
+  String get sessionsLoadFailed;
+
+  /// No description provided for @chatEmptyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'What can I help you with?'**
+  String get chatEmptyTitle;
 
   /// No description provided for @noSessions.
   ///
@@ -464,12 +524,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Next version'**
   String get nextVersion;
-
-  /// No description provided for @chatEmpty.
-  ///
-  /// In en, this message translates to:
-  /// **'Send a message to start chatting'**
-  String get chatEmpty;
 
   /// No description provided for @deepThinking.
   ///
