@@ -229,6 +229,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
   }
 
+  Future<bool> _editMessage(UserMessage message, String text) {
+    _stopReading();
+    return _controller.editMessage(
+      message,
+      text: text,
+      thinking: _thinking,
+      search: _search,
+    );
+  }
+
+  void _selectVersion(String messageId) {
+    _stopReading();
+    unawaited(_controller.selectVersion(messageId));
+  }
+
   void _stopGeneration() {
     _stopReading();
     _controller.stop();
@@ -329,6 +344,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       return _MessageView(
                         key: ValueKey(messages[position].id),
                         message: messages[position],
+                        versions: state.versions[messages[position].id],
                         isLast: position == messages.length - 1,
                         busy: state.busy,
                         speech: speech,
@@ -336,6 +352,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                           messageId: reply.id,
                           text: text,
                         ),
+                        onEdit: state.busy ? null : _editMessage,
+                        onSelectVersion: state.busy ? null : _selectVersion,
                         onRegenerate: state.busy ? null : _regenerate,
                         onContinue: state.busy ? null : _continue,
                         onRetryUpload: state.busy
@@ -411,20 +429,26 @@ class _MessageView extends StatelessWidget {
   const _MessageView({
     super.key,
     required this.message,
+    required this.versions,
     required this.isLast,
     required this.busy,
     required this.speech,
     required this.onReadAloud,
+    required this.onEdit,
+    required this.onSelectVersion,
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
   });
 
   final Message message;
+  final MessageVersions? versions;
   final bool isLast;
   final bool busy;
   final _SpeechView speech;
   final void Function(AssistantMessage reply, String text)? onReadAloud;
+  final Future<bool> Function(UserMessage message, String text)? onEdit;
+  final ValueChanged<String>? onSelectVersion;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
@@ -433,15 +457,140 @@ class _MessageView extends StatelessWidget {
   Widget build(BuildContext context) {
     final message = this.message;
     if (message is UserMessage) {
-      final colors = Theme.of(context).colorScheme;
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.end,
-        children: [
-          if (message.attachments.isNotEmpty)
-            Padding(
-              padding: const EdgeInsets.only(top: 4),
-              child: MessageAttachments(attachments: message.attachments),
+      return _UserMessageView(
+        message: message,
+        versions: versions,
+        onEdit: onEdit,
+        onSelectVersion: onSelectVersion,
+      );
+    }
+    if (message is! AssistantMessage) return const SizedBox.shrink();
+    return _ReplyView(
+      reply: message,
+      versions: versions,
+      isLast: isLast,
+      busy: busy,
+      speech: speech,
+      onReadAloud: onReadAloud,
+      onSelectVersion: onSelectVersion,
+      onRegenerate: onRegenerate,
+      onContinue: onContinue,
+      onRetryUpload: onRetryUpload,
+    );
+  }
+}
+
+/// 用户提问：气泡、附件、编辑入口与版本切换；编辑时就地换成输入框。
+class _UserMessageView extends StatefulWidget {
+  const _UserMessageView({
+    required this.message,
+    required this.versions,
+    required this.onEdit,
+    required this.onSelectVersion,
+  });
+
+  final UserMessage message;
+  final MessageVersions? versions;
+  final Future<bool> Function(UserMessage message, String text)? onEdit;
+  final ValueChanged<String>? onSelectVersion;
+
+  @override
+  State<_UserMessageView> createState() => _UserMessageViewState();
+}
+
+class _UserMessageViewState extends State<_UserMessageView> {
+  late final TextEditingController _draft = TextEditingController(
+    text: widget.message.text,
+  );
+  bool _editing = false;
+
+  @override
+  void dispose() {
+    _draft.dispose();
+    super.dispose();
+  }
+
+  void _startEditing() {
+    _draft.text = widget.message.text;
+    setState(() => _editing = true);
+  }
+
+  Future<void> _submit() async {
+    final onEdit = widget.onEdit;
+    if (onEdit == null) return;
+    final text = _draft.text;
+    if (text.trim().isEmpty && widget.message.attachments.isEmpty) return;
+    if (await onEdit(widget.message, text) && mounted) {
+      setState(() => _editing = false);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    final strings = AppLocalizations.of(context)!;
+    final message = widget.message;
+    final versions = widget.versions;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        if (message.attachments.isNotEmpty)
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: MessageAttachments(attachments: message.attachments),
+          ),
+        if (_editing)
+          Container(
+            margin: const EdgeInsets.symmetric(vertical: 4),
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              border: Border.all(color: colors.outline),
+              borderRadius: BorderRadius.circular(12),
             ),
+            child: Column(
+              children: [
+                TextField(
+                  key: const Key('edit-input'),
+                  controller: _draft,
+                  autofocus: true,
+                  enabled: widget.onEdit != null,
+                  minLines: 1,
+                  maxLines: 6,
+                  decoration: InputDecoration(
+                    hintText: strings.composerHint,
+                    isDense: true,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    TextButton(
+                      key: const Key('edit-cancel'),
+                      onPressed: () => setState(() => _editing = false),
+                      child: Text(strings.cancel),
+                    ),
+                    const SizedBox(width: 8),
+                    ValueListenableBuilder<TextEditingValue>(
+                      valueListenable: _draft,
+                      builder: (context, value, _) {
+                        final canSend =
+                            widget.onEdit != null &&
+                            (value.text.trim().isNotEmpty ||
+                                message.attachments.isNotEmpty);
+                        return FilledButton(
+                          key: const Key('edit-send'),
+                          onPressed: canSend ? _submit : null,
+                          child: Text(strings.send),
+                        );
+                      },
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          )
+        else ...[
           if (message.text.isNotEmpty)
             Container(
               margin: const EdgeInsets.symmetric(vertical: 4),
@@ -455,19 +604,78 @@ class _MessageView extends StatelessWidget {
                 style: TextStyle(color: colors.onPrimaryContainer),
               ),
             ),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.end,
+            children: [
+              if (versions != null && versions.hasMultiple)
+                _VersionSwitcher(
+                  versions: versions,
+                  onSelect: widget.onSelectVersion,
+                ),
+              if (widget.onEdit != null)
+                IconButton(
+                  key: ValueKey('edit-message-${message.id}'),
+                  onPressed: _startEditing,
+                  tooltip: strings.editMessage,
+                  iconSize: 18,
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Icons.edit_outlined),
+                ),
+            ],
+          ),
         ],
-      );
-    }
-    if (message is! AssistantMessage) return const SizedBox.shrink();
-    return _ReplyView(
-      reply: message,
-      isLast: isLast,
-      busy: busy,
-      speech: speech,
-      onReadAloud: onReadAloud,
-      onRegenerate: onRegenerate,
-      onContinue: onContinue,
-      onRetryUpload: onRetryUpload,
+      ],
+    );
+  }
+}
+
+/// 兄弟版本切换：`第几条 / 共几条`，两端箭头各切一条。
+class _VersionSwitcher extends StatelessWidget {
+  const _VersionSwitcher({required this.versions, required this.onSelect});
+
+  final MessageVersions versions;
+  final ValueChanged<String>? onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final strings = AppLocalizations.of(context)!;
+    final colors = Theme.of(context).colorScheme;
+    final previous = versions.previousId;
+    final next = versions.nextId;
+    return Semantics(
+      label: strings.messageVersions,
+      container: true,
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          IconButton(
+            onPressed: onSelect != null && previous != null
+                ? () => onSelect!(previous)
+                : null,
+            tooltip: strings.previousVersion,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            iconSize: 16,
+            icon: const Icon(Icons.chevron_left),
+          ),
+          Text(
+            '${versions.index + 1} / ${versions.ids.length}',
+            style: TextStyle(fontSize: 12, color: colors.onSurfaceVariant),
+          ),
+          IconButton(
+            onPressed: onSelect != null && next != null
+                ? () => onSelect!(next)
+                : null,
+            tooltip: strings.nextVersion,
+            constraints: const BoxConstraints(minWidth: 28, minHeight: 28),
+            padding: EdgeInsets.zero,
+            visualDensity: VisualDensity.compact,
+            iconSize: 16,
+            icon: const Icon(Icons.chevron_right),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -475,20 +683,24 @@ class _MessageView extends StatelessWidget {
 class _ReplyView extends StatelessWidget {
   const _ReplyView({
     required this.reply,
+    required this.versions,
     required this.isLast,
     required this.busy,
     required this.speech,
     required this.onReadAloud,
+    required this.onSelectVersion,
     required this.onRegenerate,
     required this.onContinue,
     required this.onRetryUpload,
   });
 
   final AssistantMessage reply;
+  final MessageVersions? versions;
   final bool isLast;
   final bool busy;
   final _SpeechView speech;
   final void Function(AssistantMessage reply, String text)? onReadAloud;
+  final ValueChanged<String>? onSelectVersion;
   final ValueChanged<AssistantMessage>? onRegenerate;
   final ValueChanged<AssistantMessage>? onContinue;
   final ValueChanged<AssistantMessage>? onRetryUpload;
@@ -560,6 +772,13 @@ class _ReplyView extends StatelessWidget {
             ),
           Row(
             children: [
+              if (!reply.isInFlight &&
+                  versions != null &&
+                  versions!.hasMultiple)
+                _VersionSwitcher(
+                  versions: versions!,
+                  onSelect: onSelectVersion,
+                ),
               if (canReadAloud)
                 ReadAloudButton(
                   phase: speech.phase,

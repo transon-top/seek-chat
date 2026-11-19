@@ -425,6 +425,191 @@ void main() {
     );
   });
 
+  test('edit creates a sibling question and streams the new reply', () async {
+    final session = await newSession();
+    var call = 0;
+    final bodies = <Map<String, dynamic>>[];
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, _) async {
+          bodies.add(
+            jsonDecode((request as http.Request).body) as Map<String, dynamic>,
+          );
+          call++;
+          return streamOf(simpleReply(call == 1 ? 'first' : 'edited reply'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+    await controller.send(text: 'Hello', thinking: false, search: false);
+
+    final original = controller.state.messages.first as UserMessage;
+    final edited = await controller.editMessage(
+      original,
+      text: '  Hello edited  ',
+      thinking: false,
+      search: false,
+    );
+    expect(edited, isTrue);
+
+    final visible = controller.state.messages;
+    expect(visible, hasLength(2));
+    final question = visible.first as UserMessage;
+    expect(question.id, isNot(original.id));
+    expect(question.text, 'Hello edited');
+    expect(
+      ((visible.last as AssistantMessage).blocks.single as TextBlock).text,
+      'edited reply',
+    );
+
+    expect(controller.state.versions[original.id]?.ids, [
+      original.id,
+      question.id,
+    ]);
+    expect(controller.state.versions[original.id]?.index, 0);
+    expect(controller.state.versions[question.id]?.index, 1);
+
+    // 编辑请求只带编辑前的问题作为上下文，旧回答不进入请求。
+    final wireMessages = bodies.last['messages'] as List<dynamic>;
+    expect(wireMessages.last, {'role': 'user', 'content': 'Hello edited'});
+    expect(wireMessages, hasLength(2));
+    expect(
+      (await repository.siblings(session.id, null)).map((m) => m.id),
+      [original.id, question.id],
+    );
+  });
+
+  test('edit with blank text keeps the original attachments', () async {
+    final session = await newSession();
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, _) async {
+          return streamOf(simpleReply('ok'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+    final user = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'with file',
+      attachments: [
+        Attachment(
+          id: 'att-1',
+          name: 'photo.jpg',
+          size: 10,
+          isImage: true,
+          localPath: 'attachments/att-1',
+          serverId: 'file-1',
+        ),
+      ],
+    );
+    await controller.load();
+
+    expect(
+      await controller.editMessage(
+        user,
+        text: '   ',
+        thinking: false,
+        search: false,
+      ),
+      isTrue,
+    );
+    final question = controller.state.messages.first as UserMessage;
+    expect(question.text, '');
+    expect(question.attachments.single.id, 'att-1');
+  });
+
+  test('selectVersion switches the visible path without losing versions', () async {
+    final session = await newSession();
+    var call = 0;
+    final container = makeContainer(
+      client: DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, _) async {
+          call++;
+          return streamOf(simpleReply(call == 1 ? 'first' : 'second'));
+        }),
+      ),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+    await controller.send(text: 'Hello', thinking: false, search: false);
+
+    final first = controller.state.messages.last as AssistantMessage;
+    await controller.regenerate(first, thinking: false, search: false);
+    final second = controller.state.messages.last as AssistantMessage;
+    expect(controller.state.versions[first.id]?.ids, [first.id, second.id]);
+
+    await controller.selectVersion(first.id);
+
+    expect(controller.state.messages.last.id, first.id);
+    expect(controller.state.versions[first.id]?.index, 0);
+    expect(controller.state.versions[second.id]?.index, 1);
+    expect(
+      (await repository.visiblePath(session.id)).last.id,
+      first.id,
+    );
+  });
+
+  test('switching to a leftover branch settles its pending reply', () async {
+    final session = await newSession();
+    final question = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'Hello',
+    );
+    final leftover = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    final selected = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+
+    final container = makeContainer(
+      client: DeepSeekApiClient(origin: Uri.parse(origin)),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+    expect(
+      (controller.state.messages.last as AssistantMessage).id,
+      selected.id,
+    );
+    expect(
+      (controller.state.messages.last as AssistantMessage).status,
+      ReplyStatus.stopped,
+    );
+
+    await controller.selectVersion(leftover.id);
+
+    final shown = controller.state.messages.last as AssistantMessage;
+    expect(shown.id, leftover.id);
+    expect(shown.status, ReplyStatus.stopped);
+  });
+
+  test('selectVersion ignores ids outside this conversation', () async {
+    final session = await newSession();
+    final container = makeContainer(
+      client: DeepSeekApiClient(origin: Uri.parse(origin)),
+    );
+    final controller = controllerFor(container, session.id);
+    await controller.load();
+
+    await controller.selectVersion('missing-message');
+
+    expect(controller.state.messages, isEmpty);
+  });
+
   test('continue appends to the same reply and reuses it', () async {
     final session = await newSession();
     final body = StreamController<List<int>>();
