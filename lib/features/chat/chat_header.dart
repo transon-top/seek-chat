@@ -29,6 +29,7 @@ class ChatHeader extends StatelessWidget {
               width: 44,
               height: 44,
               padding: EdgeInsets.zero,
+              foregroundColor: theme.colorScheme.foreground,
             ),
           ),
           Expanded(
@@ -56,6 +57,7 @@ class ChatHeader extends StatelessWidget {
               width: 44,
               height: 44,
               padding: EdgeInsets.zero,
+              foregroundColor: theme.colorScheme.foreground,
             ),
           ),
         ],

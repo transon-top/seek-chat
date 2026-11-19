@@ -5,6 +5,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 /// 主题种子；浅深两套由同一个 seed 生成（票 18）。
 const appThemeSeed = Color(0xFF4D6BFE);
 
+/// 主按钮色；种子生成的主色不等于品牌色，按钮显式指定。
+const appPrimaryColor = Color(0xFF3964FE);
+
 /// Material 主题：供 Markdown / Mermaid / 原生控件使用。
 ///
 /// 中文正文用稍高行高，英文保持 Material 默认。
@@ -16,6 +19,7 @@ ThemeData buildAppTheme({
   final base = ThemeData(colorSchemeSeed: appThemeSeed, brightness: brightness);
   final text = base.textTheme;
   return base.copyWith(
+    colorScheme: base.colorScheme.copyWith(primary: appPrimaryColor),
     textTheme: chinese
         ? text.copyWith(
             bodyLarge: text.bodyLarge?.copyWith(height: 1.6),

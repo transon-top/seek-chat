@@ -438,7 +438,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'What can I help you with?'**
+  /// **'Hi! What would you like to chat about?'**
   String get chatEmptyTitle;
 
   /// No description provided for @noSessions.

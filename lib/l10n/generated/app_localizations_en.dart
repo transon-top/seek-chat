@@ -200,7 +200,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionsLoadFailed => 'Could not load chats';
 
   @override
-  String get chatEmptyTitle => 'What can I help you with?';
+  String get chatEmptyTitle => 'Hi! What would you like to chat about?';
 
   @override
   String get noSessions => 'No chats yet';

@@ -407,6 +407,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         _showQuotaToast(quota);
       }
     });
+    // 空对话时输入框与问候语居中成组；有消息后回到底部停靠。
+    final composer = Composer(
+      input: _input,
+      inputFocus: _inputFocus,
+      busy: state.busy,
+      phase: speech.phase,
+      thinking: _thinking,
+      search: _search,
+      attachments: _attachments,
+      tasks: tasks,
+      onThinkingChanged: _setThinking,
+      onSearchChanged: _setSearch,
+      onAddAttachment: _addAttachments,
+      onRetryAttachment: _retryAttachment,
+      onRemoveAttachment: _removeAttachment,
+      onSend: _send,
+      onStop: _stopGeneration,
+      onVoice: () => _speech.toggleVoiceInput(onTranscript: _insertTranscript),
+    );
     return Scaffold(
       drawer: widget.drawer,
       body: Column(
@@ -425,17 +444,33 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             ),
           Expanded(
             child: messages.isEmpty
-                ? Center(
-                    child: Text(
-                      strings.chatEmptyTitle,
-                      textAlign: TextAlign.center,
-                      style: TextStyle(
-                        fontSize: 20,
-                        height: 28 / 20,
-                        fontWeight: FontWeight.w500,
-                        color: Theme.of(context).colorScheme.onSurface,
+                ? Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Image.asset(
+                            'assets/images/logo.png',
+                            width: 32,
+                            height: 32,
+                          ),
+                          const SizedBox(width: 12),
+                          Text(
+                            strings.chatEmptyTitle,
+                            style: TextStyle(
+                              fontSize: 24,
+                              height: 32 / 24,
+                              fontWeight: FontWeight.w600,
+                              color: Theme.of(context).colorScheme.onSurface,
+                            ),
+                          ),
+                        ],
                       ),
-                    ),
+                      const SizedBox(height: 24),
+                      composer,
+                    ],
                   )
                 : ChatMessageList(
                     messages: messages,
@@ -460,25 +495,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     onStop: _stopGeneration,
                   ),
           ),
-          Composer(
-            input: _input,
-            inputFocus: _inputFocus,
-            busy: state.busy,
-            phase: speech.phase,
-            thinking: _thinking,
-            search: _search,
-            attachments: _attachments,
-            tasks: tasks,
-            onThinkingChanged: _setThinking,
-            onSearchChanged: _setSearch,
-            onAddAttachment: _addAttachments,
-            onRetryAttachment: _retryAttachment,
-            onRemoveAttachment: _removeAttachment,
-            onSend: _send,
-            onStop: _stopGeneration,
-            onVoice: () =>
-                _speech.toggleVoiceInput(onTranscript: _insertTranscript),
-          ),
+          if (messages.isNotEmpty) composer,
         ],
       ),
     );
