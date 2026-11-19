@@ -131,10 +131,13 @@ class AppLocalizationsZh extends AppLocalizations {
   String get missingAttachment => '原件已丢失';
 
   @override
-  String get settingsTitle => '系统设置';
+  String get settingsTitle => '设置';
 
   @override
   String get settingsEntry => '设置';
+
+  @override
+  String get settingsGeneral => '通用设置';
 
   @override
   String get settingsTheme => '主题';
@@ -149,13 +152,22 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsThemeDark => '深色';
 
   @override
-  String get settingsSaveKey => '保存并校验';
-
-  @override
   String get settingsClearKey => '清除已保存的 Key';
 
   @override
+  String get settingsApiKeySaved => '已保存';
+
+  @override
+  String get settingsApiKeyPrompt => '输入 API Key 开始使用';
+
+  @override
+  String get settingsApiKeyPlaceholder => '请输入 API Key';
+
+  @override
   String get settingsLanguage => '语言';
+
+  @override
+  String get settingsLanguageSystem => '跟随系统';
 
   @override
   String get settingsLanguageZh => '简体中文';
@@ -164,10 +176,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLanguageEn => 'English';
 
   @override
+  String get settingsProvincePlaceholder => '请选择省份';
+
+  @override
+  String get settingsCityPlaceholder => '请选择市';
+
+  @override
   String get settingsLocation => '位置信息';
 
   @override
   String get settingsLocationNone => '不指定';
+
+  @override
+  String get settingsLocationDescription => '只随消息发送给你配置的 API，不申请定位权限。';
 
   @override
   String get newChat => '开启新对话';
@@ -394,7 +415,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get historyImport => '导入历史对话';
 
   @override
-  String get historyImportAction => '选择文件';
+  String get historyImportAction => '上传';
 
   @override
   String get historyImportDescription =>
@@ -428,7 +449,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get historyExport => '导出所有历史对话';
 
   @override
-  String get historyExportAction => '导出';
+  String get historyExportAction => '下载';
 
   @override
   String get historyExportDescription =>
@@ -442,6 +463,21 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get historyExportFailed => '导出失败，请重试';
+
+  @override
+  String get historyDelete => '删除所有对话';
+
+  @override
+  String get historyDeleteConfirmTitle => '删除所有对话？';
+
+  @override
+  String get historyDeleteConfirmDescription => '本机全部对话与附件将被永久删除，且无法恢复。';
+
+  @override
+  String get historyDeleted => '已删除全部对话';
+
+  @override
+  String get historyDeleteFailed => '删除失败，请重试';
 
   @override
   String get historyErrorUnrecognized => '无法识别该文件，请选择 DeepSeek 导出的历史对话 ZIP 文件';

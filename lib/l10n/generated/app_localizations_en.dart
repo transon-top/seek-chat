@@ -140,6 +140,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsEntry => 'Settings';
 
   @override
+  String get settingsGeneral => 'General';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override
@@ -152,13 +155,22 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemeDark => 'Dark';
 
   @override
-  String get settingsSaveKey => 'Save and verify';
-
-  @override
   String get settingsClearKey => 'Clear saved key';
 
   @override
+  String get settingsApiKeySaved => 'Saved';
+
+  @override
+  String get settingsApiKeyPrompt => 'Enter an API key to get started';
+
+  @override
+  String get settingsApiKeyPlaceholder => 'Enter API key';
+
+  @override
   String get settingsLanguage => 'Language';
+
+  @override
+  String get settingsLanguageSystem => 'System';
 
   @override
   String get settingsLanguageZh => 'Simplified Chinese';
@@ -167,10 +179,20 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageEn => 'English';
 
   @override
+  String get settingsProvincePlaceholder => 'Select province';
+
+  @override
+  String get settingsCityPlaceholder => 'Select city';
+
+  @override
   String get settingsLocation => 'Location';
 
   @override
   String get settingsLocationNone => 'Not specified';
+
+  @override
+  String get settingsLocationDescription =>
+      'Sent only with messages to your configured API. Location access is not requested.';
 
   @override
   String get newChat => 'New chat';
@@ -421,7 +443,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyImport => 'Import chat history';
 
   @override
-  String get historyImportAction => 'Choose file';
+  String get historyImportAction => 'Upload';
 
   @override
   String get historyImportDescription =>
@@ -456,7 +478,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyExport => 'Export all chats';
 
   @override
-  String get historyExportAction => 'Export';
+  String get historyExportAction => 'Download';
 
   @override
   String get historyExportDescription =>
@@ -470,6 +492,22 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get historyExportFailed => 'Export failed. Please try again.';
+
+  @override
+  String get historyDelete => 'Delete all chats';
+
+  @override
+  String get historyDeleteConfirmTitle => 'Delete all chats?';
+
+  @override
+  String get historyDeleteConfirmDescription =>
+      'All chats and attachments on this device will be permanently deleted and cannot be recovered.';
+
+  @override
+  String get historyDeleted => 'All chats deleted';
+
+  @override
+  String get historyDeleteFailed => 'Delete failed. Please try again.';
 
   @override
   String get historyErrorUnrecognized =>

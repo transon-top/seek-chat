@@ -340,7 +340,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('New chat'), findsOneWidget);
-    expect(find.text('What can I help you with?'), findsOneWidget);
+    expect(find.text('Hi! What would you like to chat about?'), findsOneWidget);
     expect(find.text('Deep thinking'), findsOneWidget);
     expect(find.text('Smart search'), findsOneWidget);
     expect(find.byTooltip('Send'), findsOneWidget);
@@ -371,12 +371,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await openSettings(tester);
-    await tester.tap(find.byKey(const Key('settings-theme')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('深色').last);
+    await tester.tap(find.byKey(const Key('settings-theme-dark')));
     await tester.pumpAndSettle();
 
-    final context = tester.element(find.text('系统设置'));
+    final context = tester.element(find.text('设置'));
     expect(Theme.of(context).brightness, Brightness.dark);
     expect(prefs.getString('ui.themeMode'), 'dark');
 
@@ -394,7 +392,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsOneWidget);
-    await tester.tap(find.byType(BackButton));
+    await tester.tap(find.byKey(const Key('settings-close')));
     await tester.pumpAndSettle();
     expect(find.text('New chat'), findsOneWidget);
     expect(prefs.getString('user.locale'), 'en');
@@ -1118,7 +1116,7 @@ void main() {
     await tester.tap(find.byKey(const Key('chat-new')));
     await tester.pumpAndSettle();
     expect(find.text('新对话'), findsOneWidget);
-    expect(find.text('今天有什么可以帮到你？'), findsOneWidget);
+    expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
     expect(
       tester
           .widget<ShadInput>(find.byKey(const Key('composer-input')))

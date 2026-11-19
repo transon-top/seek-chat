@@ -12,12 +12,16 @@ import 'preferences_provider.dart';
 final class UserMetadata {
   const UserMetadata({
     required this.locale,
+    required this.languageChoice,
     required this.location,
     required this.systemChinese,
   });
 
   /// 生效中的界面语言代码：`zh` 或 `en`。
   final String locale;
+
+  /// 显式选择的语言；null 表示跟随系统。
+  final String? languageChoice;
 
   /// 未选择时为 null；元信息里对应字段留空。
   final UserLocation? location;
@@ -43,8 +47,9 @@ class UserMetadataStore {
   UserLocation? get location =>
       normalizeLocation(decodeJsonSource(_preferences.getString(locationKey)));
 
-  Future<void> setLocale(String value) =>
-      _preferences.setString(localeKey, value);
+  Future<void> setLocale(String? value) => value == null
+      ? _preferences.remove(localeKey)
+      : _preferences.setString(localeKey, value);
 
   Future<void> setLocation(UserLocation? value) => value == null
       ? _preferences.remove(locationKey)
@@ -83,17 +88,21 @@ class UserMetadataNotifier extends Notifier<UserMetadata> {
         : systemChinese
         ? (stored.region == 'CN' ? stored : null)
         : UserLocation(region: stored.region);
+    final choice = _store.locale;
     return UserMetadata(
-      locale: _store.locale ?? (systemChinese ? 'zh' : 'en'),
+      locale: choice ?? (systemChinese ? 'zh' : 'en'),
+      languageChoice: choice,
       location: location,
       systemChinese: systemChinese,
     );
   }
 
-  Future<void> setLocale(String locale) async {
+  /// 传 null 表示跟随系统。
+  Future<void> setLocale(String? locale) async {
     await _store.setLocale(locale);
     state = UserMetadata(
-      locale: locale,
+      locale: locale ?? (state.systemChinese ? 'zh' : 'en'),
+      languageChoice: locale,
       location: state.location,
       systemChinese: state.systemChinese,
     );
@@ -103,6 +112,7 @@ class UserMetadataNotifier extends Notifier<UserMetadata> {
     await _store.setLocation(location);
     state = UserMetadata(
       locale: state.locale,
+      languageChoice: state.languageChoice,
       location: location,
       systemChinese: state.systemChinese,
     );

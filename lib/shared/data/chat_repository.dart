@@ -447,6 +447,20 @@ class ChatRepository {
 
   // ------------------------------------------------------------- 导入导出
 
+  /// 删除全部会话、消息与附件；返回被移除的附件供调用方清理本地原件。
+  Future<List<Attachment>> deleteAllHistory() async {
+    var previous = const <Attachment>[];
+    await _db.transaction(() async {
+      final oldRows = await _db.select(_db.attachments).get();
+      previous = [for (final row in oldRows) _toAttachment(row)];
+      await _db.delete(_db.messageAttachments).go();
+      await _db.delete(_db.messages).go();
+      await _db.delete(_db.sessions).go();
+      await _db.delete(_db.attachments).go();
+    });
+    return previous;
+  }
+
   /// 用归档内容整体替换全部会话、消息与附件（`history.md` §5）。
   ///
   /// 单事务完成：失败时旧数据保留。返回被移除的附件，供调用方在事务提交后

@@ -6,7 +6,7 @@
 - 助手正文通栏、来源胶囊（站点图标叠加 + `N 个网页`）、底部操作条；
 - 输入区激活开关为蓝色样式；
 - 会话历史为分组抽屉，顶部品牌占位文案 `Fleepseek`，底部为设置按钮；
-- 系统设置为带三段导航的底部 Sheet（通用设置 / 账号管理 / 数据管理）。
+- 系统设置为带两段导航的底部 Sheet（通用设置 / 数据管理）。
 
 关联文档：`architecture.md` §8、`markdown.md`、`search.md`、`attachments.md`、
 `safety.md`、`history.md`、`i18n-theme.md`、`user-metadata.md`、`speech.md`。
@@ -26,7 +26,7 @@
 | 主题 | 决策 |
 | --- | --- |
 | 主路由 | 聊天页为根；会话列表改为左侧抽屉，不再使用独立列表首页 |
-| 设置 | 底部 Sheet，占屏 92%，顶部三段导航；数据管理为 Sheet 内二级视图 |
+| 设置 | 底部 Sheet，占屏 92%，顶部两段导航；数据管理为同一 Sheet 内的视图 |
 | 品牌 | 界面显示 `Fleepseek`；抽屉顶部为蓝色文字标，不使用 logo 图片 |
 | 主题来源 | `ColorScheme.fromSeed(#4D6BFE)` → 映射 `ShadColorScheme`；不维护第二套色表 |
 | 激活开关 | 蓝色系：浅蓝底 + 蓝描边 + 蓝图标 / 文字；未激活为透明底 + 灰描边 |
@@ -61,17 +61,17 @@
 | --- | --- | --- | --- | --- |
 | 聊天页 | 应用启动 | 根页面 | 系统返回退出 | 顶部栏 + 消息区 + 输入区 |
 | 会话抽屉 | 顶部菜单按钮；右滑 | 左侧 Sheet，宽 `min(320, 屏宽×0.82)` | 遮罩、返回、面板收起按钮 | 新建 / 打开 / 重命名 / 删除 / 设置入口 |
-| 系统设置 | 抽屉底部设置行 | 底部 Sheet，高 92% | 关闭按钮、返回、遮罩 | 三段导航：通用 / 账号 / 数据管理 |
-| 数据管理 | 设置顶部「数据管理」 | 设置 Sheet 内二级视图 | 返回箭头 | 导入 / 导出 / 删除全部对话 |
+| 系统设置 | 抽屉底部设置行 | 底部 Sheet，高 92% | 关闭按钮、返回、遮罩 | 两段导航：通用 / 数据管理 |
+| 数据管理 | 设置导航「数据管理」 | 设置 Sheet 内视图 | 关闭按钮、遮罩 | API Key、导入 / 导出 / 删除全部对话 |
 | 来源抽屉 | 「N 个网页」胶囊、搜索行、查看全部 | 底部 Sheet，最高 85% | 下拉、遮罩、关闭按钮 | 全局去重来源列表 |
 | 附件来源 | 回形针按钮 | 底部 Sheet | 遮罩、返回 | 从相册选择 / 选择文件 |
-| 语言选择 | 设置「语言」行 | 底部 Sheet | 选中、遮罩 | 跟随系统 / 简体中文 / English |
-| 所在地选择 | 设置「所在地」行 | 底部 Sheet | 完成、遮罩 | 中文系统省市；其他系统国家 / 地区 |
-| 音色选择 | 设置「朗读音色」行 | 底部 Sheet | 选中、遮罩 | Stella / Tide |
-| API Key | 设置「DeepSeek API Key」行 | 居中 Dialog | 取消、遮罩 | 保存并校验 |
+| 语言选择 | 设置「语言」行 | 锚定弹层 | 选中、遮罩 | 跟随系统 / 简体中文 / English |
+| 所在地选择 | 设置「位置信息」胶囊 | 锚定弹层 | 选中、遮罩 | 中文系统省市；其他系统国家 / 地区 |
+| 音色选择 | 设置「朗读音色」行 | 锚定弹层 | 选中、遮罩 | Stella / Tide |
+| API Key | 数据管理顶部输入框 | 内联输入 | 键盘完成提交 | 校验并保存；已保存时可清除 |
 | 重命名会话 | 会话行菜单 | Dialog | 取消、遮罩 | 输入框 + 保存 |
 | 删除会话 | 会话行菜单 | Dialog | 取消、遮罩 | 危险按钮 |
-| 清除 Key | 账号管理内红色行 | Dialog | 取消、遮罩 | 危险按钮 |
+| 清除 Key | 数据管理「清除已保存的 Key」 | 直接清除 | — | 输入框回到未设置 |
 | 导入确认 | 数据管理「选择文件」后 | Dialog | 取消、遮罩 | 覆盖提示 |
 | 导入 / 导出进度 | 确认后 / 点击导出 | Dialog | 不可关闭 | 阻塞重复操作 |
 | 删除全部对话 | 数据管理红色按钮 | Dialog | 取消、遮罩 | 二次确认 |
@@ -121,43 +121,36 @@
 
 ### 1.5 系统设置 Sheet
 
-- 本节覆盖票 20 原型的「单页分组」结构，改为参考截图的三段导航；
-  设置内容与持久化语义沿用票 16 / 17 / 18 / 21。
 - 底部 Sheet，高 92%，顶部圆角 24，背景 `background`，遮罩 40%（深色 60%）。
-- 顶部：标题「系统设置」20sp / w600；右侧关闭按钮（36×36，Lucide `x`）。
-- 导航行：水平排布三个入口，间距 8：
+- 顶部：标题「设置」20sp / w600；右侧关闭按钮（36×36，Lucide `x`）。
+- 导航行：水平排布两个入口，间距 8：
   - 通用设置（Lucide `settings2`）
-  - 账号管理（Lucide `userRound`）
-  - 数据管理（Lucide `database` + `chevronRight`）
-  - 选中项为灰底胶囊（`muted`，圆角 999，高 40，内边距 14/8）；
-    未选中透明底，文字 `mutedForeground`。文字放大或英文溢出时整行可水平滚动。
-  - 前两项在当前 Sheet 内切换；数据管理打开二级视图（顶部返回箭头 +
-    「数据管理」标题），保留截图中的 `chevronRight` 作为下钻提示。
+  - 数据管理（Lucide `database`）
+  - 选中项为灰底胶囊（`muted`，圆角 999，高 44）；未选中透明底，
+    文字 `mutedForeground`。两项在当前 Sheet 内切换。
 - 内容：水平内边距 20，顶部 24，底部 `SafeArea` + 48；宽屏最大 640 居中。
 
 **通用设置**
 
-1. `主题`：三张等宽卡片，间距 8，高 88，圆角 14，1px 描边；
-   图标 20（`sun` / `moon` / `monitor`），文案 13；选中卡片 `muted` 底，
-   未选中 `card` 底。文案：浅色 / 深色 / 跟随系统。
-2. `语言与所在地`：语言与所在地同区（票 16 / 18 约束）。
-   - `语言`：行高 52；左侧标签 15；右侧下拉胶囊（高 36，`muted` 底，圆角 999，
-     内边距 14，文字 13 + `chevronDown` 14）。选项：跟随系统 / 简体中文 / English。
-   - `所在地`：同样的下拉胶囊；行尾所在地或灰色「未设置」；点击打开所在地
-     选择 Sheet。行下说明沿用票 20 的原型：「只随消息发送给你配置的 API，
-     不申请定位权限」，不是独立隐私区。
-3. `对话`：朗读音色（下拉胶囊，Stella · 女声 / Tide · 男声）、深度思考开关、
-   智能搜索开关、模型（固定 `deepseek-flash`，不可点）。
-4. `语音`：麦克风权限状态行；已拒绝时显示「打开系统设置」描边按钮。
-
-**账号管理**
-
-1. `DeepSeek API Key`：行尾「已保存」或「未设置」；点击打开 Key Dialog。
-2. 已保存时显示红色文字行「清除已保存的 Key」。
+1. `主题`：浅色 / 深色 两张等宽卡片一行，跟随系统整行；卡片间距 8，高 88，
+   圆角 14，1px 描边；图标 20（`sun` / `moon` / `monitor`），文案 13；
+   选中卡片 `muted` 底，未选中 `card` 底。
+2. `语言`：行高 52；左侧标签 15；右侧下拉胶囊（高 36，`muted` 底，圆角 999，
+   内边距 14，文字 13 + `chevronDown` 14）。选项：跟随系统 / 简体中文 / English。
+3. `朗读音色`：同样的下拉胶囊；选项 Stella · 女声 / Tide · 男声。
+4. `位置信息`：中文系统为省份 / 城市两颗并排胶囊，其他系统为单颗国家 / 地区
+   胶囊；行下说明「只随消息发送给你配置的 API，不申请定位权限」。
+5. `语音`：麦克风权限状态行；已拒绝时显示「打开系统设置」描边按钮。
+- 下拉胶囊点击打开锚定弹层：圆角 16、1px 描边，最大高 320，内部滚动；
+  选项高 44，选中项右侧 `check` 18。
 
 **数据管理**
 
-- 导入历史对话、导出所有历史对话、删除全部对话三行；版式与状态见 §5.9。
+1. 顶部 `输入 API Key 开始使用`：单行输入框，占位「请输入 API Key」，
+   键盘完成时校验并保存；已保存时下方显示「已保存」与
+   「清除已保存的 Key」。
+2. 导入历史对话（上传）、导出所有历史对话（下载）、删除所有对话（删除，
+   危险色描边）三行；版式与状态见 §5.9。
 
 ### 1.6 浮层
 
@@ -204,8 +197,8 @@ Markdown / Mermaid 内容使用 `materialThemeBuilder` 提供的 Material 主题
 | --- | --- | --- | --- |
 | `ChatHeader` | 自绘 + `ShadIconButton` | `features/chat/` | 菜单、标题、新建对话 |
 | `SessionDrawer` | 自绘 + `ShadSheet` | `features/sessions/` | 分组会话列表、设置入口 |
-| `SettingsSheet` | 自绘 + `ShadSheet` | `features/settings/` | 三段导航系统设置 |
-| `SettingsNav` | 自绘 | `features/settings/` | 通用 / 账号 / 数据管理导航 |
+| `SettingsSheet` | 自绘 + `ShadSheet` | `features/settings/` | 两段导航系统设置 |
+| `SettingsNav` | 自绘 | `features/settings/` | 通用 / 数据管理导航 |
 | `SettingsSection` | 自绘 | `features/settings/` | 设置分组、卡片、分隔线 |
 | `SettingsValueRow` | 自绘 | `features/settings/` | 标签 + 行尾值 / 操作 |
 | `SettingsSwitchRow` | 自绘 + `ShadSwitch` | `features/settings/` | 开关行 |
@@ -234,7 +227,7 @@ Markdown / Mermaid 内容使用 `materialThemeBuilder` 提供的 Material 主题
 | `RecordingStatus` | 自绘 | `features/chat/speech/` | 录音计时 + 5 根电平条 |
 | `VoiceButton` | 自绘 / `ShadIconButton` | `features/chat/speech/` | idle / recording / transcribing |
 | `ReadAloudButton` | 自绘 | `features/chat/speech/` | idle / loading / playing |
-| `ApiKeyDialog` | `ShadDialog` + `ShadInput` | `features/settings/` | 保存并校验 |
+| `ApiKeyField` | 自绘 + `ShadInput` | `features/settings/` | 数据管理内联 Key 输入 |
 | `ConfirmDialog` | `ShadDialog` | `features/settings/` | 删除 / 清除 / 导入覆盖 |
 | `ProgressDialog` | `ShadDialog` + `ShadProgress` | `features/settings/` | 导入 / 导出不可关闭进度 |
 | `ImportExportRows` | 自绘 + `ShadButton` | `features/history/` | 数据管理三行 |
@@ -620,32 +613,26 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 **通用设置**
 
 - 主题卡片点击立即生效并持久化；选中卡片 `muted` 底。
-- 语言下拉：选中立即刷新界面并关闭弹层；「跟随系统」写回 `user.locale = system`，
+- 语言下拉：选中立即刷新界面并关闭弹层；「跟随系统」删除 `user.locale`，
   读取时按系统语言解析。
-- 所在地：点击打开所在地 Sheet；未设置显示灰色「未设置」；状态即时写入。
+- 位置信息：胶囊在同页锚定弹层内选择；未设置显示灰色占位；状态即时写入。
 - 音色下拉：选中即写入，下一次朗读生效。
-- 深度思考 / 智能搜索开关：写入默认值；输入区开关同步。
 - 麦克风权限：只读三态；已拒绝时显示「打开系统设置」；`resumed` 刷新。
-
-**账号管理**
-
-- Key 行：未设置显示「未设置」；已保存显示「已保存」。
-- Key Dialog：输入框自动聚焦、`obscureText`、禁用自动纠正；校验中按钮转圈并
-  禁用；失败在输入框下方显示红色错误；成功后关闭并 Toast「Key 校验通过」。
-- 清除 Key：红色文字行 → 确认 Dialog → 清除；行回「未设置」。
 
 **数据管理**
 
 | 操作 | 流程 | 关闭 | 结果 |
 | --- | --- | --- | --- |
-| 导入 | 选择文件 → 覆盖确认 → 不可关闭进度 → 完成 | 进度期间禁止 | 成功 Toast 会话数；失败行内红字 |
-| 导出 | 点击导出 → 进度 → 系统保存面板 | 进度期间禁止 | 成功 Toast「导出文件已保存」；失败红字 |
-| 删除全部 | 红色按钮 → 确认 → 进度 | 进度期间禁止 | Toast「已删除全部对话」 |
+| Key | 输入 → 键盘完成 → 校验 | 允许 | 成功显示「已保存」；失败在输入框下显示红色错误 |
+| 清除 Key | 「清除已保存的 Key」→ 直接清除 | — | 输入框回到未设置 |
+| 导入 | 上传 → 覆盖确认 → 不可关闭进度 → 完成 | 进度期间禁止 | 成功 Toast 会话数；失败行内红字 |
+| 导出 | 点击下载 → 进度 → 系统保存面板 | 进度期间禁止 | 成功 Toast「导出文件已保存」；失败红字 |
+| 删除全部 | 删除 → 确认 → 删除 | 进度期间禁止 | 成功 Toast「已删除全部对话」 |
 
 - 导入覆盖确认文案见 `history.md` §8；取消不提示错误。
-- 导入 / 导出进度 Dialog 不可关闭，设置导航与数据按钮禁用，系统返回被拦截；
+- 导入 / 导出进度 Dialog 不可关闭，系统返回被拦截；
   生成停止与聊天页行为以 `history.md` §5 为准。
-- 数据管理二级视图顶部返回箭头回到通用设置。
+- 删除全部先停止全部生成，再在单事务内清空会话、消息与附件。
 
 ### 5.10 会话抽屉交互
 
@@ -762,7 +749,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | `userMessage` | 你的消息 | Your message | 消息语义 |
 | `versionPosition` | 第 {current} 个，共 {total} 个 | Version {current} of {total} | 分支语义 |
 | `settingsTabGeneral` | 通用设置 | General | 设置导航 |
-| `settingsTabAccount` | 账号管理 | Account | 设置导航 |
+| `settingsData` | 数据管理 | Data | 设置导航 |
 | `settingsLanguageSystem` | 跟随系统 | System | 语言选项（写回 `system`） |
 | `settingsLanguageNote` | 切换后界面立即生效，已生成的回复保持原样。 | The interface updates immediately. Existing replies stay as-is. | 语言说明 |
 | `settingsLocation` | 所在地 | Location | 设置行标签（改值） |
@@ -919,9 +906,9 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | --- | --- |
 | `HomePage` 会话列表为根页面 | 根页面改聊天页；会话列表迁入左侧抽屉 |
 | `MaterialApp` + Material 主题 | `ShadApp` + `ShadThemeData` + Material 桥接 |
-| 设置页为独立 Material 页面 | 系统设置 Sheet + 三段导航 |
+| 设置页为独立 Material 页面 | 系统设置 Sheet + 两段导航 |
 | 聊天页使用 Material 控件 | 按 §2 组件映射替换；渲染包继续用 Material |
-| 主题 / 语言 / 音色为下拉框 | 主题卡片 + 胶囊下拉 + 底部选择 Sheet |
+| 主题 / 语言 / 音色为下拉框 | 主题卡片 + 胶囊下拉 + 锚定弹层 |
 | 无会话分组 | 今天 / 昨天 / 7 天内 / 更早 |
 | 输入区开关为灰底选中 | 蓝色激活态 |
 | 来源为样例行 / 横向卡片 | 站点图标叠加胶囊 + 底部抽屉 |
@@ -936,8 +923,8 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 3. 输入区：`Composer`、蓝色开关、附件条、语音按钮、发送 / 停止。
 4. 消息区：`UserMessage`、`AssistantMessage`、思考 / 工具行、分支、操作条、
    来源胶囊与抽屉、引用角标。
-5. 设置：`SettingsSheet` 三段导航、主题卡片、语言 / 所在地 / 音色 Sheet、Key Dialog、
-   数据管理二级视图。
+5. 设置：`SettingsSheet` 两段导航、主题卡片、语言 / 所在地 / 音色锚定弹层、
+   数据管理内联 Key 输入与历史行。
 6. 无障碍与响应式收口：语义标签、动态字体 2.0、320 宽、横屏、平板、
    减少动画。
 7. 文案：新增 ARB 键、同步中英、跑 `flutter gen-l10n`。
@@ -963,7 +950,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 - 输入区：蓝色激活开关、附件上传 / 失败 / 移除、录音 / 转写态、无 Key。
 - 消息：思考折叠、工具行状态、来源胶囊、来源抽屉、角标点击、分支切换、
   操作条启用 / 禁用。
-- 设置：三段导航、主题卡片、语言 / 音色 / 所在地 Sheet、Key 校验成功 / 失败、
+- 设置：两段导航、主题卡片、语言 / 音色 / 所在地锚定弹层、Key 校验成功 / 失败、
   导入确认 / 进度 / 失败、导出、删除全部。
 - 无障碍：关键语义标签；动态字体 2.0 无溢出；减少动画；320 宽。
 - 双语 × 浅深四组合：聊天、抽屉、设置、来源抽屉。
@@ -976,7 +963,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 4. 助手正文通栏；来源胶囊显示图标叠加与 `N 个网页`；点击打开来源抽屉。
 5. 思考 / 搜索时间线状态与文案符合 §5.4；拒答无来源与操作。
 6. 分支切换覆盖 user / assistant；切换停止朗读；旧分支保留。
-7. 系统设置三段导航；主题卡片即时生效；语言跟随系统 / 中 / 英；音色选择持久化。
+7. 系统设置两段导航；主题卡片即时生效；语言跟随系统 / 中 / 英；音色选择持久化。
 8. Key 校验、清除、所在地选择、权限状态与跳系统设置正确。
 9. 导入 / 导出 / 删除全部的状态行、确认与不可关闭进度正确。
 10. VoiceOver / TalkBack 朗读顺序与标签正确；动态字体 2.0、减少动画、深色对比度通过。

@@ -133,6 +133,15 @@ final class HistoryService {
     return history.length;
   }
 
+  /// 删除全部会话与附件；返回删除的会话数。
+  Future<int> deleteAll({required void Function() stopGeneration}) async {
+    stopGeneration();
+    final count = (await _repository.listSessions()).length;
+    final removed = await _repository.deleteAllHistory();
+    await _attachments.deleteAttachments(removed);
+    return count;
+  }
+
   List<Message> _rewriteAttachments(
     List<Message> messages,
     Map<String, String> ids,

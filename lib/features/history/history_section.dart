@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
@@ -164,34 +165,149 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     showAppToast(context, message, destructive: destructive);
   }
 
+  Future<void> _deleteAll() async {
+    final l10n = AppLocalizations.of(context)!;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(l10n.historyDeleteConfirmTitle),
+        content: Text(l10n.historyDeleteConfirmDescription),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text(l10n.cancel),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.pop(context, true),
+            child: Text(l10n.delete),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    setState(() => _busy = true);
+    try {
+      await ref
+          .read(historyServiceProvider)
+          .deleteAll(stopGeneration: widget.stopGeneration);
+      if (!mounted) return;
+      _showMessage(l10n.historyDeleted);
+    } on Object {
+      if (!mounted) return;
+      _showMessage(l10n.historyDeleteFailed, destructive: true);
+    } finally {
+      if (mounted) setState(() => _busy = false);
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    final colors = ShadTheme.of(context).colorScheme;
+    final divider = Divider(height: 1, thickness: 1, color: colors.border);
+    Widget pillButton({
+      required String label,
+      required VoidCallback? onPressed,
+      required bool destructive,
+    }) => OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: destructive ? colors.destructive : colors.foreground,
+        side: BorderSide(
+          color: destructive ? colors.destructive : colors.border,
+        ),
+        shape: const StadiumBorder(),
+        minimumSize: const Size(0, 36),
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+      ),
+      child: Text(label),
+    );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Text(l10n.settingsData, style: titleStyle),
-        const SizedBox(height: 8),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.historyImport),
-          subtitle: Text(l10n.historyImportDescription),
-          trailing: OutlinedButton(
+        _HistoryRow(
+          title: l10n.historyImport,
+          description: l10n.historyImportDescription,
+          trailing: pillButton(
+            label: l10n.historyImportAction,
             onPressed: _busy ? null : _import,
-            child: Text(l10n.historyImportAction),
+            destructive: false,
           ),
         ),
-        ListTile(
-          contentPadding: EdgeInsets.zero,
-          title: Text(l10n.historyExport),
-          subtitle: Text(l10n.historyExportDescription),
-          trailing: OutlinedButton(
+        divider,
+        _HistoryRow(
+          title: l10n.historyExport,
+          description: l10n.historyExportDescription,
+          trailing: pillButton(
+            label: l10n.historyExportAction,
             onPressed: _busy ? null : _export,
-            child: Text(l10n.historyExportAction),
+            destructive: false,
+          ),
+        ),
+        divider,
+        _HistoryRow(
+          title: l10n.historyDelete,
+          trailing: pillButton(
+            label: l10n.delete,
+            onPressed: _busy ? null : _deleteAll,
+            destructive: true,
           ),
         ),
       ],
+    );
+  }
+}
+
+class _HistoryRow extends StatelessWidget {
+  const _HistoryRow({
+    required this.title,
+    required this.trailing,
+    this.description,
+  });
+
+  final String title;
+  final String? description;
+  final Widget trailing;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = ShadTheme.of(context).colorScheme;
+    final description = this.description;
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 12),
+      child: Row(
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: 15,
+                    height: 20 / 15,
+                    color: colors.foreground,
+                  ),
+                ),
+                if (description != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          trailing,
+        ],
+      ),
     );
   }
 }
