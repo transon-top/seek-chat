@@ -30,6 +30,9 @@ class DeepSeekApiClient {
     ),
   );
 
+  /// Messages 之外的语音端点复用同一 API 源。
+  static Uri get defaultOrigin => _defaultOrigin;
+
   static const String filesApiBeta = 'files-api-2025-04-14';
 
   final http.Client _http;

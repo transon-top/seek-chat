@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 
 import '../features/chat/chat_controller.dart';
 import '../features/chat/chat_page.dart';
+import '../features/chat/speech/speech_controller.dart';
 import '../features/history/history_section.dart';
 import '../features/sessions/home_page.dart';
 import '../features/settings/settings_page.dart';
@@ -38,9 +39,13 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
     super.dispose();
   }
 
-  /// 进入后台时把各控制器内存中的流式回复补写一次（architecture.md §3）。
+  /// 进入后台时把各控制器内存中的流式回复补写一次（architecture.md §3）；
+  /// 语音同一时刻只在 `resumed` 下工作（`speech.md` §5.2）。
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state != AppLifecycleState.resumed) {
+      unawaited(ref.read(speechControllerProvider.notifier).handleLifecycle());
+    }
     if (state != AppLifecycleState.paused &&
         state != AppLifecycleState.hidden) {
       return;

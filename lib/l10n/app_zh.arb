@@ -176,5 +176,37 @@
   "historyErrorInvalidFiles": "文件中的附件数据已损坏，无法导入",
   "historyErrorTooLarge": "文件过大，无法导入",
   "cancel": "取消",
-  "historyErrorExportTooLarge": "文件过大，无法导出"
+  "historyErrorExportTooLarge": "文件过大，无法导出",
+  "voiceInput": "语音输入",
+  "voiceInputRecording": "录音中 {seconds} 秒",
+  "@voiceInputRecording": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "voiceInputStop": "结束录音并转写",
+  "voiceInputTranscribing": "正在转写…",
+  "voiceInputCancel": "正在转写，点击取消",
+  "voiceInputPermissionDenied": "无法使用麦克风，请在系统设置中允许访问",
+  "voiceInputNoDevice": "未检测到麦克风",
+  "voiceInputFailed": "语音识别失败，请稍后再试",
+  "voiceInputEmpty": "未识别到语音内容",
+  "voiceInputLimitReached": "已达到单次录音时长上限",
+  "voiceInputInterrupted": "录音已中断",
+  "ttsPlay": "朗读",
+  "ttsStop": "停止朗读",
+  "ttsUnavailable": "这条回答暂时无法朗读",
+  "ttsFailed": "朗读失败，请稍后再试",
+  "settingsTtsVoice": "朗读音色",
+  "settingsTtsVoiceStella": "Stella · 女声",
+  "settingsTtsVoiceTide": "Tide · 男声",
+  "settingsSpeech": "语音",
+  "settingsMicPermission": "麦克风权限",
+  "settingsMicNotRequested": "未请求",
+  "settingsMicGranted": "已允许",
+  "settingsMicDenied": "已拒绝",
+  "settingsSpeechDescription": "语音输入需要麦克风权限；朗读不需要。v1 只在前台工作。",
+  "settingsOpenSystemSettings": "打开系统设置"
 }

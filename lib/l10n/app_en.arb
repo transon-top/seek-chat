@@ -225,5 +225,37 @@
       }
     }
   },
-  "historyErrorExportTooLarge": "The file is too large to export."
+  "historyErrorExportTooLarge": "The file is too large to export.",
+  "voiceInput": "Voice input",
+  "voiceInputRecording": "Recording {seconds}s",
+  "@voiceInputRecording": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "voiceInputStop": "Stop recording and transcribe",
+  "voiceInputTranscribing": "Transcribing…",
+  "voiceInputCancel": "Transcribing. Tap to cancel",
+  "voiceInputPermissionDenied": "Microphone access is denied. Allow it in system settings.",
+  "voiceInputNoDevice": "No microphone detected",
+  "voiceInputFailed": "Speech recognition failed. Please try again later.",
+  "voiceInputEmpty": "No speech detected",
+  "voiceInputLimitReached": "Maximum recording length reached",
+  "voiceInputInterrupted": "Recording interrupted",
+  "ttsPlay": "Read aloud",
+  "ttsStop": "Stop reading",
+  "ttsUnavailable": "This answer cannot be read aloud right now",
+  "ttsFailed": "Read-aloud failed. Please try again later.",
+  "settingsTtsVoice": "Read-aloud voice",
+  "settingsTtsVoiceStella": "Stella · female",
+  "settingsTtsVoiceTide": "Tide · male",
+  "settingsSpeech": "Speech",
+  "settingsMicPermission": "Microphone access",
+  "settingsMicNotRequested": "Not requested",
+  "settingsMicGranted": "Allowed",
+  "settingsMicDenied": "Denied",
+  "settingsSpeechDescription": "Voice input needs microphone access; read-aloud does not. Works in the foreground only.",
+  "settingsOpenSystemSettings": "Open system settings"
 }

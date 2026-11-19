@@ -8,8 +8,10 @@ import '../../shared/api/errors.dart';
 import '../../shared/models/location.dart';
 import '../../shared/models/location_data.dart';
 import '../../shared/models/types.dart';
+import '../../shared/prefs/speech_store.dart';
 import '../../shared/prefs/theme_store.dart';
 import '../../shared/prefs/user_metadata_store.dart';
+import '../../shared/speech/permissions.dart';
 
 /// 最小设置页：填写并校验 DeepSeek API Key。界面规格见票 10 / 20。
 class SettingsPage extends ConsumerStatefulWidget {
@@ -101,6 +103,7 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
         padding: const EdgeInsets.all(16),
         children: [
           const _ThemeSection(),
+          const _SpeechSection(),
           const _UserMetadataSection(),
           Text(
             'DeepSeek API Key',
@@ -316,6 +319,107 @@ class _UserMetadataSection extends ConsumerWidget {
           value.isEmpty ? null : UserLocation(region: value),
         );
       },
+    );
+  }
+}
+
+/// 语音：朗读音色与麦克风权限三态；从系统设置返回时刷新权限状态。
+class _SpeechSection extends ConsumerStatefulWidget {
+  const _SpeechSection();
+
+  @override
+  ConsumerState<_SpeechSection> createState() => _SpeechSectionState();
+}
+
+class _SpeechSectionState extends ConsumerState<_SpeechSection>
+    with WidgetsBindingObserver {
+  MicrophoneStatus? _status;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+    _loadStatus();
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) _loadStatus();
+  }
+
+  Future<void> _loadStatus() async {
+    final status = await ref.read(microphonePermissionsProvider).status();
+    if (mounted) setState(() => _status = status);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final titleStyle = Theme.of(context).textTheme.titleMedium;
+    final status = _status;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(l10n.settingsSpeech, style: titleStyle),
+        const SizedBox(height: 8),
+        Text(l10n.settingsTtsVoice),
+        DropdownButton<TtsVoice>(
+          key: const Key('settings-tts-voice'),
+          isExpanded: true,
+          value: ref.watch(ttsVoiceProvider),
+          items: [
+            DropdownMenuItem(
+              value: TtsVoice.stella,
+              child: Text(l10n.settingsTtsVoiceStella),
+            ),
+            DropdownMenuItem(
+              value: TtsVoice.tide,
+              child: Text(l10n.settingsTtsVoiceTide),
+            ),
+          ],
+          onChanged: (value) {
+            if (value != null) {
+              ref.read(ttsVoiceProvider.notifier).setVoice(value);
+            }
+          },
+        ),
+        const SizedBox(height: 12),
+        Text(l10n.settingsMicPermission),
+        Text(
+          switch (status) {
+            MicrophoneStatus.granted => l10n.settingsMicGranted,
+            MicrophoneStatus.denied => l10n.settingsMicDenied,
+            MicrophoneStatus.notRequested ||
+            null => l10n.settingsMicNotRequested,
+          },
+          key: const Key('settings-mic-status'),
+          style: TextStyle(
+            color: Theme.of(context).colorScheme.onSurfaceVariant,
+          ),
+        ),
+        if (status == MicrophoneStatus.denied)
+          Align(
+            alignment: Alignment.centerLeft,
+            child: TextButton(
+              key: const Key('settings-open-settings'),
+              onPressed: () =>
+                  ref.read(microphonePermissionsProvider).openSettings(),
+              child: Text(l10n.settingsOpenSystemSettings),
+            ),
+          ),
+        const SizedBox(height: 8),
+        Text(
+          l10n.settingsSpeechDescription,
+          style: Theme.of(context).textTheme.bodySmall,
+        ),
+        const Divider(height: 32),
+      ],
     );
   }
 }

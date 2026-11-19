@@ -26,6 +26,58 @@ String apiErrorText(
   return raw.isEmpty ? text : '$text\n$raw';
 }
 
+/// 语音输入可见的失败类别（`speech.md` §6.1）。ASR 的各状态码统一折叠为
+/// [failed]；只有权限、设备、空结果、时长与中断单独区分。
+enum VoiceInputFailure {
+  noApiKey,
+  permissionDenied,
+  noDevice,
+  failed,
+  empty,
+  limitReached,
+  interrupted,
+}
+
+String voiceInputErrorText(AppLocalizations l10n, VoiceInputFailure failure) =>
+    switch (failure) {
+      VoiceInputFailure.noApiKey => l10n.errorNoApiKey,
+      VoiceInputFailure.permissionDenied => l10n.voiceInputPermissionDenied,
+      VoiceInputFailure.noDevice => l10n.voiceInputNoDevice,
+      VoiceInputFailure.failed => l10n.voiceInputFailed,
+      VoiceInputFailure.empty => l10n.voiceInputEmpty,
+      VoiceInputFailure.limitReached => l10n.voiceInputLimitReached,
+      VoiceInputFailure.interrupted => l10n.voiceInputInterrupted,
+    };
+
+/// 朗读失败的可见类别（`speech.md` §6.2）。
+enum TtsFailure {
+  noApiKey,
+  unavailable,
+  unauthorized,
+  insufficientBalance,
+  rateLimited,
+  failed,
+}
+
+/// 400 单独区分，401 / 402 / 429 复用通用文案，其余折叠为 [TtsFailure.failed]。
+TtsFailure ttsFailureFromStatus(int? status) => switch (status) {
+  400 => TtsFailure.unavailable,
+  401 => TtsFailure.unauthorized,
+  402 => TtsFailure.insufficientBalance,
+  429 => TtsFailure.rateLimited,
+  _ => TtsFailure.failed,
+};
+
+String ttsErrorText(AppLocalizations l10n, TtsFailure failure) =>
+    switch (failure) {
+      TtsFailure.noApiKey => l10n.errorNoApiKey,
+      TtsFailure.unavailable => l10n.ttsUnavailable,
+      TtsFailure.unauthorized => l10n.apiErrorUnauthorized,
+      TtsFailure.insufficientBalance => l10n.apiErrorInsufficientBalance,
+      TtsFailure.rateLimited => l10n.apiErrorRateLimited,
+      TtsFailure.failed => l10n.ttsFailed,
+    };
+
 /// 回复级错误优先 `localMessage`，否则按 `kind`/`status` 归类到通用文案。
 String replyErrorText(AppLocalizations l10n, ReplyError error) {
   final local = error.localMessage;

@@ -12,9 +12,11 @@ import 'package:open_chat/l10n/generated/app_localizations.dart';
 import 'package:open_chat/shared/api/client.dart';
 import 'package:open_chat/shared/prefs/preferences_provider.dart';
 import 'package:open_chat/shared/security/api_key_store.dart';
+import 'package:open_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_key_store.dart';
+import '../chat/speech/speech_fakes.dart';
 
 const origin = 'https://api.test';
 
@@ -45,6 +47,7 @@ void main() {
     required DeepSeekApiClient client,
     required ApiKeyStore store,
     Locale locale = const Locale('zh'),
+    FakeMicrophonePermissions? permissions,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -52,6 +55,9 @@ void main() {
           apiClientProvider.overrideWithValue(client),
           apiKeyStoreProvider.overrideWithValue(store),
           sharedPreferencesProvider.overrideWithValue(prefs),
+          microphonePermissionsProvider.overrideWithValue(
+            permissions ?? FakeMicrophonePermissions(),
+          ),
         ],
         child: MaterialApp(
           locale: locale,
@@ -64,10 +70,20 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> reveal(WidgetTester tester, Finder finder) async {
+    await tester.scrollUntilVisible(
+      finder,
+      200,
+      scrollable: find.byType(Scrollable).first,
+    );
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('validates and stores a working key', (tester) async {
     final store = FakeApiKeyStore();
     await pumpSettings(tester, client: clientResponding(200), store: store);
 
+    await reveal(tester, find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'sk-good');
     await tester.tap(find.text('保存并校验'));
     await tester.pumpAndSettle();
@@ -80,6 +96,7 @@ void main() {
     final store = FakeApiKeyStore()..value = 'sk-old';
     await pumpSettings(tester, client: clientResponding(401), store: store);
 
+    await reveal(tester, find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'sk-bad');
     await tester.tap(find.text('保存并校验'));
     await tester.pumpAndSettle();
@@ -149,6 +166,7 @@ void main() {
 
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Theme'), findsOneWidget);
+    await reveal(tester, find.text('Save and verify'));
     expect(find.text('Language'), findsOneWidget);
     expect(find.text('Save and verify'), findsOneWidget);
     expect(find.text('Clear saved key'), findsOneWidget);
@@ -172,6 +190,40 @@ void main() {
     expect(jsonDecode(prefs.getString('user.location')!), {'region': 'AF'});
   });
 
+  testWidgets('shows the microphone permission states', (tester) async {
+    final permissions = FakeMicrophonePermissions()
+      ..granted = false
+      ..requestResult = false;
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+      permissions: permissions,
+    );
+
+    await reveal(tester, find.byKey(const Key('settings-mic-status')));
+    expect(find.text('已拒绝'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('settings-open-settings')));
+    await tester.pumpAndSettle();
+    expect(permissions.openedSettings, isTrue);
+  });
+
+  testWidgets('persists the read-aloud voice', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await reveal(tester, find.byKey(const Key('settings-tts-voice')));
+    await tester.tap(find.byKey(const Key('settings-tts-voice')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Tide · 男声').last);
+    await tester.pumpAndSettle();
+
+    expect(prefs.getString('tts.voice'), 'tide');
+  });
+
   testWidgets('reports a network failure without saving', (tester) async {
     final store = FakeApiKeyStore();
     final client = DeepSeekApiClient(
@@ -182,6 +234,8 @@ void main() {
     );
     await pumpSettings(tester, client: client, store: store);
 
+    await reveal(tester, find.byType(TextField));
+    await reveal(tester, find.byType(TextField));
     await tester.enterText(find.byType(TextField), 'sk-good');
     await tester.tap(find.text('保存并校验'));
     await tester.pumpAndSettle();
