@@ -199,6 +199,46 @@ void main() {
       );
     });
 
+    test('conversation pairs the visible path with sibling versions', () async {
+      final (session, user, firstReply) = await seeded();
+      final secondReply = await repository.createReply(
+        sessionId: session.id,
+        userMessageId: user.id,
+        model: ChatModel.deepseekFlash,
+        thinking: false,
+        search: false,
+      );
+      final (edited, editedReply) = await repository.editUserMessage(
+        sessionId: session.id,
+        originalMessageId: user.id,
+        text: 'edited',
+        model: ChatModel.deepseekFlash,
+        thinking: false,
+        search: false,
+      );
+
+      // 编辑后可见路径是新的 user 版本；根版本的兄弟仍可查询。
+      var view = await repository.loadConversation(session.id);
+      expect(view.messages.map((m) => m.id), [edited.id, editedReply.id]);
+      expect(view.versions[user.id]?.ids, [user.id, edited.id]);
+      expect(view.versions[user.id]?.index, 0);
+      expect(view.versions[edited.id]?.ids, [user.id, edited.id]);
+      expect(view.versions[edited.id]?.index, 1);
+      expect(view.versions[firstReply.id]?.ids, [firstReply.id, secondReply.id]);
+      expect(view.versions[editedReply.id]?.ids, [editedReply.id]);
+      expect(view.versions[editedReply.id]?.index, 0);
+
+      await repository.selectVersion(
+        sessionId: session.id,
+        messageId: user.id,
+      );
+      view = await repository.loadConversation(session.id);
+      expect(view.messages.map((m) => m.id), [user.id, secondReply.id]);
+      expect(view.versions[user.id]?.index, 0);
+      expect(view.versions[secondReply.id]?.ids, [firstReply.id, secondReply.id]);
+      expect(view.versions[secondReply.id]?.index, 1);
+    });
+
     test('editing a follow-up question keeps the rest of the tree', () async {
       final (session, firstUser, firstReply) = await seeded();
       final secondUser = await repository.addUserMessage(

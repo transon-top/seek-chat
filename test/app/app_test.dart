@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,10 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:open_chat/app/app.dart';
+import 'package:open_chat/features/chat/speech/player.dart';
+import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
+import 'package:open_chat/features/chat/speech/speech_api.dart';
+import 'package:open_chat/features/chat/speech/speech_controller.dart';
 import 'package:open_chat/shared/api/client.dart';
 import 'package:open_chat/shared/data/attachment_store.dart';
 import 'package:open_chat/shared/data/chat_repository.dart';
@@ -18,6 +23,7 @@ import 'package:open_chat/shared/prefs/preferences_provider.dart';
 import 'package:open_chat/shared/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../features/chat/speech/speech_fakes.dart';
 import '../support/fake_api_key_store.dart';
 import '../support/sse_fixtures.dart';
 
@@ -264,27 +270,34 @@ void main() {
     binding.platformDispatcher.clearLocalesTestValue();
   });
 
-  Widget appWith({required String? apiKey, DeepSeekApiClient? client}) =>
-      ProviderScope(
-        overrides: [
-          appDatabaseProvider.overrideWithValue(db),
-          chatRepositoryProvider.overrideWithValue(repository),
-          apiClientProvider.overrideWithValue(
-            client ??
-                DeepSeekApiClient(
-                  origin: Uri.parse(origin),
-                  httpClient: MockClient.streaming(
-                    (request, _) async =>
-                        sseResponse(Stream.value(utf8.encode(replyFixture))),
-                  ),
-                ),
-          ),
-          apiKeyStoreProvider.overrideWithValue(FakeApiKeyStore(apiKey)),
-          attachmentStoreProvider.overrideWithValue(AttachmentStore()),
-          sharedPreferencesProvider.overrideWithValue(prefs),
-        ],
-        child: const OpenChatApp(),
-      );
+  Widget appWith({
+    required String? apiKey,
+    DeepSeekApiClient? client,
+    SpeechApi? speechApi,
+    SpeechPlayer? speechPlayer,
+  }) => ProviderScope(
+    overrides: [
+      appDatabaseProvider.overrideWithValue(db),
+      chatRepositoryProvider.overrideWithValue(repository),
+      apiClientProvider.overrideWithValue(
+        client ??
+            DeepSeekApiClient(
+              origin: Uri.parse(origin),
+              httpClient: MockClient.streaming(
+                (request, _) async =>
+                    sseResponse(Stream.value(utf8.encode(replyFixture))),
+              ),
+            ),
+      ),
+      apiKeyStoreProvider.overrideWithValue(FakeApiKeyStore(apiKey)),
+      attachmentStoreProvider.overrideWithValue(AttachmentStore()),
+      sharedPreferencesProvider.overrideWithValue(prefs),
+      if (speechApi != null) speechApiProvider.overrideWithValue(speechApi),
+      if (speechPlayer != null)
+        speechPlayerProvider.overrideWithValue(speechPlayer),
+    ],
+    child: const OpenChatApp(),
+  );
 
   testWidgets('creates a session and streams a reply into it', (tester) async {
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
@@ -864,6 +877,258 @@ void main() {
 
     expect(find.textContaining('内容未通过安全审核'), findsOneWidget);
     expect(find.textContaining('Content Exists Risk'), findsNothing);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('reopens the selected branch and switches versions', (
+    tester,
+  ) async {
+    final session = await repository.createSession();
+    final question = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'Hello',
+    );
+    final first = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: first.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'first answer')],
+    );
+    final second = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: second.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'second answer')],
+    );
+
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('新对话'));
+    await tester.pumpAndSettle();
+
+    // 打开会话只显示选中分支，不把旧版本拼进消息流。
+    expect(find.text('second answer'), findsOneWidget);
+    expect(find.text('first answer'), findsNothing);
+    expect(find.text('2 / 2'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('上一个版本'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('first answer'), findsOneWidget);
+    expect(find.text('second answer'), findsNothing);
+    expect(find.text('1 / 2'), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('editing a question creates a sibling version', (tester) async {
+    final session = await repository.createSession();
+    final question = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'Original',
+    );
+    final reply = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: reply.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'first answer')],
+    );
+
+    final client = DeepSeekApiClient(
+      origin: Uri.parse(origin),
+      httpClient: MockClient.streaming(
+        (_, _) async => sseResponse(
+          Stream.value(
+            utf8.encode(
+              messageStart +
+                  textStart(0) +
+                  textDelta(0, 'edited answer') +
+                  textStop(0) +
+                  frame('message_delta', {
+                    'type': 'message_delta',
+                    'delta': {'stop_reason': 'end_turn'},
+                  }) +
+                  messageStop,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('新对话'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('编辑提问'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('edit-input')), findsOneWidget);
+
+    await tester.enterText(find.byKey(const Key('edit-input')), 'Edited');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('edit-send')));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Edited'), findsOneWidget);
+    expect(find.text('Original'), findsNothing);
+    expect(find.text('edited answer'), findsOneWidget);
+    expect(find.text('2 / 2'), findsOneWidget);
+    expect(await repository.siblings(session.id, null), hasLength(2));
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('disables version switching while the edited reply streams', (
+    tester,
+  ) async {
+    final session = await repository.createSession();
+    final question = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'Original',
+    );
+    final reply = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: reply.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'first answer')],
+    );
+
+    final body = StreamController<List<int>>();
+    final client = DeepSeekApiClient(
+      origin: Uri.parse(origin),
+      httpClient: MockClient.streaming(
+        (_, _) async => sseResponse(body.stream),
+      ),
+    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('新对话'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('编辑提问'));
+    await tester.pumpAndSettle();
+    await tester.enterText(find.byKey(const Key('edit-input')), 'Edited');
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('edit-send')));
+    await tester.pump();
+    await tester.pump();
+    await tester.pump();
+
+    // 流式期间新提问已有两个版本；切换器必须禁用而不是空指针。
+    expect(tester.takeException(), isNull);
+    expect(find.text('Edited'), findsOneWidget);
+    expect(find.text('2 / 2'), findsOneWidget);
+    final previous = tester.widget<IconButton>(
+      find.widgetWithIcon(IconButton, Icons.chevron_left),
+    );
+    expect(previous.onPressed, isNull);
+
+    body.add(
+      utf8.encode(
+        messageStart +
+            textStart(0) +
+            textDelta(0, 'edited answer') +
+            textStop(0) +
+            frame('message_delta', {
+              'type': 'message_delta',
+              'delta': {'stop_reason': 'end_turn'},
+            }) +
+            messageStop,
+      ),
+    );
+    await body.close();
+    await tester.pumpAndSettle();
+
+    expect(find.text('edited answer'), findsOneWidget);
+    await unmountApp(tester);
+  });
+
+  testWidgets('switching versions stops read-aloud', (tester) async {
+    final session = await repository.createSession();
+    final question = await repository.addUserMessage(
+      sessionId: session.id,
+      text: 'Hello',
+    );
+    final first = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: first.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'first answer')],
+    );
+    final second = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: question.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: second.id,
+      status: ReplyStatus.done,
+      blocks: const [TextBlock(text: 'second answer')],
+    );
+
+    final api = FakeSpeechApi();
+    final player = FakePlayer();
+    await tester.pumpWidget(
+      appWith(apiKey: 'sk-good', speechApi: api, speechPlayer: player),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('新对话'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byTooltip('朗读'));
+    await tester.pump();
+    await tester.pump();
+    expect(api.ttsCalls, hasLength(1));
+    api.ttsController!.add(Uint8List.fromList([1, 2, 3, 4]));
+    await tester.pump();
+    expect(player.sessions, hasLength(1));
+    expect(find.byTooltip('停止朗读'), findsOneWidget);
+
+    await tester.tap(find.byTooltip('上一个版本'));
+    await tester.pump();
+    // 停止朗读要等流取消在真实事件循环上完成。
+    await tester.runAsync(() => Future<void>.delayed(Duration.zero));
+    await tester.pumpAndSettle();
+
+    expect(find.text('first answer'), findsOneWidget);
+    final button = tester.widget<ReadAloudButton>(
+      find.byType(ReadAloudButton),
+    );
+    expect(button.phase, SpeechPhase.idle);
+    expect(player.sessions.single.stopped, isTrue);
+    expect(find.byTooltip('朗读'), findsOneWidget);
 
     await unmountApp(tester);
   });

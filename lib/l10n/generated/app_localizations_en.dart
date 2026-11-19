@@ -205,6 +205,18 @@ class AppLocalizationsEn extends AppLocalizations {
   String get continueGeneration => 'Continue';
 
   @override
+  String get editMessage => 'Edit message';
+
+  @override
+  String get messageVersions => 'Message versions';
+
+  @override
+  String get previousVersion => 'Previous version';
+
+  @override
+  String get nextVersion => 'Next version';
+
+  @override
   String get chatEmpty => 'Send a message to start chatting';
 
   @override

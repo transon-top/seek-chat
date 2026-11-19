@@ -202,6 +202,18 @@ class AppLocalizationsZh extends AppLocalizations {
   String get continueGeneration => '继续生成';
 
   @override
+  String get editMessage => '编辑提问';
+
+  @override
+  String get messageVersions => '消息版本';
+
+  @override
+  String get previousVersion => '上一个版本';
+
+  @override
+  String get nextVersion => '下一个版本';
+
+  @override
   String get chatEmpty => '发一条消息开始对话';
 
   @override

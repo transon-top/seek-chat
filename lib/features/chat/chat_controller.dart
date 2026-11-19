@@ -35,6 +35,7 @@ final activeChatControllersProvider = Provider<Set<ChatController>>(
 class ChatState {
   const ChatState({
     this.messages = const [],
+    this.versions = const {},
     this.title = '',
     this.busy = false,
     this.error,
@@ -44,6 +45,9 @@ class ChatState {
 
   /// 选中分支的可见消息；流式回复以内存中的最新状态出现在原位。
   final List<Message> messages;
+
+  /// 每条消息的兄弟版本；切换器据此显示「第几条 / 共几条」。
+  final Map<String, MessageVersions> versions;
 
   final String title;
 
@@ -55,11 +59,13 @@ class ChatState {
 
   ChatState copyWith({
     List<Message>? messages,
+    Map<String, MessageVersions>? versions,
     String? title,
     bool? busy,
     Object? error = _keepError,
   }) => ChatState(
     messages: messages ?? this.messages,
+    versions: versions ?? this.versions,
     title: title ?? this.title,
     busy: busy ?? this.busy,
     error: identical(error, _keepError) ? this.error : error as LocalMessage?,
@@ -102,10 +108,17 @@ class ChatController extends Notifier<ChatState> {
 
   Future<void> load() async {
     final session = await _repository.getSession(sessionId);
-    final messages = await _repository.loadMessagesForDisplay(sessionId);
+    final view = await _repository.loadConversation(
+      sessionId,
+      settleInterrupted: true,
+    );
     // 页面可能在读取期间销毁；首次读取也可能晚于请求发出，不覆盖内存状态。
     if (!ref.mounted || state.busy) return;
-    state = state.copyWith(title: session?.title ?? '', messages: messages);
+    state = state.copyWith(
+      title: session?.title ?? '',
+      messages: view.messages,
+      versions: view.versions,
+    );
   }
 
   /// 追加提问并流式生成回复。附件原件在写入数据库前复制到应用支持目录；
@@ -155,8 +168,10 @@ class ChatController extends Notifier<ChatState> {
         thinking: thinking,
         search: search,
       );
+      final view = await _repository.loadConversation(sessionId);
       state = state.copyWith(
-        messages: await _repository.visiblePath(sessionId),
+        messages: view.messages,
+        versions: view.versions,
       );
       submitted = true;
       // 已完成的上传任务只在发送前有用；serverId 已随消息落库。
@@ -204,8 +219,10 @@ class ChatController extends Notifier<ChatState> {
         thinking: thinking,
         search: search,
       );
+      final view = await _repository.loadConversation(sessionId);
       state = state.copyWith(
-        messages: await _repository.visiblePath(sessionId),
+        messages: view.messages,
+        versions: view.versions,
       );
 
       await _stream(
@@ -222,6 +239,75 @@ class ChatController extends Notifier<ChatState> {
     } finally {
       _end();
     }
+  }
+
+  /// 编辑可见路径上的提问：新建同父 user 版本并流式生成回复，旧分支保留。
+  /// 文本为空时沿用原附件；两者皆空则不提交。
+  Future<bool> editMessage(
+    UserMessage message, {
+    required String text,
+    required bool thinking,
+    required bool search,
+  }) async {
+    if (state.busy) return false;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty && message.attachments.isEmpty) return false;
+    if (!state.messages.any((item) => item.id == message.id)) return false;
+
+    _begin();
+    var submitted = false;
+    try {
+      final apiKey = await _requireApiKey();
+      if (apiKey == null) return false;
+      if (_cancelled) return false;
+
+      final (question, reply) = await _repository.editUserMessage(
+        sessionId: sessionId,
+        originalMessageId: message.id,
+        text: trimmed,
+        model: ChatModel.deepseekFlash,
+        thinking: thinking,
+        search: search,
+      );
+      final view = await _repository.loadConversation(sessionId);
+      state = state.copyWith(
+        messages: view.messages,
+        versions: view.versions,
+      );
+      submitted = true;
+
+      await _stream(
+        reply: reply,
+        accumulator: ReplyAccumulator(),
+        apiKey: apiKey,
+        questionId: question.id,
+        thinking: thinking,
+        search: search,
+        titleEnabled: state.title.isEmpty,
+      );
+    } on Object catch (error) {
+      _recordError(error);
+    } finally {
+      _end();
+    }
+    return submitted;
+  }
+
+  /// 切换到兄弟版本；下游每条分支保留自己的选择（`data-model.md` §3）。
+  /// 新分支可能来自上次中断的会话，读取时按 `stopped` 收尾展示。
+  Future<void> selectVersion(String messageId) async {
+    if (state.busy || !state.versions.containsKey(messageId)) return;
+    await _repository.selectVersion(
+      sessionId: sessionId,
+      messageId: messageId,
+    );
+    if (!ref.mounted || state.busy) return;
+    final view = await _repository.loadConversation(
+      sessionId,
+      settleInterrupted: true,
+    );
+    if (!ref.mounted || state.busy) return;
+    state = state.copyWith(messages: view.messages, versions: view.versions);
   }
 
   /// 续写可见路径末尾的回复；新块追加在原回复之后。缺快照时回退到当前

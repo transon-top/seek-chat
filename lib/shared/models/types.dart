@@ -326,6 +326,20 @@ final class SessionSummary {
   final DateTime updatedAt;
 }
 
+/// 同一父节点下的兄弟消息 id（按模型顺序）与当前消息的下标。
+final class MessageVersions {
+  const MessageVersions({required this.ids, required this.index});
+
+  final List<String> ids;
+  final int index;
+
+  bool get hasMultiple => ids.length > 1;
+
+  String? get previousId => index > 0 ? ids[index - 1] : null;
+
+  String? get nextId => index < ids.length - 1 ? ids[index + 1] : null;
+}
+
 /// 一个会话及其完整消息树；导入导出的共享载体。
 final class SessionHistory {
   const SessionHistory({required this.session, required this.messages});

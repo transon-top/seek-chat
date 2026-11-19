@@ -115,15 +115,41 @@ class ChatRepository {
   }
 
   /// 选中分支：从 `rootMessageId` 沿每行 `selected_child_id` 走出的路径。
-  Future<List<Message>> visiblePath(String sessionId) async {
+  Future<List<Message>> visiblePath(String sessionId) async =>
+      (await loadConversation(sessionId)).messages;
+
+  /// 选中分支与每条消息的兄弟版本；聊天页一次读取即可渲染路径和切换器。
+  ///
+  /// [settleInterrupted] 为真时，残留的 `pending`/`streaming` 回复在返回结果
+  /// 中按 `stopped` 显示（不写库），供打开会话时使用。
+  Future<({List<Message> messages, Map<String, MessageVersions> versions})>
+  loadConversation(
+    String sessionId, {
+    bool settleInterrupted = false,
+  }) async {
     final ids = await _visibleIds(sessionId);
-    if (ids.isEmpty) return const [];
-    final messages = await loadMessages(sessionId);
+    final messages = settleInterrupted
+        ? await loadMessagesForDisplay(sessionId)
+        : await loadMessages(sessionId);
     final byId = {for (final message in messages) message.id: message};
-    return [
-      for (final id in ids)
-        if (byId[id] != null) byId[id]!,
-    ];
+    final groups = <String?, List<String>>{};
+    for (final message in messages) {
+      (groups[message.parentId] ??= []).add(message.id);
+    }
+    return (
+      messages: [
+        for (final id in ids)
+          if (byId[id] != null) byId[id]!,
+      ],
+      versions: {
+        for (final group in groups.values)
+          for (var index = 0; index < group.length; index++)
+            group[index]: MessageVersions(
+              ids: List<String>.unmodifiable(group),
+              index: index,
+            ),
+      },
+    );
   }
 
   /// [parentId] 下的兄弟版本；parentId 为 null 时返回根版本。

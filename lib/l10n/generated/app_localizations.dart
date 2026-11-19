@@ -441,6 +441,30 @@ abstract class AppLocalizations {
   /// **'Continue'**
   String get continueGeneration;
 
+  /// No description provided for @editMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit message'**
+  String get editMessage;
+
+  /// No description provided for @messageVersions.
+  ///
+  /// In en, this message translates to:
+  /// **'Message versions'**
+  String get messageVersions;
+
+  /// No description provided for @previousVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Previous version'**
+  String get previousVersion;
+
+  /// No description provided for @nextVersion.
+  ///
+  /// In en, this message translates to:
+  /// **'Next version'**
+  String get nextVersion;
+
   /// No description provided for @chatEmpty.
   ///
   /// In en, this message translates to:
