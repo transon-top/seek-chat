@@ -9,6 +9,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
+import '../../shared/widgets/scroll_edge_fade.dart';
 import 'attachments_view.dart';
 import 'markdown_view.dart';
 import 'reply_view.dart';
@@ -120,37 +121,41 @@ class _ChatMessageListState extends State<ChatMessageList> {
   @override
   Widget build(BuildContext context) {
     final messages = widget.messages;
-    return ListView.builder(
+    return ScrollEdgeFade(
       controller: _controller,
-      padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-      itemCount: messages.length,
-      itemBuilder: (context, index) {
-        final message = messages[index];
-        return Padding(
-          // 顶部留白只加在第一行之前，其余消息间距 16。
-          padding: EdgeInsets.only(top: index == 0 ? 0 : 16),
-          child: Align(
-            alignment: Alignment.topCenter,
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 760),
-              child: _MessageView(
-                key: ValueKey(message.id),
-                message: message,
-                versions: widget.versions[message.id],
-                isLast: index == messages.length - 1,
-                busy: widget.busy,
-                speech: widget.speech,
-                onReadAloud: widget.onReadAloud,
-                onEdit: widget.onEdit,
-                onSelectVersion: widget.onSelectVersion,
-                onRegenerate: widget.onRegenerate,
-                onContinue: widget.onContinue,
-                onRetryUpload: widget.onRetryUpload,
+      color: Theme.of(context).colorScheme.surface,
+      child: ListView.builder(
+        controller: _controller,
+        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
+        itemCount: messages.length,
+        itemBuilder: (context, index) {
+          final message = messages[index];
+          return Padding(
+            // 顶部留白只加在第一行之前，其余消息间距 16。
+            padding: EdgeInsets.only(top: index == 0 ? 0 : 16),
+            child: Align(
+              alignment: Alignment.topCenter,
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 760),
+                child: _MessageView(
+                  key: ValueKey(message.id),
+                  message: message,
+                  versions: widget.versions[message.id],
+                  isLast: index == messages.length - 1,
+                  busy: widget.busy,
+                  speech: widget.speech,
+                  onReadAloud: widget.onReadAloud,
+                  onEdit: widget.onEdit,
+                  onSelectVersion: widget.onSelectVersion,
+                  onRegenerate: widget.onRegenerate,
+                  onContinue: widget.onContinue,
+                  onRetryUpload: widget.onRetryUpload,
+                ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
