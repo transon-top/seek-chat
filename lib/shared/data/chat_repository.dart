@@ -28,7 +28,16 @@ class ChatRepository {
   Stream<List<SessionSummary>> watchSessions() =>
       _sessionsQuery().watch().map(_toSummaries);
 
+  /// 历史列表只含已有消息的会话；新建的草稿会话（尚未发出消息）不展示
+  /// （chat-demo 同款）。消息写入后 drift 会重新推送同一查询。
   Selectable<SessionRow> _sessionsQuery() => _db.select(_db.sessions)
+    ..where(
+      (t) => existsQuery(
+        _db.selectOnly(_db.messages)
+          ..addColumns([_db.messages.id])
+          ..where(_db.messages.sessionId.equalsExp(t.id)),
+      ),
+    )
     ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]);
 
   Future<Session?> getSession(String id) async {
