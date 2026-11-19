@@ -437,7 +437,7 @@ void main() {
       ),
     ]);
 
-    expect(find.text('生成失败'), findsOneWidget);
+    expect(find.textContaining('发生错误，请重试'), findsOneWidget);
     await tester.tap(find.text('重试'));
     expect(events, ['retry:upload-error']);
   });

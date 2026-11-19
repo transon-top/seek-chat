@@ -179,7 +179,7 @@
 | 输入 | `ShadInput` | 输入区、API Key、重命名 |
 | 开关 | `ShadSwitch` | 深度思考、智能搜索、设置默认值 |
 | 进度 | `ShadProgress` | 加载、导入、导出；搜索时间线不使用进度条 |
-| 错误块 | `ShadAlert.destructive` | 回复请求错误；拒答不用红色 |
+| 错误块 | 自绘红字行（同 chat-demo `notice`） | 回复请求错误；拒答不用红色 |
 | 对话框 | `ShadDialog` + `showShadDialog` | 确认、Key、进度 |
 | 底部弹层 | `ShadSheet` + `showShadSheet` | 设置、来源、选择器、附件来源 |
 | 弹出菜单 | `ShadPopover` | 会话行重命名 / 删除 |
@@ -219,7 +219,7 @@ Markdown / Mermaid 内容使用 `materialThemeBuilder` 提供的 Material 主题
 | `MessageActions` | 自绘 + `ShadIconButton` | `features/chat/` | 复制 / 重新生成 / 朗读 |
 | `InlineStopButton` | `ShadButton.outline` | `features/chat/` | 流式中的行内停止 |
 | `StoppedNotice` | 自绘 + `ShadButton.outline` | `features/chat/` | 已停止 + 继续生成 |
-| `ReplyError` | `ShadAlert.destructive` | `features/chat/` | 请求错误 + 重试 |
+| `ReplyError` | 自绘红字行（同 chat-demo `notice`） | `features/chat/` | 请求错误 + 重试 |
 | `AttachmentStrip` | 自绘 | `features/chat/` | 草稿附件条 |
 | `AttachmentChip` | 自绘 | `features/chat/` | 图片缩略图 / 文档卡 |
 | `MessageAttachments` | 自绘 | `features/chat/` | 消息内附件 |
@@ -511,9 +511,9 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | `error` | 保留 | 已收内容 + 错误 | 无 | 显示 | 有正文时可用 | 否 | 可用 |
 | 拒答 | 隐藏 | 拒答文案 | 无 | 仅复制 / 版本切换 | 禁用 | 否 | 禁用 |
 
-- 错误块：`ShadAlert.destructive`，图标 `circleAlert`，标题「生成失败」，
-  描述为 `error_text.dart` 的本地化文案；仅 `upload` 且 `retryable` 显示「重试」，
-  其余通过「重新生成」重发。
+- 错误块：照搬 chat-demo `notice`——14/22 红色文本行，图标 `circleAlert`
+  与首行顶端对齐，无标题无边框；`error_text.dart` 的本地化文案；仅 `upload`
+  且 `retryable` 行内显示「重试」，其余通过「重新生成」重发。
 - 拒答：正文样式，不用红色、不显示标题；隐藏时间线、来源胶囊与继续 / 重新生成。
 - 停止后：显示「已停止生成」+「继续生成」描边按钮；继续后回到 `pending`。
 - 分支切换器覆盖 user 与 assistant 消息；有兄弟版本时显示，格式 `当前 / 总数`，

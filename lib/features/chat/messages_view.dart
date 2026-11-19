@@ -679,6 +679,7 @@ class _ReplyError extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
+    final color = ShadTheme.of(context).colorScheme.destructive;
     final error = reply.error == null
         ? apiErrorText(strings, ApiErrorCondition.other)
         : replyErrorText(strings, reply.error!);
@@ -686,18 +687,28 @@ class _ReplyError extends StatelessWidget {
         reply.error?.kind == ApiErrorKind.upload &&
         reply.error?.retryable == true &&
         onRetryUpload != null;
+    // 对齐 chat-demo 的 notice：14/22 红字行，图标与首行顶端对齐。
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 4),
-      child: ShadAlert.destructive(
-        icon: const Icon(LucideIcons.circleAlert),
-        title: Text(strings.replyFailedTitle),
-        description: Text(error),
-        trailing: canRetry
-            ? ShadButton.outline(
-                onPressed: busy ? null : () => onRetryUpload!(reply),
-                child: Text(strings.retry),
-              )
-            : null,
+      padding: const EdgeInsets.only(top: 8),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 4, right: 6),
+            child: Icon(LucideIcons.circleAlert, size: 14, color: color),
+          ),
+          Expanded(
+            child: Text(
+              error,
+              style: TextStyle(fontSize: 14, height: 22 / 14, color: color),
+            ),
+          ),
+          if (canRetry)
+            ShadButton.link(
+              onPressed: busy ? null : () => onRetryUpload!(reply),
+              child: Text(strings.retry),
+            ),
+        ],
       ),
     );
   }
