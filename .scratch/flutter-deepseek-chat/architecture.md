@@ -18,7 +18,6 @@ lib/
     chat/            # 聊天页、消息控件、ChatController
     sessions/        # 会话列表
     settings/        # 设置页
-    attachments/     # 图片与文档上传（票 13）
     search/          # 搜索进度、引用抽屉与来源卡片（票 12）
     history/         # 导入导出（票 17）
   shared/
@@ -183,7 +182,7 @@ flutter test
 
 ### 依赖清单
 
-版本以 `pubspec.yaml` 为准；本表是锁定时的直接依赖快照。
+版本以 `pubspec.lock` 为准；本表是锁定时的直接依赖快照。
 
 | 包 | 版本 | 用途 |
 | --- | --- | --- |
@@ -208,9 +207,9 @@ flutter test
 | `url_launcher` | `^6.3.3` | 外部链接 |
 | `file_picker` | `^13.4.0`（新增） | 相册、文件选择与导出保存（票 13、17） |
 | `archive` | `^3.6.1`（新增） | 历史归档 ZIP 读写（票 17） |
-| `record` | `^7.2.0`（票 21，待接入） | 语音输入录音 |
-| `flutter_soloud` | `^5.3.0`（票 21，待接入） | 朗读 PCM 流式播放 |
-| `permission_handler` | `^13.0.2`（票 21，待接入） | 麦克风权限状态与跳系统设置 |
+| `record` | `^7.2.0` | 语音输入录音 |
+| `flutter_soloud` | `^5.3.0` | 朗读 PCM 流式播放 |
+| `permission_handler` | `^13.0.2` | 麦克风权限状态与跳系统设置 |
 | `drift_dev` | `^2.35.3`（dev） | drift 代码生成 |
 | `build_runner` | `^2.17.1`（dev） | 代码生成入口 |
 | `flutter_test` | SDK（dev） | 单元与 widget 测试 |
