@@ -197,7 +197,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionsLoadFailed => '无法加载会话';
 
   @override
-  String get chatEmptyTitle => '今天有什么可以帮到你？';
+  String get chatEmptyTitle => '嗨! 今天想聊些什么?';
 
   @override
   String get noSessions => '还没有会话';

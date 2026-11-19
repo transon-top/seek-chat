@@ -134,7 +134,7 @@ class _ReadingBars extends StatelessWidget {
                     width: 2.5,
                     height: _height(index),
                     decoration: BoxDecoration(
-                      color: colors.primary,
+                      color: colors.onSurface,
                       borderRadius: BorderRadius.circular(1.5),
                     ),
                   ),

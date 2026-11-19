@@ -106,6 +106,7 @@ class SessionDrawer extends ConsumerWidget {
                         width: 44,
                         height: 44,
                         padding: EdgeInsets.zero,
+                        foregroundColor: colors.foreground,
                       ),
                     ),
                   ],
@@ -178,7 +179,6 @@ class SessionDrawer extends ConsumerWidget {
                   ),
                 ),
               ),
-              ShadSeparator.horizontal(color: colors.border),
               InkWell(
                 key: const Key('drawer-settings'),
                 onTap: () {

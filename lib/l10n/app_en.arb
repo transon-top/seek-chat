@@ -112,7 +112,7 @@
   "sessionGroupEarlier": "Earlier",
   "sessionLoading": "Loading chats…",
   "sessionsLoadFailed": "Could not load chats",
-  "chatEmptyTitle": "What can I help you with?",
+  "chatEmptyTitle": "Hi! What would you like to chat about?",
   "noSessions": "No chats yet",
   "untitledChat": "New chat",
   "renameSession": "Rename chat",
