@@ -167,6 +167,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsApiKeyPlaceholder => 'Enter API key';
 
   @override
+  String get settingsApiKeyConfirm => 'Confirm';
+
+  @override
+  String get settingsApiKeyVerifying => 'Verifying…';
+
+  @override
   String get settingsLanguage => 'Language';
 
   @override

@@ -369,6 +369,18 @@ abstract class AppLocalizations {
   /// **'Enter API key'**
   String get settingsApiKeyPlaceholder;
 
+  /// No description provided for @settingsApiKeyConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get settingsApiKeyConfirm;
+
+  /// No description provided for @settingsApiKeyVerifying.
+  ///
+  /// In en, this message translates to:
+  /// **'Verifying…'**
+  String get settingsApiKeyVerifying;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:

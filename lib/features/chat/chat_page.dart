@@ -435,6 +435,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
             child: ChatHeader(
               title: state.title.isEmpty ? strings.untitledChat : state.title,
               onNewChat: widget.onNewChat,
+              inConversation: messages.isNotEmpty,
             ),
           ),
           if (state.error != null)

@@ -164,6 +164,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsApiKeyPlaceholder => '请输入 API Key';
 
   @override
+  String get settingsApiKeyConfirm => '确定';
+
+  @override
+  String get settingsApiKeyVerifying => '正在验证…';
+
+  @override
   String get settingsLanguage => '语言';
 
   @override

@@ -115,7 +115,7 @@ class Composer extends StatelessWidget {
                             children: [
                               ComposerToggle(
                                 key: const Key('thinking-toggle'),
-                                icon: LucideIcons.brain,
+                                icon: LucideIcons.atom,
                                 label: l10n.deepThinking,
                                 selected: thinking,
                                 onChanged: onThinkingChanged,
@@ -133,6 +133,10 @@ class Composer extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
+                      VoiceButton(
+                        phase: phase,
+                        onPressed: busy || reading ? null : onVoice,
+                      ),
                       Tooltip(
                         message: l10n.uploadFile,
                         child: ShadIconButton.ghost(
@@ -146,10 +150,6 @@ class Composer extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           foregroundColor: colors.mutedForeground,
                         ),
-                      ),
-                      VoiceButton(
-                        phase: phase,
-                        onPressed: busy || reading ? null : onVoice,
                       ),
                       const SizedBox(width: 2),
                       ValueListenableBuilder<TextEditingValue>(
