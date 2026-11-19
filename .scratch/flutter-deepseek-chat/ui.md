@@ -738,6 +738,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 键 | 中文 | English | 用途 |
 | --- | --- | --- | --- |
 | `settingsTitle` | 系统设置 | Settings | 设置 Sheet 标题（改值） |
+| `settingsEntry` | 设置 | Settings | 抽屉底部设置行 |
 | `newChat` | 开启新对话 | New chat | 抽屉新建按钮（改值） |
 | `openSessionList` | 打开会话列表 | Open chat list | 菜单语义 |
 | `sessionActions` | 会话操作 | Chat actions | 三点菜单语义 |

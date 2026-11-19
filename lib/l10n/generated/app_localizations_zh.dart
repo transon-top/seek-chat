@@ -128,7 +128,10 @@ class AppLocalizationsZh extends AppLocalizations {
   String get missingAttachment => '原件已丢失';
 
   @override
-  String get settingsTitle => '设置';
+  String get settingsTitle => '系统设置';
+
+  @override
+  String get settingsEntry => '设置';
 
   @override
   String get settingsTheme => '主题';
@@ -164,7 +167,34 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLocationNone => '不指定';
 
   @override
-  String get newChat => '新建会话';
+  String get newChat => '开启新对话';
+
+  @override
+  String get openSessionList => '打开会话列表';
+
+  @override
+  String get sessionActions => '会话操作';
+
+  @override
+  String get sessionGroupToday => '今天';
+
+  @override
+  String get sessionGroupYesterday => '昨天';
+
+  @override
+  String get sessionGroupLast7Days => '7 天内';
+
+  @override
+  String get sessionGroupEarlier => '更早';
+
+  @override
+  String get sessionLoading => '正在加载会话…';
+
+  @override
+  String get sessionsLoadFailed => '无法加载会话';
+
+  @override
+  String get chatEmptyTitle => '今天有什么可以帮到你？';
 
   @override
   String get noSessions => '还没有会话';
@@ -212,9 +242,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get nextVersion => '下一个版本';
-
-  @override
-  String get chatEmpty => '发一条消息开始对话';
 
   @override
   String get deepThinking => '深度思考';

@@ -412,10 +412,11 @@ done / stopped / error → [*]
 
 ### 6.5 实现状态
 
-当前代码为**临时 Material UI**：`MaterialApp` + `HomePage` 会话列表为根页面，
-聊天与设置页使用 Material 控件。最终界面以 [`ui.md`](ui.md) 为准，
-迁移顺序见 §11；功能行为已按本规格实现。二者差异仅限视觉与导航结构，
-不改变行为契约。迁移期间每步保持 `flutter analyze` 与 `flutter test` 通过。
+界面迁移第 1–2 步已完成（2026-11-19）：`ShadApp` + `ShadThemeData` 由同一 Material
+种子派生，中文行高 1.6；聊天页为根路由，会话抽屉、会话分组与新建 / 重命名 / 删除
+已迁入 `SessionDrawer`，首条消息发出时才创建会话。设置页、输入区与消息区仍为
+临时 Material 控件，按 §11 第 3–7 步继续。功能行为已按本规格实现；迁移期间每步
+保持 `flutter analyze` 与 `flutter test` 通过。
 
 ## 7. 设置、语言与所在地、安全
 
@@ -564,9 +565,9 @@ Android `allowBackup="false"`。
 功能行为已实现、测试覆盖；剩余工作集中在 [`ui.md`](ui.md) §9 的界面迁移，
 按屏幕逐步进行，每步保持分析与测试通过：
 
-1. `lib/app/theme.dart`：`buildShadTheme` / `buildShadTextTheme`；`app.dart` 换 `ShadApp`
-   与 Material 桥接。
-2. 聊天壳：`ChatHeader`、`SessionDrawer`、根路由切换，移除列表首页。
+1. ~~`lib/app/theme.dart`：`buildShadTheme` / `buildShadTextTheme`；`app.dart` 换 `ShadApp`
+   与 Material 桥接。~~（已完成）
+2. ~~聊天壳：`ChatHeader`、`SessionDrawer`、根路由切换，移除列表首页。~~（已完成）
 3. 输入区：`Composer`、蓝色开关、附件条、语音按钮、发送 / 停止。
 4. 消息区：用户 / 助手消息、思考与工具行、分支、操作条、来源胶囊与抽屉、角标。
 5. 设置：三段导航 Sheet、主题卡片、语言 / 所在地 / 音色 Sheet、Key Dialog、数据管理二级视图。
