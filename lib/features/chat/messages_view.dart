@@ -251,15 +251,22 @@ class _UserMessageViewState extends State<_UserMessageView> {
                     versions: versions,
                     onSelect: widget.onSelectVersion,
                   ),
-                if (widget.onEdit != null)
-                  ShadButton.link(
-                    key: ValueKey('edit-message-${message.id}'),
-                    onPressed: _startEditing,
-                    child: Text(
-                      strings.edit,
-                      style: const TextStyle(fontSize: 13),
-                    ),
+                if (message.text.isNotEmpty)
+                  _IconAction(
+                    key: ValueKey('copy-message-${message.id}'),
+                    tooltip: strings.copy,
+                    icon: LucideIcons.copy,
+                    size: 16,
+                    onPressed: () =>
+                        Clipboard.setData(ClipboardData(text: message.text)),
                   ),
+                _IconAction(
+                  key: ValueKey('edit-message-${message.id}'),
+                  tooltip: strings.edit,
+                  icon: LucideIcons.pencil,
+                  size: 16,
+                  onPressed: widget.onEdit == null ? null : _startEditing,
+                ),
               ],
             ),
           ],
