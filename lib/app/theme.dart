@@ -18,8 +18,27 @@ ThemeData buildAppTheme({
 }) {
   final base = ThemeData(colorSchemeSeed: appThemeSeed, brightness: brightness);
   final text = base.textTheme;
+  // 深色参考图：中性炭灰层级，不用种子生成的蓝紫色表面。
+  final scheme = brightness == Brightness.dark
+      ? base.colorScheme.copyWith(
+          primary: appPrimaryColor,
+          onPrimary: const Color(0xFFFFFFFF),
+          surface: const Color(0xFF1C1C1E),
+          onSurface: const Color(0xFFEDEDEF),
+          surfaceContainerLowest: const Color(0xFF171719),
+          surfaceContainerLow: const Color(0xFF2B2B2D),
+          surfaceContainer: const Color(0xFF313133),
+          surfaceContainerHigh: const Color(0xFF363638),
+          surfaceContainerHighest: const Color(0xFF3C3C3E),
+          onSurfaceVariant: const Color(0xFF9E9EA3),
+          outline: const Color(0xFF5A5A5E),
+          outlineVariant: const Color(0xFF3D3D40),
+        )
+      : base.colorScheme.copyWith(primary: appPrimaryColor);
   return base.copyWith(
-    colorScheme: base.colorScheme.copyWith(primary: appPrimaryColor),
+    colorScheme: scheme,
+    scaffoldBackgroundColor: scheme.surface,
+    canvasColor: scheme.surface,
     textTheme: chinese
         ? text.copyWith(
             bodyLarge: text.bodyLarge?.copyWith(height: 1.6),

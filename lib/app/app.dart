@@ -149,12 +149,9 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
     }
   }
 
-  Future<void> _openSettings() => Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      builder: (_) => SettingsPage(
-        dataManagement: HistorySection(stopGeneration: _stopAllGenerations),
-      ),
-    ),
+  Future<void> _openSettings() => showSettingsSheet(
+    context,
+    dataManagement: HistorySection(stopGeneration: _stopAllGenerations),
   );
 
   @override

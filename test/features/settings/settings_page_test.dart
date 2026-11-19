@@ -5,7 +5,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/localization.dart';
+import 'package:open_chat/app/theme.dart';
 import 'package:open_chat/shared/providers.dart';
 import 'package:open_chat/features/settings/settings_page.dart';
 import 'package:open_chat/l10n/generated/app_localizations.dart';
@@ -63,10 +65,21 @@ void main() {
           locale: locale,
           localizationsDelegates: appLocalizationDelegates,
           supportedLocales: AppLocalizations.supportedLocales,
-          home: const SettingsPage(),
+          home: ShadTheme(
+            data: buildShadTheme(
+              brightness: Brightness.light,
+              chinese: locale.languageCode == 'zh',
+            ),
+            child: ShadToaster(child: Scaffold(body: const SettingsSheet())),
+          ),
         ),
       ),
     );
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> openData(WidgetTester tester) async {
+    await tester.tap(find.byKey(const Key('settings-nav-data')));
     await tester.pumpAndSettle();
   }
 
@@ -79,30 +92,48 @@ void main() {
     await tester.pumpAndSettle();
   }
 
+  Future<void> submitKey(WidgetTester tester, String key) async {
+    await tester.enterText(
+      find.byKey(const Key('settings-api-key-input')),
+      key,
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+  }
+
   testWidgets('validates and stores a working key', (tester) async {
     final store = FakeApiKeyStore();
     await pumpSettings(tester, client: clientResponding(200), store: store);
+    await openData(tester);
 
-    await reveal(tester, find.byType(TextField));
-    await tester.enterText(find.byType(TextField), 'sk-good');
-    await tester.tap(find.text('保存并校验'));
-    await tester.pumpAndSettle();
+    await submitKey(tester, 'sk-good');
 
     expect(store.value, 'sk-good');
     expect(find.text('API Key 无效'), findsNothing);
+    expect(find.text('已保存'), findsOneWidget);
   });
 
   testWidgets('shows an error and keeps the old key on 401', (tester) async {
     final store = FakeApiKeyStore()..value = 'sk-old';
     await pumpSettings(tester, client: clientResponding(401), store: store);
+    await openData(tester);
 
-    await reveal(tester, find.byType(TextField));
-    await tester.enterText(find.byType(TextField), 'sk-bad');
-    await tester.tap(find.text('保存并校验'));
-    await tester.pumpAndSettle();
+    await submitKey(tester, 'sk-bad');
 
     expect(store.value, 'sk-old');
     expect(find.textContaining('API Key 无效'), findsOneWidget);
+  });
+
+  testWidgets('clears the saved key', (tester) async {
+    final store = FakeApiKeyStore()..value = 'sk-old';
+    await pumpSettings(tester, client: clientResponding(200), store: store);
+    await openData(tester);
+
+    await tester.tap(find.byKey(const Key('settings-clear-key')));
+    await tester.pumpAndSettle();
+
+    expect(store.value, isNull);
+    expect(find.text('输入 API Key 开始使用'), findsOneWidget);
   });
 
   testWidgets('stores the selected language and location', (tester) async {
@@ -141,6 +172,22 @@ void main() {
     expect(prefs.getString('user.location'), isNull);
   });
 
+  testWidgets('follows the system language when selected', (tester) async {
+    prefs.setString('user.locale', 'en');
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await tester.tap(find.byKey(const Key('settings-language')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('跟随系统').last);
+    await tester.pumpAndSettle();
+
+    expect(prefs.getString('user.locale'), isNull);
+  });
+
   testWidgets('stores the selected theme', (tester) async {
     await pumpSettings(
       tester,
@@ -148,15 +195,13 @@ void main() {
       store: FakeApiKeyStore(),
     );
 
-    await tester.tap(find.byKey(const Key('settings-theme')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('深色').last);
+    await tester.tap(find.byKey(const Key('settings-theme-dark')));
     await tester.pumpAndSettle();
 
     expect(prefs.getString('ui.themeMode'), 'dark');
   });
 
-  testWidgets('renders the settings page in English', (tester) async {
+  testWidgets('renders the settings sheet in English', (tester) async {
     await pumpSettings(
       tester,
       client: clientResponding(200),
@@ -166,10 +211,12 @@ void main() {
 
     expect(find.text('Settings'), findsOneWidget);
     expect(find.text('Theme'), findsOneWidget);
-    await reveal(tester, find.text('Save and verify'));
     expect(find.text('Language'), findsOneWidget);
-    expect(find.text('Save and verify'), findsOneWidget);
-    expect(find.text('Clear saved key'), findsOneWidget);
+    expect(find.text('Dark'), findsOneWidget);
+
+    await openData(tester);
+    expect(find.text('Enter an API key to get started'), findsOneWidget);
+    expect(find.text('Data'), findsOneWidget);
   });
 
   testWidgets('uses a country list when the system language is not Chinese', (
@@ -233,12 +280,9 @@ void main() {
       }),
     );
     await pumpSettings(tester, client: client, store: store);
+    await openData(tester);
 
-    await reveal(tester, find.byType(TextField));
-    await reveal(tester, find.byType(TextField));
-    await tester.enterText(find.byType(TextField), 'sk-good');
-    await tester.tap(find.text('保存并校验'));
-    await tester.pumpAndSettle();
+    await submitKey(tester, 'sk-good');
 
     expect(store.value, isNull);
     expect(find.textContaining('网络错误，请检查连接'), findsOneWidget);

@@ -315,6 +315,12 @@ abstract class AppLocalizations {
   /// **'Settings'**
   String get settingsEntry;
 
+  /// No description provided for @settingsGeneral.
+  ///
+  /// In en, this message translates to:
+  /// **'General'**
+  String get settingsGeneral;
+
   /// No description provided for @settingsTheme.
   ///
   /// In en, this message translates to:
@@ -339,23 +345,41 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get settingsThemeDark;
 
-  /// No description provided for @settingsSaveKey.
-  ///
-  /// In en, this message translates to:
-  /// **'Save and verify'**
-  String get settingsSaveKey;
-
   /// No description provided for @settingsClearKey.
   ///
   /// In en, this message translates to:
   /// **'Clear saved key'**
   String get settingsClearKey;
 
+  /// No description provided for @settingsApiKeySaved.
+  ///
+  /// In en, this message translates to:
+  /// **'Saved'**
+  String get settingsApiKeySaved;
+
+  /// No description provided for @settingsApiKeyPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter an API key to get started'**
+  String get settingsApiKeyPrompt;
+
+  /// No description provided for @settingsApiKeyPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter API key'**
+  String get settingsApiKeyPlaceholder;
+
   /// No description provided for @settingsLanguage.
   ///
   /// In en, this message translates to:
   /// **'Language'**
   String get settingsLanguage;
+
+  /// No description provided for @settingsLanguageSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsLanguageSystem;
 
   /// No description provided for @settingsLanguageZh.
   ///
@@ -369,6 +393,18 @@ abstract class AppLocalizations {
   /// **'English'**
   String get settingsLanguageEn;
 
+  /// No description provided for @settingsProvincePlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select province'**
+  String get settingsProvincePlaceholder;
+
+  /// No description provided for @settingsCityPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Select city'**
+  String get settingsCityPlaceholder;
+
   /// No description provided for @settingsLocation.
   ///
   /// In en, this message translates to:
@@ -380,6 +416,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Not specified'**
   String get settingsLocationNone;
+
+  /// No description provided for @settingsLocationDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Sent only with messages to your configured API. Location access is not requested.'**
+  String get settingsLocationDescription;
 
   /// No description provided for @newChat.
   ///
@@ -792,7 +834,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyImportAction.
   ///
   /// In en, this message translates to:
-  /// **'Choose file'**
+  /// **'Upload'**
   String get historyImportAction;
 
   /// No description provided for @historyImportDescription.
@@ -852,7 +894,7 @@ abstract class AppLocalizations {
   /// No description provided for @historyExportAction.
   ///
   /// In en, this message translates to:
-  /// **'Export'**
+  /// **'Download'**
   String get historyExportAction;
 
   /// No description provided for @historyExportDescription.
@@ -878,6 +920,36 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Export failed. Please try again.'**
   String get historyExportFailed;
+
+  /// No description provided for @historyDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all chats'**
+  String get historyDelete;
+
+  /// No description provided for @historyDeleteConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete all chats?'**
+  String get historyDeleteConfirmTitle;
+
+  /// No description provided for @historyDeleteConfirmDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'All chats and attachments on this device will be permanently deleted and cannot be recovered.'**
+  String get historyDeleteConfirmDescription;
+
+  /// No description provided for @historyDeleted.
+  ///
+  /// In en, this message translates to:
+  /// **'All chats deleted'**
+  String get historyDeleted;
+
+  /// No description provided for @historyDeleteFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete failed. Please try again.'**
+  String get historyDeleteFailed;
 
   /// No description provided for @historyErrorUnrecognized.
   ///

@@ -457,13 +457,16 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                             height: 32,
                           ),
                           const SizedBox(width: 12),
-                          Text(
-                            strings.chatEmptyTitle,
-                            style: TextStyle(
-                              fontSize: 24,
-                              height: 32 / 24,
-                              fontWeight: FontWeight.w600,
-                              color: Theme.of(context).colorScheme.onSurface,
+                          Flexible(
+                            child: Text(
+                              strings.chatEmptyTitle,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                fontSize: 24,
+                                height: 32 / 24,
+                                fontWeight: FontWeight.w600,
+                                color: Theme.of(context).colorScheme.onSurface,
+                              ),
                             ),
                           ),
                         ],
