@@ -222,7 +222,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionsLoadFailed => 'Could not load chats';
 
   @override
-  String get chatEmptyTitle => 'Hi! What would you like to chat about?';
+  String get chatEmptyTitle => 'How can I help you?';
 
   @override
   String get noSessions => 'No chats yet';
@@ -306,7 +306,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get nextVersion => 'Next version';
 
   @override
-  String get deepThinking => 'Deep thinking';
+  String get deepThinking => 'DeepThink';
 
   @override
   String thoughtForSeconds(int seconds) {
@@ -425,7 +425,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get composerHint => 'Message';
 
   @override
-  String get composerPlaceholder => 'Message Fleepseek';
+  String get composerPlaceholder => 'Enter a message';
 
   @override
   String get stop => 'Stop';
@@ -434,7 +434,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get send => 'Send';
 
   @override
-  String get smartSearch => 'Smart search';
+  String get smartSearch => 'Search';
 
   @override
   String get settingsData => 'Data';
