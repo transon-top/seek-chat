@@ -51,12 +51,12 @@
 - [语音输入与朗读行为规格](issues/21-speech-behavior.md): 语音输入 `idle/recording/transcribing`，ASR 请求错误折叠为一条；朗读 `idle/loading/playing`，首帧流式、同条停止、全局单通道；仅前台，v1 电平条；详见 [`speech.md`](speech.md)。
 - [shadcn_ui 界面规格](issues/10-ui-spec.md): 聊天页为根 + 分组会话抽屉（`Fleepseek` 文字标、底部设置）；系统设置为三段导航 Sheet；`#4D6BFE` 种子映射 `ShadColorScheme`；激活开关蓝色；来源胶囊 + 抽屉；完整 Markdown 不折叠；详见 [`ui.md`](ui.md)。
 - [规格汇总与缺口检查](issues/11-spec-assembly.md): [`spec.md`](spec.md) 定稿；依赖按 `pubspec.lock` 重锁；10 项验收映射到测试与手动用例；唯一新缺口为启动失败界面，已开票 22。
+- [子版本计划与 v1 验收标准](issues/19-subversions.md): 剩余工作切为 S1–S6（输入区 / 消息区 / 设置 / 启动失败 / 无障碍与文案 / 真机与 CI），S0 为已完成基线；公共门槛与 `v1.0.0-sN` / `v1.0.0-rc.1` 回滚标签；详见 [`roadmap.md`](roadmap.md) 与 `spec.md` §10.1。
 
 ## Not yet specified
 
-- 子版本切分与每版验收边界（等「子版本计划」票）
-- 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待真机实测回填
-- 启动失败的应用级错误界面（票 22）
+- 渲染性能预算的真机基准：票 08 已定目标值（50 ms–2 s 节流、单帧 ≤ 16.7 ms、200 条消息流畅），待 S6 真机实测回填
+- 启动失败的应用级错误界面（票 22，列为 S4）
 
 ## Out of scope
 
