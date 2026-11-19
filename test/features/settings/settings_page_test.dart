@@ -110,7 +110,9 @@ void main() {
 
     expect(store.value, 'sk-good');
     expect(find.text('API Key 无效'), findsNothing);
-    expect(find.text('已保存'), findsOneWidget);
+    // 保存后只显示掩码，点编辑按钮才能重新输入
+    expect(find.byKey(const Key('settings-edit-key')), findsOneWidget);
+    expect(find.byKey(const Key('settings-api-key-input')), findsNothing);
   });
 
   testWidgets('shows an error and keeps the old key on 401', (tester) async {
@@ -118,10 +120,28 @@ void main() {
     await pumpSettings(tester, client: clientResponding(401), store: store);
     await openData(tester);
 
+    await tester.tap(find.byKey(const Key('settings-edit-key')));
+    await tester.pumpAndSettle();
     await submitKey(tester, 'sk-bad');
 
     expect(store.value, 'sk-old');
     expect(find.textContaining('API Key 无效'), findsOneWidget);
+  });
+
+  testWidgets('leaves edit mode when the input is empty', (tester) async {
+    final store = FakeApiKeyStore()..value = 'sk-old';
+    await pumpSettings(tester, client: clientResponding(200), store: store);
+    await openData(tester);
+
+    await tester.tap(find.byKey(const Key('settings-edit-key')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('settings-api-key-input')), findsOneWidget);
+
+    FocusManager.instance.primaryFocus?.unfocus();
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('settings-edit-key')), findsOneWidget);
+    expect(find.byKey(const Key('settings-api-key-input')), findsNothing);
   });
 
   testWidgets('clears the saved key', (tester) async {

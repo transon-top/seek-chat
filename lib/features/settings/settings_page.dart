@@ -662,11 +662,7 @@ class _SettingsSelectState<T> extends State<_SettingsSelect<T>> {
       text,
       maxLines: 1,
       overflow: TextOverflow.ellipsis,
-      style: TextStyle(
-        fontSize: 13,
-        height: 18 / 13,
-        color: colors.foreground,
-      ),
+      style: TextStyle(fontSize: 13, height: 18 / 13, color: colors.foreground),
     );
     return ShadPopover(
       controller: _controller,
@@ -727,8 +723,7 @@ class _SettingsSelectState<T> extends State<_SettingsSelect<T>> {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
-              mainAxisSize:
-                  widget.fill ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisSize: widget.fill ? MainAxisSize.max : MainAxisSize.min,
               children: [
                 if (widget.fill)
                   Expanded(child: labelWidget)
@@ -826,30 +821,42 @@ class _ApiKeyField extends ConsumerStatefulWidget {
 
 class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   bool _loading = false;
+  bool _editing = false;
   String? _saved;
   String? _error;
 
   @override
   void initState() {
     super.initState();
+    _focusNode.addListener(_handleFocusChange);
     _loadSavedKey();
   }
 
   Future<void> _loadSavedKey() async {
     final saved = await ref.read(apiKeyStoreProvider).read();
     if (!mounted || saved == null) return;
-    setState(() {
-      _saved = saved;
-      _controller.text = saved;
-    });
+    setState(() => _saved = saved);
   }
 
-  Future<void> _save(String text) async {
+  /// 修改时没输入就离开，回到已保存的掩码状态（参考 chat-demo）。
+  void _handleFocusChange() {
+    if (!mounted) return;
+    final cancel =
+        !_focusNode.hasFocus &&
+        _saved != null &&
+        _editing &&
+        _controller.text.trim().isEmpty &&
+        !_loading;
+    setState(() => _editing = _editing && !cancel);
+  }
+
+  Future<void> _save() async {
     final l10n = AppLocalizations.of(context)!;
-    final apiKey = text.trim();
-    if (apiKey.isEmpty) {
-      setState(() => _error = l10n.errorApiKeyEmpty);
+    final apiKey = _controller.text.trim();
+    if (apiKey.isEmpty || _loading) {
+      if (apiKey.isEmpty) setState(() => _error = l10n.errorApiKeyEmpty);
       return;
     }
     setState(() {
@@ -860,7 +867,12 @@ class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
       await ref.read(apiClientProvider).validateApiKey(apiKey);
       await ref.read(apiKeyStoreProvider).write(apiKey);
       if (!mounted) return;
-      setState(() => _saved = apiKey);
+      _controller.clear();
+      _focusNode.unfocus();
+      setState(() {
+        _saved = apiKey;
+        _editing = false;
+      });
     } on ApiException catch (error) {
       if (!mounted) return;
       setState(() {
@@ -890,12 +902,15 @@ class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
     _controller.clear();
     setState(() {
       _saved = null;
+      _editing = false;
       _error = null;
     });
   }
 
   @override
   void dispose() {
+    _focusNode.removeListener(_handleFocusChange);
+    _focusNode.dispose();
     _controller.dispose();
     super.dispose();
   }
@@ -904,12 +919,14 @@ class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
+    final saved = _saved;
+    final showInput = saved == null || _editing;
     final error = _error;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Text(
-          _saved == null ? l10n.settingsApiKeyPrompt : 'DeepSeek API Key',
+          saved == null ? l10n.settingsApiKeyPrompt : 'DeepSeek API Key',
           style: TextStyle(
             fontSize: 15,
             height: 20 / 15,
@@ -918,39 +935,127 @@ class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
           ),
         ),
         const SizedBox(height: 12),
-        ShadInput(
-          key: const Key('settings-api-key-input'),
-          controller: _controller,
-          obscureText: true,
-          autocorrect: false,
-          enableSuggestions: false,
-          placeholder: Text(l10n.settingsApiKeyPlaceholder),
-          enabled: !_loading,
-          onSubmitted: _save,
-        ),
-        if (_saved != null)
-          Row(
-            children: [
-              Text(
-                l10n.settingsApiKeySaved,
-                style: TextStyle(
-                  fontSize: 13,
-                  height: 18 / 13,
-                  color: colors.mutedForeground,
+        if (showInput)
+          ValueListenableBuilder<TextEditingValue>(
+            valueListenable: _controller,
+            builder: (context, value, _) {
+              final hasText = value.text.trim().isNotEmpty;
+              return Container(
+                height: 44,
+                padding: const EdgeInsets.only(left: 14, right: 4),
+                decoration: BoxDecoration(
+                  border: Border.all(
+                    color: _focusNode.hasFocus ? colors.primary : colors.border,
+                  ),
+                  borderRadius: BorderRadius.circular(22),
                 ),
-              ),
-              const Spacer(),
-              ShadButton.link(
-                key: const Key('settings-clear-key'),
-                onPressed: _loading ? null : _clear,
-                child: Text(
-                  l10n.settingsClearKey,
-                  style: TextStyle(fontSize: 13, color: colors.destructive),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: TextField(
+                        key: const Key('settings-api-key-input'),
+                        controller: _controller,
+                        focusNode: _focusNode,
+                        autofocus: saved != null,
+                        obscureText: true,
+                        autocorrect: false,
+                        enableSuggestions: false,
+                        textInputAction: TextInputAction.done,
+                        style: TextStyle(
+                          fontSize: 14,
+                          height: 22 / 14,
+                          color: colors.foreground,
+                        ),
+                        cursorColor: colors.primary,
+                        onSubmitted: (_) => _save(),
+                        decoration: InputDecoration.collapsed(
+                          hintText: l10n.settingsApiKeyPlaceholder,
+                          hintStyle: TextStyle(
+                            fontSize: 14,
+                            height: 22 / 14,
+                            color: colors.mutedForeground,
+                          ),
+                        ),
+                      ),
+                    ),
+                    if (hasText) ...[
+                      const SizedBox(width: 12),
+                      Container(width: 1, height: 20, color: colors.border),
+                      const SizedBox(width: 12),
+                      InkWell(
+                        key: const Key('settings-save-key'),
+                        borderRadius: BorderRadius.circular(16),
+                        onTap: _loading ? null : _save,
+                        child: Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 8,
+                            vertical: 5,
+                          ),
+                          child: _loading
+                              ? SizedBox(
+                                  width: 16,
+                                  height: 16,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: colors.primary,
+                                  ),
+                                )
+                              : Text(
+                                  l10n.save,
+                                  style: TextStyle(
+                                    fontSize: 14,
+                                    height: 22 / 14,
+                                    color: colors.primary,
+                                  ),
+                                ),
+                        ),
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ],
+              );
+            },
+          )
+        else
+          Container(
+            height: 44,
+            padding: const EdgeInsets.only(left: 16, right: 6),
+            decoration: BoxDecoration(
+              color: colors.muted,
+              borderRadius: BorderRadius.circular(22),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '*' * saved.length,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 14,
+                      height: 22 / 14,
+                      color: colors.mutedForeground,
+                    ),
+                  ),
+                ),
+                _PillIconButton(
+                  key: const Key('settings-edit-key'),
+                  icon: LucideIcons.penLine,
+                  color: colors.primary,
+                  tooltip: l10n.edit,
+                  onPressed: () => setState(() => _editing = true),
+                ),
+                _PillIconButton(
+                  key: const Key('settings-clear-key'),
+                  icon: LucideIcons.trash2,
+                  color: colors.destructive,
+                  tooltip: l10n.settingsClearKey,
+                  onPressed: _loading ? null : _clear,
+                ),
+              ],
+            ),
           ),
-        if (error != null)
+        if (showInput && error != null)
           Padding(
             padding: const EdgeInsets.only(top: 8),
             child: Text(
@@ -962,16 +1067,39 @@ class _ApiKeyFieldState extends ConsumerState<_ApiKeyField> {
               ),
             ),
           ),
-        if (_loading)
-          Padding(
-            padding: const EdgeInsets.only(top: 12),
-            child: LinearProgressIndicator(
-              minHeight: 2,
-              color: colors.primary,
-              backgroundColor: colors.muted,
-            ),
-          ),
       ],
+    );
+  }
+}
+
+/// 已保存 Key 胶囊内的图标按钮。
+class _PillIconButton extends StatelessWidget {
+  const _PillIconButton({
+    super.key,
+    required this.icon,
+    required this.color,
+    required this.tooltip,
+    required this.onPressed,
+  });
+
+  final IconData icon;
+  final Color color;
+  final String tooltip;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(999),
+        onTap: onPressed,
+        child: SizedBox(
+          width: 36,
+          height: 36,
+          child: Icon(icon, size: 16, color: color),
+        ),
+      ),
     );
   }
 }
