@@ -480,7 +480,7 @@ abstract class AppLocalizations {
   /// No description provided for @chatEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Hi! What would you like to chat about?'**
+  /// **'How can I help you?'**
   String get chatEmptyTitle;
 
   /// No description provided for @noSessions.
@@ -636,7 +636,7 @@ abstract class AppLocalizations {
   /// No description provided for @deepThinking.
   ///
   /// In en, this message translates to:
-  /// **'Deep thinking'**
+  /// **'DeepThink'**
   String get deepThinking;
 
   /// No description provided for @thoughtForSeconds.
@@ -798,7 +798,7 @@ abstract class AppLocalizations {
   /// No description provided for @composerPlaceholder.
   ///
   /// In en, this message translates to:
-  /// **'Message Fleepseek'**
+  /// **'Enter a message'**
   String get composerPlaceholder;
 
   /// No description provided for @stop.
@@ -816,7 +816,7 @@ abstract class AppLocalizations {
   /// No description provided for @smartSearch.
   ///
   /// In en, this message translates to:
-  /// **'Smart search'**
+  /// **'Search'**
   String get smartSearch;
 
   /// No description provided for @settingsData.

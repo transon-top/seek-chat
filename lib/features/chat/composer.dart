@@ -86,7 +86,7 @@ class Composer extends StatelessWidget {
                     key: const Key('composer-input'),
                     controller: input,
                     focusNode: inputFocus,
-                    minLines: 1,
+                    minLines: 2,
                     maxLines: 5,
                     padding: EdgeInsets.zero,
                     decoration: ShadDecoration.none,
@@ -107,22 +107,32 @@ class Composer extends StatelessWidget {
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      ComposerToggle(
-                        key: const Key('thinking-toggle'),
-                        icon: LucideIcons.brain,
-                        label: l10n.deepThinking,
-                        selected: thinking,
-                        onChanged: onThinkingChanged,
+                      // 左侧开关可横向滚动，右侧按钮定宽不动，避免窄屏溢出。
+                      Expanded(
+                        child: _FadingScroll(
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              ComposerToggle(
+                                key: const Key('thinking-toggle'),
+                                icon: LucideIcons.brain,
+                                label: l10n.deepThinking,
+                                selected: thinking,
+                                onChanged: onThinkingChanged,
+                              ),
+                              const SizedBox(width: 6),
+                              ComposerToggle(
+                                key: const Key('search-toggle'),
+                                icon: LucideIcons.globe,
+                                label: l10n.smartSearch,
+                                selected: search,
+                                onChanged: onSearchChanged,
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                       const SizedBox(width: 6),
-                      ComposerToggle(
-                        key: const Key('search-toggle'),
-                        icon: LucideIcons.globe,
-                        label: l10n.smartSearch,
-                        selected: search,
-                        onChanged: onSearchChanged,
-                      ),
-                      const Spacer(),
                       Tooltip(
                         message: l10n.uploadFile,
                         child: ShadIconButton.ghost(
@@ -164,6 +174,87 @@ class Composer extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+}
+
+/// 横向滚动 + 边缘渐隐：只有被遮挡的一侧淡出，内容完整展示时不加遮罩。
+class _FadingScroll extends StatefulWidget {
+  const _FadingScroll({required this.child});
+
+  final Widget child;
+
+  @override
+  State<_FadingScroll> createState() => _FadingScrollState();
+}
+
+class _FadingScrollState extends State<_FadingScroll> {
+  static const _fadeExtent = 24.0;
+  final _controller = ScrollController();
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return NotificationListener<ScrollMetricsNotification>(
+      // 内容尺寸 / 视口变化时刷新可滚动状态。
+      onNotification: (_) {
+        setState(() {});
+        return false;
+      },
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          final metrics = _controller.hasClients ? _controller.position : null;
+          final leftFade = metrics != null && metrics.pixels > 0.5;
+          final rightFade =
+              metrics != null && metrics.pixels < metrics.maxScrollExtent - 0.5;
+          return ShaderMask(
+            blendMode: BlendMode.dstIn,
+            shaderCallback: (bounds) => _gradient(
+              leftFade,
+              rightFade,
+              bounds.width,
+            ).createShader(bounds),
+            child: SingleChildScrollView(
+              controller: _controller,
+              scrollDirection: Axis.horizontal,
+              child: child,
+            ),
+          );
+        },
+        child: widget.child,
+      ),
+    );
+  }
+
+  LinearGradient _gradient(bool left, bool right, double width) {
+    final fade = (_fadeExtent / width).clamp(0.0, 0.5);
+    final colors = <Color>[];
+    final stops = <double>[];
+    if (left) {
+      colors.addAll([Colors.transparent, Colors.white]);
+      stops.addAll([0, fade]);
+    } else {
+      colors.add(Colors.white);
+      stops.add(0);
+    }
+    if (right) {
+      colors.addAll([Colors.white, Colors.transparent]);
+      stops.addAll([1 - fade, 1]);
+    } else {
+      colors.add(Colors.white);
+      stops.add(1);
+    }
+    return LinearGradient(
+      begin: Alignment.centerLeft,
+      end: Alignment.centerRight,
+      colors: colors,
+      stops: stops,
     );
   }
 }
