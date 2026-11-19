@@ -26,7 +26,9 @@ typedef SpeechView = ({
 /// （ui.md §9 第 4 步、§5.3–§5.6）。
 ///
 /// 列表水平内边距 16、消息间距 16，宽屏内容最大 760 并居中（§1.3、§4）。
-class ChatMessageList extends StatelessWidget {
+/// 列表正序排列：内容不足一屏时提问从视口顶部开始，超过一屏后跟随底部，
+/// 用户上滑离开底部则停止跟随（与 chat-demo 一致）。
+class ChatMessageList extends StatefulWidget {
   const ChatMessageList({
     super.key,
     required this.messages,
@@ -55,17 +57,80 @@ class ChatMessageList extends StatelessWidget {
   final VoidCallback? onStop;
 
   @override
+  State<ChatMessageList> createState() => _ChatMessageListState();
+}
+
+class _ChatMessageListState extends State<ChatMessageList> {
+  /// 距底部小于该值时视为在底部，流式内容增长时继续跟随（chat-demo 同值）。
+  static const double _stickyThreshold = 40;
+
+  final ScrollController _controller = ScrollController();
+  bool _sticky = true;
+  double _lastOffset = 0;
+  bool _followScheduled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onScroll);
+    // 首次布局后落到最新消息（打开历史会话时从底部开始）。
+    _scheduleFollow();
+  }
+
+  @override
+  void didUpdateWidget(covariant ChatMessageList oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    // 新请求（发送、编辑、重新生成、续写）一律重新跟随底部。
+    if (!oldWidget.busy && widget.busy) _sticky = true;
+    _scheduleFollow();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _onScroll() {
+    final position = _controller.position;
+    final offset = position.pixels;
+    if (position.maxScrollExtent - offset - position.viewportDimension <
+        _stickyThreshold) {
+      _sticky = true;
+    } else if (offset < _lastOffset) {
+      _sticky = false;
+    }
+    _lastOffset = offset;
+  }
+
+  /// 布局后若仍在跟随状态就跳到最新内容。懒加载下列表的
+  /// `maxScrollExtent` 可能仍是估算值，跳转后继续调度直到稳定。
+  void _scheduleFollow() {
+    if (_followScheduled) return;
+    _followScheduled = true;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _followScheduled = false;
+      if (!mounted || !_sticky || !_controller.hasClients) return;
+      final target = _controller.position.maxScrollExtent;
+      if (_controller.position.pixels != target) {
+        _controller.jumpTo(target);
+        _scheduleFollow();
+      }
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final messages = widget.messages;
     return ListView.builder(
-      reverse: true,
+      controller: _controller,
       padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
       itemCount: messages.length,
       itemBuilder: (context, index) {
-        final position = messages.length - 1 - index;
-        final message = messages[position];
+        final message = messages[index];
         return Padding(
-          // 反序列表：顶部留白加在较旧的一条之前，最新一条与上一条间距也为 16。
-          padding: EdgeInsets.only(top: index == messages.length - 1 ? 0 : 16),
+          // 顶部留白只加在第一行之前，其余消息间距 16。
+          padding: EdgeInsets.only(top: index == 0 ? 0 : 16),
           child: Align(
             alignment: Alignment.topCenter,
             child: ConstrainedBox(
@@ -73,17 +138,17 @@ class ChatMessageList extends StatelessWidget {
               child: _MessageView(
                 key: ValueKey(message.id),
                 message: message,
-                versions: versions[message.id],
-                isLast: position == messages.length - 1,
-                busy: busy,
-                speech: speech,
-                onReadAloud: onReadAloud,
-                onEdit: onEdit,
-                onSelectVersion: onSelectVersion,
-                onRegenerate: onRegenerate,
-                onContinue: onContinue,
-                onRetryUpload: onRetryUpload,
-                onStop: onStop,
+                versions: widget.versions[message.id],
+                isLast: index == messages.length - 1,
+                busy: widget.busy,
+                speech: widget.speech,
+                onReadAloud: widget.onReadAloud,
+                onEdit: widget.onEdit,
+                onSelectVersion: widget.onSelectVersion,
+                onRegenerate: widget.onRegenerate,
+                onContinue: widget.onContinue,
+                onRetryUpload: widget.onRetryUpload,
+                onStop: widget.onStop,
               ),
             ),
           ),
