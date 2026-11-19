@@ -90,6 +90,9 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
   bool _openedLatest = false;
   int _focusRequests = 0;
 
+  /// 已创建但首条消息尚未落库的会话；此间列表还没有它，不能回退到旧会话。
+  String? _pendingCreatedId;
+
   /// 冷启动打开最近会话；空列表保持空对话。
   String? _current(List<SessionSummary> sessions) {
     if (_draft) return null;
@@ -98,8 +101,10 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
       if (sessions.isNotEmpty) _selectedId = sessions.first.id;
     }
     final selected = _selectedId;
-    if (selected != null && sessions.any((item) => item.id == selected)) {
-      return selected;
+    if (selected != null) {
+      final listed = sessions.any((item) => item.id == selected);
+      if (listed && selected == _pendingCreatedId) _pendingCreatedId = null;
+      if (listed || selected == _pendingCreatedId) return selected;
     }
     return sessions.isEmpty ? null : sessions.first.id;
   }
@@ -115,6 +120,7 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
     setState(() {
       _draft = false;
       _selectedId = sessionId;
+      _pendingCreatedId = null;
     });
   }
 
@@ -122,17 +128,22 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
     setState(() {
       _draft = false;
       _selectedId = sessionId;
+      _pendingCreatedId = sessionId;
     });
   }
 
   void _deleted(String sessionId) {
     if (_selectedId != sessionId) return;
-    setState(() => _selectedId = null);
+    setState(() {
+      _selectedId = null;
+      _pendingCreatedId = null;
+    });
   }
 
   void _discarded() {
     setState(() {
       _selectedId = null;
+      _pendingCreatedId = null;
       _draft = true;
     });
   }

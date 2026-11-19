@@ -168,7 +168,13 @@ class Composer extends StatelessWidget {
   }
 }
 
+const _darkToggleFill = Color(0xFF283142);
+const _darkToggleBorder = Color(0xFF4868B2);
+const _darkToggleForeground = Color(0xFF679EFE);
+const _darkToggleIdleForeground = Color(0xFFF9FAFB);
+
 /// 深度思考 / 智能搜索胶囊；激活为浅蓝底 + 蓝描边 + 蓝色图标文字（ui.md §5.2）。
+/// 深色取值照搬 chat-demo（blue-900 填充 / blue-600 描边 / blue-400 前景）。
 class ComposerToggle extends StatelessWidget {
   const ComposerToggle({
     super.key,
@@ -187,7 +193,10 @@ class ComposerToggle extends StatelessWidget {
   Widget build(BuildContext context) {
     final theme = ShadTheme.of(context);
     final colors = theme.colorScheme;
-    final foreground = selected ? colors.primary : colors.mutedForeground;
+    final dark = theme.brightness == Brightness.dark;
+    final foreground = selected
+        ? (dark ? _darkToggleForeground : colors.primary)
+        : (dark ? _darkToggleIdleForeground : colors.mutedForeground);
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return Semantics(
       button: true,
@@ -204,14 +213,16 @@ class ComposerToggle extends StatelessWidget {
           padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             color: selected
-                ? colors.primary.withValues(
-                    alpha: theme.brightness == Brightness.dark ? 0.16 : 0.10,
-                  )
+                ? (dark
+                      ? _darkToggleFill
+                      : colors.primary.withValues(alpha: 0.10))
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
-                  ? colors.primary.withValues(alpha: 0.45)
+                  ? (dark
+                        ? _darkToggleBorder
+                        : colors.primary.withValues(alpha: 0.45))
                   : colors.border,
             ),
           ),

@@ -262,6 +262,27 @@ Future<void> startNewChat(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// 首条消息落库可被卡住的仓储，覆盖“新会话已创建、历史列表还没它”的窗口。
+class _GatedRepository extends ChatRepository {
+  _GatedRepository(super.db);
+
+  final gate = Completer<void>();
+
+  @override
+  Future<UserMessage> addUserMessage({
+    required String sessionId,
+    required String text,
+    List<Attachment> attachments = const [],
+  }) async {
+    await gate.future;
+    return super.addUserMessage(
+      sessionId: sessionId,
+      text: text,
+      attachments: attachments,
+    );
+  }
+}
+
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
   late AppDatabase db;
@@ -287,10 +308,11 @@ void main() {
     DeepSeekApiClient? client,
     SpeechApi? speechApi,
     SpeechPlayer? speechPlayer,
+    ChatRepository? chatRepository,
   }) => ProviderScope(
     overrides: [
       appDatabaseProvider.overrideWithValue(db),
-      chatRepositoryProvider.overrideWithValue(repository),
+      chatRepositoryProvider.overrideWithValue(chatRepository ?? repository),
       apiClientProvider.overrideWithValue(
         client ??
             DeepSeekApiClient(
@@ -330,6 +352,39 @@ void main() {
       find.descendant(of: find.byType(Drawer), matching: find.text('Greeting')),
       findsOneWidget,
     );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('a new chat stays selected until its first message lands', (
+    tester,
+  ) async {
+    final old = await repository.createSession();
+    await repository.renameSession(old.id, 'Old');
+    await repository.addUserMessage(sessionId: old.id, text: 'old question');
+
+    final gated = _GatedRepository(db);
+    await tester.pumpWidget(
+      appWith(apiKey: 'sk-good', chatRepository: gated),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Old'), findsOneWidget);
+
+    await startNewChat(tester);
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
+    await tester.pump();
+    await tester.tap(find.byTooltip('发送'));
+    await tester.pump();
+    await tester.pump();
+
+    // 消息尚未落库：列表里还没有新会话，页面不能跳回旧会话。
+    expect(find.text('新对话'), findsOneWidget);
+    expect(find.text('Old'), findsNothing);
+
+    gated.gate.complete();
+    await tester.pumpAndSettle();
+    expect(find.text('Hello'), findsOneWidget);
+    expect(find.text('Hi there'), findsOneWidget);
 
     await unmountApp(tester);
   });
@@ -1149,6 +1204,7 @@ void main() {
     );
     final second = await repository.createSession();
     await repository.renameSession(second.id, 'Second');
+    await repository.addUserMessage(sessionId: second.id, text: 'Hi');
 
     final api = FakeSpeechApi();
     final player = FakePlayer();

@@ -34,9 +34,11 @@ void main() {
   }
 
   group('sessions', () {
-    test('creates empty sessions and lists them newest first', () async {
+    test('lists only sessions with messages, newest first', () async {
       final first = await repository.createSession();
+      await repository.addUserMessage(sessionId: first.id, text: 'a');
       final second = await repository.createSession();
+      await repository.addUserMessage(sessionId: second.id, text: 'b');
       await repository.renameSession(second.id, 'Second');
 
       final summaries = await repository.listSessions();
@@ -46,6 +48,15 @@ void main() {
       expect(summaries.last.title, '');
     });
 
+    test('hides a new session until its first message is sent', () async {
+      final session = await repository.createSession();
+      expect(await repository.listSessions(), isEmpty);
+
+      await repository.addUserMessage(sessionId: session.id, text: 'hello');
+
+      expect((await repository.listSessions()).single.id, session.id);
+    });
+
     test('watching sessions emits the latest list after each change', () async {
       final emissions = <List<SessionSummary>>[];
       final subscription = repository.watchSessions().listen(emissions.add);
@@ -53,6 +64,10 @@ void main() {
       expect(emissions.last, isEmpty);
 
       final session = await repository.createSession();
+      await pumpEventQueue();
+      expect(emissions.last, isEmpty);
+
+      await repository.addUserMessage(sessionId: session.id, text: 'q');
       await pumpEventQueue();
       expect(emissions.last.single.id, session.id);
 
