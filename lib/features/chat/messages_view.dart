@@ -885,12 +885,6 @@ class _ThinkingAreaState extends State<_ThinkingArea> {
                 height: 36,
                 child: Row(
                   children: [
-                    Icon(
-                      LucideIcons.brain,
-                      size: 14,
-                      color: colors.mutedForeground,
-                    ),
-                    const SizedBox(width: 6),
                     Flexible(
                       child: Text(
                         title,
