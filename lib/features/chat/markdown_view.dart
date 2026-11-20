@@ -185,7 +185,8 @@ class _MarkdownViewState extends State<MarkdownView> {
                 ? const GptMarkdownStyleSheet(blockSpacing: 12)
                 : null,
             codeBuilder: (context, name, code, closed) {
-              if (name.trim().toLowerCase() == 'mermaid') {
+              // mermaid 围栏闭合后才渲染图表；流式半成品按普通代码展示。
+              if (closed && name.trim().toLowerCase() == 'mermaid') {
                 return _MermaidBlock(source: code);
               }
               return CodeField(name: name, codes: code);
@@ -275,6 +276,9 @@ Widget _headingBuilder(
 );
 
 /// 表格：只有行分隔线、无表头底色；首列与末列贴边（chat-demo `markdown.css`）。
+///
+/// 列宽按可视宽度均分（每列至少 100），固定后跳过固有尺寸测量；单元格内容
+/// 已是纯文本，直接显示，不再每格嵌套 `GptMarkdown`。
 Widget _tableBuilder(
   BuildContext context,
   List<CustomTableRow> rows,
@@ -291,48 +295,45 @@ Widget _tableBuilder(
   );
   final headerStyle = bodyStyle.copyWith(fontWeight: FontWeight.w500);
   final border = BorderSide(color: colors.borderL2);
-  // chat-demo：单元格 100 至 min(30vw, 320)，超出换行。
-  final cellWidth = BoxConstraints(
-    minWidth: 100,
-    maxWidth: math.min(MediaQuery.sizeOf(context).width * 0.3, 320),
+  final columns = rows.fold<int>(
+    1,
+    (count, row) => math.max(count, row.fields.length),
   );
-  return HorizontalFadeScroll(
-    child: Table(
-      defaultColumnWidth: const IntrinsicColumnWidth(),
-      border: TableBorder(horizontalInside: border, bottom: border),
-      children: [
-        for (final row in rows)
-          TableRow(
-            children: [
-              for (var index = 0; index < row.fields.length; index++)
-                Padding(
-                  padding: EdgeInsets.only(
-                    left: index == 0 ? 0 : 16,
-                    right: index == row.fields.length - 1 ? 0 : 16,
-                    top: 10,
-                    bottom: 10,
-                  ),
-                  child: ConstrainedBox(
-                    constraints: cellWidth,
-                    child: Align(
-                      alignment: switch (row.fields[index].alignment) {
-                        TextAlign.center => Alignment.center,
-                        TextAlign.right => Alignment.centerRight,
-                        _ => Alignment.centerLeft,
-                      },
-                      child: GptMarkdown(
+  return LayoutBuilder(
+    builder: (context, constraints) {
+      final available = constraints.hasBoundedWidth
+          ? constraints.maxWidth
+          : MediaQuery.sizeOf(context).width;
+      // chat-demo：单元格最少 100，超出换行，超过视口宽度后横向滚动。
+      final cellWidth = math.max(available / columns, 100.0);
+      return HorizontalFadeScroll(
+        child: Table(
+          defaultColumnWidth: FixedColumnWidth(cellWidth),
+          border: TableBorder(horizontalInside: border, bottom: border),
+          children: [
+            for (final row in rows)
+              TableRow(
+                children: [
+                  for (var index = 0; index < row.fields.length; index++)
+                    Padding(
+                      padding: EdgeInsets.only(
+                        left: index == 0 ? 0 : 16,
+                        right: index == row.fields.length - 1 ? 0 : 16,
+                        top: 10,
+                        bottom: 10,
+                      ),
+                      child: Text(
                         row.fields[index].data,
                         style: row.isHeader ? headerStyle : bodyStyle,
-                        onLinkTap: openExternalLink,
-                        isStreaming: false,
+                        textAlign: row.fields[index].alignment,
                       ),
                     ),
-                  ),
-                ),
-            ],
-          ),
-      ],
-    ),
+                ],
+              ),
+          ],
+        ),
+      );
+    },
   );
 }
 
@@ -429,13 +430,36 @@ InlinePattern _citationPattern(List<Source> sources) => InlinePattern(
   },
 );
 
-class _MermaidBlock extends StatelessWidget {
+class _MermaidBlock extends StatefulWidget {
   const _MermaidBlock({required this.source});
 
   final String source;
 
   @override
+  State<_MermaidBlock> createState() => _MermaidBlockState();
+}
+
+class _MermaidBlockState extends State<_MermaidBlock> {
+  bool _failed = false;
+
+  @override
+  void didUpdateWidget(_MermaidBlock oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.source != oldWidget.source) _failed = false;
+  }
+
+  /// 解析失败时整块换成代码块；错误回调发生在 build 中，延到帧后再换。
+  void _markFailed() {
+    if (_failed) return;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() => _failed = true);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    // 无可用图时按普通代码块展示源码，不用图表容器里的纯文本降级。
+    if (_failed) return CodeField(name: 'mermaid', codes: widget.source);
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(16),
@@ -445,17 +469,16 @@ class _MermaidBlock extends StatelessWidget {
         child: SizedBox(
           height: 320,
           child: MermaidView(
-            source: source,
+            source: widget.source,
             showControls: false,
             theme: dark
                 ? mermaid_core.MermaidTheme.darkTheme
                 : mermaid_core.MermaidTheme.defaultTheme,
             keepLastGoodSceneOnError: true,
-            // 无可用图时降级为源码；此处宽度不受限，不能用 CodeField。
-            errorBuilder: (context, error) => Text(
-              source,
-              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
-            ),
+            errorBuilder: (context, error) {
+              _markFailed();
+              return const SizedBox.shrink();
+            },
           ),
         ),
       ),
