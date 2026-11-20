@@ -7,6 +7,7 @@ import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_core/mermaid_core.dart' as mermaid_core;
 import 'package:mermaid_flutter/mermaid_flutter.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/markdown_theme.dart';
@@ -131,7 +132,7 @@ class _MarkdownViewState extends State<MarkdownView> {
       child: _shown.length > MarkdownView.plainTextLimit
           ? Text(_shown, style: style)
           : GptMarkdown(
-              _shown,
+              _detachedTaskItems(_shown),
               style: style,
               useDollarSignsForLatex: false,
               onLinkTap: widget.disableLinks ? null : openExternalLink,
@@ -150,6 +151,8 @@ class _MarkdownViewState extends State<MarkdownView> {
               tableBuilder: _tableBuilder,
               // chat-demo 不识别 GitHub Alert，按普通引用块渲染。
               alertBuilder: (context, details) => details.asBlockQuote(),
+              // chat-demo 的任务项画成 `☑`/`□` 文本，不用 Material 复选框。
+              checkboxBuilder: _taskCheckbox,
               // 思考内容比正文更紧凑。
               styleSheet: widget.dense
                   ? const GptMarkdownStyleSheet(blockSpacing: 12)
@@ -179,6 +182,45 @@ Widget _imageAsLink(
       uri?.toString() ?? url,
       style: TextStyle(color: colors.brandText),
     ),
+  );
+}
+
+/// 任务列表去掉列表符号：`[x]` 行成为无圆点的 checkbox 块，
+/// 与 chat-demo 的 `list-style: none` 一致。
+/// shortcut: 只处理顶层的 `-`/`*`/`+` 任务行，嵌套任务列表保持原样。
+String _detachedTaskItems(String text) => text.replaceAllMapped(
+  RegExp(r'^[-*+] (?=\[[ xX]\] )', multiLine: true),
+  (match) => '',
+);
+
+/// 任务复选框：用同色的 Lucide 方框替代 Material 复选框的高对比填充。
+Widget _taskCheckbox(
+  BuildContext context,
+  bool checked,
+  Widget content,
+  CheckboxStyle style,
+) {
+  final colors = AppMarkdownColors.of(context);
+  return Row(
+    mainAxisSize: MainAxisSize.min,
+    textBaseline: TextBaseline.alphabetic,
+    crossAxisAlignment: CrossAxisAlignment.baseline,
+    children: [
+      Text.rich(
+        WidgetSpan(
+          alignment: PlaceholderAlignment.middle,
+          child: Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: Icon(
+              checked ? LucideIcons.squareCheck : LucideIcons.square,
+              size: 16,
+              color: colors.labelSecondary,
+            ),
+          ),
+        ),
+      ),
+      Flexible(child: content),
+    ],
   );
 }
 
