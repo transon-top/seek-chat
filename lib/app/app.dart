@@ -90,6 +90,10 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
   bool _openedLatest = false;
   int _focusRequests = 0;
 
+  /// 最近一次构建出的当前会话 id；列表数据变化时与它比较，
+  /// 只有当前会话变了才重建整页（列表性能 P2）。
+  String? _currentId;
+
   /// 已创建但首条消息尚未落库的会话；此间列表还没有它，不能回退到旧会话。
   String? _pendingCreatedId;
 
@@ -168,10 +172,27 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final sessions = ref.watch(sessionsProvider);
-    return sessions.when(
-      data: (items) {
-        final current = _current(items);
+    // 只订阅加载阶段：会话数据变化（标题、时间、排序）由监听消化，
+    // 当前会话不变时不重建整页。
+    final phase = ref.watch(
+      sessionsProvider.select(
+        (value) => value.when(
+          data: (_) => _SessionsPhase.data,
+          loading: () => _SessionsPhase.loading,
+          error: (_, _) => _SessionsPhase.error,
+        ),
+      ),
+    );
+    ref.listen<AsyncValue<List<SessionSummary>>>(sessionsProvider, (_, next) {
+      final sessions = next.value;
+      if (sessions == null) return;
+      final current = _current(sessions);
+      if (current != _currentId) setState(() => _currentId = current);
+    });
+    switch (phase) {
+      case _SessionsPhase.data:
+        final current = _current(ref.read(sessionsProvider).requireValue);
+        _currentId = current;
         return ChatPage(
           sessionId: current,
           focusRequest: _focusRequests,
@@ -187,26 +208,30 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
             onDeleted: _deleted,
           ),
         );
-      },
-      loading: () => const _ChatLoading(),
-      error: (error, stackTrace) => Scaffold(
-        body: Center(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(l10n.sessionsLoadFailed),
-              const SizedBox(height: 8),
-              ShadButton.outline(
-                onPressed: () => ref.invalidate(sessionsProvider),
-                child: Text(l10n.retry),
-              ),
-            ],
+      case _SessionsPhase.loading:
+        return const _ChatLoading();
+      case _SessionsPhase.error:
+        return Scaffold(
+          body: Center(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(l10n.sessionsLoadFailed),
+                const SizedBox(height: 8),
+                ShadButton.outline(
+                  onPressed: () => ref.invalidate(sessionsProvider),
+                  child: Text(l10n.retry),
+                ),
+              ],
+            ),
           ),
-        ),
-      ),
-    );
+        );
+    }
   }
 }
+
+/// 会话来源的加载阶段；数据变化不切换阶段，不触发重建。
+enum _SessionsPhase { loading, error, data }
 
 /// 会话列表首帧：不确定进度条、3 条骨架与加载文案（ui.md §1.3）。
 class _ChatLoading extends StatelessWidget {
