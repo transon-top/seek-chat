@@ -216,6 +216,63 @@ void main() {
     },
   );
 
+  testWidgets(
+    'a failing mermaid block above the viewport does not shift the content',
+    (tester) async {
+      // 第 5 条回复里的 mermaid 解析失败；等错误回调再换代码块会让该条
+      // 先撑高再缩回，滚动中视口上方高度突变、内容跳位。
+      final messages = <Message>[
+        for (var i = 0; i < 30; i++) ...[
+          UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+          AssistantMessage(
+            id: 'r$i',
+            createdAt: DateTime(2026),
+            status: ReplyStatus.done,
+            stopReason: StopReason.endTurn,
+            thinking: false,
+            search: false,
+            blocks: [
+              TextBlock(
+                text: i == 5
+                    ? 'Answer\n\n```mermaid\nnot a valid diagram @@\n```\n\n'
+                          'Answer\n\nAnswer\n\nAnswer'
+                    : 'Answer\n\nAnswer\n\nAnswer\n\nAnswer',
+              ),
+            ],
+          ),
+        ],
+      ];
+      await pumpMessages(tester, messages, width: 390);
+      final position = tester.state<ScrollableState>(_listScrollable).position;
+      double? yOf(String id) {
+        final finder = find.byKey(ValueKey('user-bubble-$id'));
+        return finder.evaluate().isEmpty ? null : tester.getTopLeft(finder).dy;
+      }
+
+      // 一边往上拖（看更早的消息），一边核对固定消息的屏幕位移与滚动位移。
+      var checked = false;
+      for (var step = 0; step < 20; step++) {
+        final tracked = yOf('u10') != null
+            ? 'u10'
+            : (yOf('u9') != null ? 'u9' : null);
+        final before = tracked == null ? null : yOf(tracked);
+        final pixelsBefore = position.pixels;
+        await tester.drag(find.byType(ListView), const Offset(0, 400));
+        await tester.pump();
+        await tester.pump(const Duration(milliseconds: 16));
+        final after = tracked == null ? null : yOf(tracked);
+        if (before == null || after == null) continue;
+        checked = true;
+        expect(
+          after - before,
+          moreOrLessEquals(pixelsBefore - position.pixels, epsilon: 1),
+          reason: '第 $step 次拖动：内容位移必须与滚动位移一致',
+        );
+      }
+      expect(checked, isTrue);
+    },
+  );
+
   testWidgets('reopening a conversation resets the window', (tester) async {
     final messages = [
       for (var i = 0; i < 200; i++)
