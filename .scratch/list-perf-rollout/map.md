@@ -22,6 +22,7 @@
 <!-- 每个已关闭的票一行：票名 + 一句话结论。详细答案在票内。 -->
 
 - [P0 稳定 GptMarkdown 输入](issues/01-p0-stable-markdown-input.md): 空来源不装 pattern，pattern 与正文 widget 按内容缓存，正文补 `isStreaming`；模拟器流式滚动慢帧 1.58%，首屏仍 1651ms（留给《初始窗口》）。
+- [初始窗口](issues/02-initial-window.md): 只渲染末 50 条、向上距顶 200px 内每次补 40 条；补历史在布局阶段两段修正偏移（估算 + 锚点 `layoutOffset` 实测），视口不跳动；模拟器首屏 347ms、`build max` 95.56ms（改造前 1966–5623ms），build 侧大跳帧消除，慢帧余量受模拟器光栅化影响。
 
 ## Not yet specified
 

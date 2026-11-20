@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:math';
 
+import 'package:flutter/rendering.dart' show SliverMultiBoxAdaptorParentData;
 import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
@@ -64,14 +65,64 @@ class _ChatMessageListState extends State<ChatMessageList> {
   /// 距底部小于该值时视为在底部，流式内容增长时继续跟随（chat-demo 同值）。
   static const double _stickyThreshold = 40;
 
-  final ScrollController _controller = ScrollController();
+  /// 初始窗口：打开会话时只渲染可见路径末尾的最近 50 条。
+  static const int _initialWindow = 50;
+
+  /// 向上滚动接近已渲染范围起点时，每次补 40 条。
+  static const int _windowBatch = 40;
+
+  /// 距顶部小于该值时触发补历史。
+  static const double _loadMoreDistance = 200;
+
+  /// 补历史当帧临时放大的缓存，让锚点消息进入布局供测量。
+  static const double _measureCacheExtent = 1500;
+
+  /// 列表内边距。
+  static const EdgeInsets _listPadding = EdgeInsets.fromLTRB(16, 4, 16, 8);
+
+  GlobalKey _anchorKey = GlobalKey();
+  String? _anchorKeyId;
+  late final _WindowScrollController _controller = _WindowScrollController(
+    correction: _correctForNewMessages,
+  );
   bool _sticky = true;
   double _lastOffset = 0;
   bool _followScheduled = false;
+  Map<String, int> _indexById = const {};
+  List<Message>? _indexedMessages;
+
+  /// 渲染窗口起点（绝对下标）；窗口只扩不缩，重新打开会话时随 State 重建。
+  late int _windowStart;
+
+  /// 补历史时作为锚点的消息 id。
+  String? _anchorId;
+
+  /// 补历史前的滚动偏移与最大偏移，用于补正计算。
+  double _pixelsBeforeExpand = 0;
+  double _maxExtentBeforeExpand = 0;
+
+  /// 0 空闲；1 等第一轮布局后按最大偏移估算补正；2 等第二轮布局后按锚点补正。
+  int _correctionPhase = 0;
+
+  /// 带 GlobalKey 的消息 id：补历史过程中锁住旧起点，平时跟随窗口起点。
+  String? get _keyedMessageId => _correctionPhase == 0
+      ? (widget.messages.isEmpty ? null : widget.messages[_windowStart].id)
+      : _anchorId;
+
+  /// 锚点换到另一条消息时换新 key，避免把旧消息的元素状态挪给新消息。
+  GlobalKey? _anchorKeyFor(String? id) {
+    if (id == null) return null;
+    if (_anchorKeyId != id) {
+      _anchorKeyId = id;
+      _anchorKey = GlobalKey();
+    }
+    return _anchorKey;
+  }
 
   @override
   void initState() {
     super.initState();
+    _windowStart = max(0, widget.messages.length - _initialWindow);
     _controller.addListener(_onScroll);
     // 首次布局后落到最新消息（打开历史会话时从底部开始）。
     _scheduleFollow();
@@ -82,7 +133,65 @@ class _ChatMessageListState extends State<ChatMessageList> {
     super.didUpdateWidget(oldWidget);
     // 新请求（发送、编辑、重新生成、续写）一律重新跟随底部。
     if (!oldWidget.busy && widget.busy) _sticky = true;
+    _syncWindow(oldWidget.messages.length);
     _scheduleFollow();
+  }
+
+  /// 版本切换或编辑导致消息数变化时重算窗口，保证消息仍在渲染范围内。
+  void _syncWindow(int oldLength) {
+    final length = widget.messages.length;
+    if (length == oldLength) return;
+    if (length < _windowStart + _initialWindow) {
+      _windowStart = max(0, length - _initialWindow);
+    }
+  }
+
+  /// 补历史后修正滚动偏移：第一轮按最大偏移差值估算，第二轮按锚点实测。
+  ///
+  /// 在 `applyContentDimensions` 期间调用，视口会在同一帧内按新偏移重排，
+  /// 不会把错误帧画到屏幕上。
+  double? _correctForNewMessages(double maxScrollExtent, double pixels) {
+    if (_correctionPhase == 1) {
+      _correctionPhase = 2;
+      final delta = maxScrollExtent - _maxExtentBeforeExpand;
+      return delta.isFinite && delta > 0 ? delta : null;
+    }
+    if (_correctionPhase == 2) {
+      _correctionPhase = 0;
+      final layoutOffset = _anchorLayoutOffset();
+      if (layoutOffset == null) return null;
+      // 锚点回到补前位置所需的新偏移：内容偏移 + 补前偏移 - 当前偏移。
+      final delta = layoutOffset + _pixelsBeforeExpand - pixels;
+      return delta.abs() > 0.5 ? delta : null;
+    }
+    return null;
+  }
+
+  /// 锚点条目在列表内容坐标系中的起点；未建成时返回 null。
+  double? _anchorLayoutOffset() {
+    RenderObject? object = _anchorKey.currentContext?.findRenderObject();
+    while (object != null &&
+        object.parentData is! SliverMultiBoxAdaptorParentData) {
+      object = object.parent;
+    }
+    return (object?.parentData as SliverMultiBoxAdaptorParentData?)
+        ?.layoutOffset;
+  }
+
+  /// 顶部补 40 条；补前记下滚动位置，补后按锚点补回。
+  void _expandWindow() {
+    if (_windowStart == 0 || _correctionPhase != 0) return;
+    _anchorId = widget.messages[_windowStart].id;
+    _pixelsBeforeExpand = _controller.position.pixels;
+    _maxExtentBeforeExpand = _controller.position.maxScrollExtent;
+    _correctionPhase = 1;
+    setState(() {
+      _windowStart = max(0, _windowStart - _windowBatch);
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      setState(() => _correctionPhase = 0);
+    });
   }
 
   @override
@@ -101,6 +210,7 @@ class _ChatMessageListState extends State<ChatMessageList> {
       _sticky = false;
     }
     _lastOffset = offset;
+    if (offset <= _loadMoreDistance) _expandWindow();
   }
 
   /// 布局后若仍在跟随状态就跳到最新内容。懒加载下列表的
@@ -119,41 +229,76 @@ class _ChatMessageListState extends State<ChatMessageList> {
     });
   }
 
+  /// 消息 id → 绝对下标；消息变化（追加、编辑、切版本）时重建。
+  int? _indexFor(Key key) {
+    if (key is! ValueKey<String>) return null;
+    final messages = widget.messages;
+    if (!identical(messages, _indexedMessages)) {
+      _indexedMessages = messages;
+      if (messages.length != _indexById.length ||
+          (messages.isNotEmpty && !_indexById.containsKey(messages.last.id))) {
+        _indexById = {
+          for (var index = 0; index < messages.length; index++)
+            messages[index].id: index,
+        };
+      }
+    }
+    final absolute = _indexById[key.value];
+    // 索引表可能滞后：对不上就当未知键处理，让框架按位置重建。
+    if (absolute == null || messages[absolute].id != key.value) return null;
+    final index = absolute - _windowStart;
+    return index < 0 ? null : index;
+  }
+
   @override
   Widget build(BuildContext context) {
     final messages = widget.messages;
+    final anchorKey = _anchorKeyFor(_keyedMessageId);
     return ScrollEdgeFade(
       controller: _controller,
       color: Theme.of(context).colorScheme.surface,
       child: ListView.builder(
         controller: _controller,
-        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-        itemCount: messages.length,
+        scrollCacheExtent: _correctionPhase == 0
+            ? null
+            : const ScrollCacheExtent.pixels(_measureCacheExtent),
+        padding: _listPadding,
+        itemCount: messages.length - _windowStart,
+        findChildIndexCallback: _indexFor,
         itemBuilder: (context, index) {
-          final message = messages[index];
-          return Padding(
-            // 顶部留白只加在第一行之前，其余消息间距 16。
-            padding: EdgeInsets.only(top: index == 0 ? 0 : 16),
+          final position = _windowStart + index;
+          final message = messages[position];
+          final view = _MessageView(
+            message: message,
+            versions: widget.versions[message.id],
+            isLast: position == messages.length - 1,
+            busy: widget.busy,
+            speech: widget.speech,
+            onReadAloud: widget.onReadAloud,
+            onEdit: widget.onEdit,
+            onSelectVersion: widget.onSelectVersion,
+            onRegenerate: widget.onRegenerate,
+            onContinue: widget.onContinue,
+            onRetryUpload: widget.onRetryUpload,
+          );
+          final item = Padding(
+            // 顶部留白只加在第一条消息之前，其余消息间距 16。
+            padding: EdgeInsets.only(top: position == 0 ? 0 : 16),
             child: Align(
               alignment: Alignment.topCenter,
               child: ConstrainedBox(
                 constraints: const BoxConstraints(maxWidth: 760),
-                child: _MessageView(
-                  key: ValueKey(message.id),
-                  message: message,
-                  versions: widget.versions[message.id],
-                  isLast: index == messages.length - 1,
-                  busy: widget.busy,
-                  speech: widget.speech,
-                  onReadAloud: widget.onReadAloud,
-                  onEdit: widget.onEdit,
-                  onSelectVersion: widget.onSelectVersion,
-                  onRegenerate: widget.onRegenerate,
-                  onContinue: widget.onContinue,
-                  onRetryUpload: widget.onRetryUpload,
-                ),
+                child: view,
               ),
             ),
+          );
+          return KeyedSubtree(
+            // 消息 key 供前插历史时按 id 复用子项。
+            key: ValueKey(message.id),
+            // 锚点包住整条消息，量到的是条目顶端而非正文顶端。
+            child: anchorKey != null && message.id == _anchorKeyId
+                ? KeyedSubtree(key: anchorKey, child: item)
+                : item,
           );
         },
       ),
@@ -161,9 +306,60 @@ class _ChatMessageListState extends State<ChatMessageList> {
   }
 }
 
+/// 顶部补历史后需要按插入高度修正偏移；默认控制器做不到，这里补一个钩子。
+class _WindowScrollController extends ScrollController {
+  _WindowScrollController({required this.correction});
+
+  final _ScrollCorrection correction;
+
+  @override
+  ScrollPosition createScrollPosition(
+    ScrollPhysics physics,
+    ScrollContext context,
+    ScrollPosition? oldPosition,
+  ) => _WindowScrollPosition(
+    physics: physics,
+    context: context,
+    initialPixels: initialScrollOffset,
+    keepScrollOffset: keepScrollOffset,
+    oldPosition: oldPosition,
+    debugLabel: debugLabel,
+    correction: correction,
+  );
+}
+
+/// 返回 null 表示不修正；返回数值会在同一帧内重排。
+typedef _ScrollCorrection = double? Function(
+  double maxScrollExtent,
+  double pixels,
+);
+
+class _WindowScrollPosition extends ScrollPositionWithSingleContext {
+  _WindowScrollPosition({
+    required super.physics,
+    required super.context,
+    super.initialPixels,
+    super.keepScrollOffset,
+    super.oldPosition,
+    super.debugLabel,
+    required this.correction,
+  });
+
+  final _ScrollCorrection correction;
+
+  @override
+  bool applyContentDimensions(double minScrollExtent, double maxScrollExtent) {
+    final delta = correction(maxScrollExtent, pixels);
+    if (delta != null) {
+      correctPixels(pixels + delta);
+      return false;
+    }
+    return super.applyContentDimensions(minScrollExtent, maxScrollExtent);
+  }
+}
+
 class _MessageView extends StatelessWidget {
   const _MessageView({
-    super.key,
     required this.message,
     required this.versions,
     required this.isLast,
