@@ -2,6 +2,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../l10n/generated/app_localizations.dart';
+import '../../shared/toast.dart';
 
 /// 聊天页顶部栏：菜单、左对齐标题、新建对话（ui.md §1.3）。
 ///
@@ -23,7 +24,7 @@ class ChatHeader extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final theme = ShadTheme.of(context);
     return SizedBox(
-      height: 46,
+      height: chatHeaderHeight,
       child: Row(
         children: [
           Semantics(
