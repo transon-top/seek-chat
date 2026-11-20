@@ -1,10 +1,12 @@
 import 'dart:io';
 
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
+import 'dev/mock_seed.dart';
 import 'shared/providers.dart';
 import 'shared/data/attachment_store.dart';
 import 'shared/data/chat_repository.dart';
@@ -19,13 +21,21 @@ Future<void> main() async {
   final attachmentStore = AttachmentStore();
   // 应用被杀后残留的 pending/streaming 回复在启动时统一置为 stopped。
   await repository.resetInterruptedReplies();
+  final preferences = await SharedPreferences.getInstance();
+  if (kDebugMode) {
+    try {
+      await seedMarkdownSamples(repository, preferences);
+    } on Object catch (error) {
+      // 样本写入失败不阻塞启动。
+      debugLog('markdown sample seed failed', error);
+    }
+  }
   try {
     await attachmentStore.cleanupOrphans(repository);
   } on FileSystemException catch (error) {
     // 启动清理失败不阻塞应用，下次启动再试。
     debugLog('attachment cleanup failed', error);
   }
-  final preferences = await SharedPreferences.getInstance();
   runApp(
     ProviderScope(
       overrides: [

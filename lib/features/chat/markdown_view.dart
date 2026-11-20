@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/scheduler.dart';
 import 'package:gpt_markdown/custom_widgets/code_field.dart';
@@ -8,6 +9,7 @@ import 'package:mermaid_core/mermaid_core.dart' as mermaid_core;
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../../app/markdown_theme.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'reply_view.dart';
 
@@ -142,6 +144,16 @@ class _MarkdownViewState extends State<MarkdownView> {
                   : [_citationPattern(widget.sources!)],
               // 与 chat-demo 一致：图片不加载，只显示可点击的地址（票 08）。
               imageBuilder: _imageAsLink,
+              // chat-demo 的 h1-h3 上方留 32，h4-h6 保持段间距。
+              headingBuilder: widget.dense ? null : _headingBuilder,
+              // chat-demo 的表格只保留行分隔线，表头无底色。
+              tableBuilder: _tableBuilder,
+              // chat-demo 不识别 GitHub Alert，按普通引用块渲染。
+              alertBuilder: (context, details) => details.asBlockQuote(),
+              // 思考内容比正文更紧凑。
+              styleSheet: widget.dense
+                  ? const GptMarkdownStyleSheet(blockSpacing: 12)
+                  : null,
               codeBuilder: (context, name, code, closed) {
                 if (name.trim().toLowerCase() == 'mermaid') {
                   return _MermaidBlock(source: code);
@@ -159,16 +171,87 @@ Widget _imageAsLink(
   double? width,
   double? height,
 ) {
-  final colors = Theme.of(context).colorScheme;
+  final colors = AppMarkdownColors.of(context);
   final uri = webUri(url);
   return GestureDetector(
     onTap: uri == null ? null : () => openExternalLink(uri.toString(), ''),
     child: Text(
       uri?.toString() ?? url,
-      style: TextStyle(
-        color: colors.primary,
-        decoration: TextDecoration.underline,
-      ),
+      style: TextStyle(color: colors.brandText),
+    ),
+  );
+}
+
+/// 标题间距：`h1`-`h3` 上方 32，`h4`-`h6` 只保留块间距 16。
+Widget _headingBuilder(
+  BuildContext context,
+  int level,
+  Widget content,
+  HeadingStyle style,
+) => Padding(
+  padding: EdgeInsets.only(top: level <= 3 ? 16 : 0),
+  child: content,
+);
+
+/// 表格：只有行分隔线、无表头底色；首列与末列贴边（chat-demo `markdown.css`）。
+Widget _tableBuilder(
+  BuildContext context,
+  List<CustomTableRow> rows,
+  TextStyle style,
+  GptMarkdownConfig config,
+) {
+  final colors = AppMarkdownColors.of(context);
+  final dense = (style.fontSize ?? 16) < 16;
+  final cellSize = dense ? 14.0 : 15.0;
+  final bodyStyle = style.copyWith(
+    fontSize: cellSize,
+    height: (cellSize + 10) / cellSize,
+    color: colors.labelPrimary,
+  );
+  final headerStyle = bodyStyle.copyWith(fontWeight: FontWeight.w500);
+  final border = BorderSide(color: colors.borderL2);
+  // chat-demo：单元格 100 至 min(30vw, 320)，超出换行。
+  final cellWidth = BoxConstraints(
+    minWidth: 100,
+    maxWidth: math.min(MediaQuery.sizeOf(context).width * 0.3, 320),
+  );
+  return SingleChildScrollView(
+    scrollDirection: Axis.horizontal,
+    child: Table(
+      defaultColumnWidth: const IntrinsicColumnWidth(),
+      border: TableBorder(horizontalInside: border, bottom: border),
+      children: [
+        for (final row in rows)
+          TableRow(
+            children: [
+              for (var index = 0; index < row.fields.length; index++)
+                Padding(
+                  padding: EdgeInsets.only(
+                    left: index == 0 ? 0 : 16,
+                    right: index == row.fields.length - 1 ? 0 : 16,
+                    top: 10,
+                    bottom: 10,
+                  ),
+                  child: ConstrainedBox(
+                    constraints: cellWidth,
+                    child: Align(
+                      alignment: switch (row.fields[index].alignment) {
+                        TextAlign.center => Alignment.center,
+                        TextAlign.right => Alignment.centerRight,
+                        _ => Alignment.centerLeft,
+                      },
+                      child: GptMarkdown(
+                        row.fields[index].data,
+                        style: row.isHeader ? headerStyle : bodyStyle,
+                        onLinkTap: openExternalLink,
+                        isStreaming: false,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+      ],
     ),
   );
 }
@@ -209,7 +292,7 @@ InlinePattern _citationPattern(List<Source> sources) => InlinePattern(
     }
     if (matchSource == null) return const TextSpan(text: '');
     final source = matchSource;
-    final colors = Theme.of(context).colorScheme;
+    final colors = AppMarkdownColors.of(context);
     final l10n = AppLocalizations.of(context);
     return WidgetSpan(
       alignment: PlaceholderAlignment.middle,
@@ -221,20 +304,42 @@ InlinePattern _citationPattern(List<Source> sources) => InlinePattern(
         child: GestureDetector(
           key: Key('citation-${source.index}'),
           onTap: () => openExternalLink(source.url, source.title),
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 1),
-            padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1),
-            decoration: BoxDecoration(
-              color: colors.surfaceContainerHighest,
-              borderRadius: BorderRadius.circular(6),
-            ),
-            child: Text(
-              '${source.index}',
-              style: TextStyle(
-                fontSize: 10,
-                height: 14 / 10,
-                fontWeight: FontWeight.w600,
-                color: colors.onSurfaceVariant,
+          // chat-demo 的角标上移 5px、右下角不圆角、9px 等宽数字。
+          child: Transform.translate(
+            offset: const Offset(0, -5),
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 2),
+              decoration: BoxDecoration(
+                color: colors.placeholderFill,
+                borderRadius: const BorderRadius.only(
+                  topLeft: Radius.circular(6),
+                  topRight: Radius.circular(6),
+                  bottomLeft: Radius.circular(6),
+                ),
+                border: Border.all(color: colors.borderL1, width: 0.5),
+              ),
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(minWidth: 14, minHeight: 14),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 4),
+                      child: Text(
+                        '${source.index}',
+                        style: TextStyle(
+                          fontFamily: kGptMarkdownMonoFontFamily,
+                          package: kGptMarkdownFontPackage,
+                          fontSize: 9,
+                          height: 14 / 9,
+                          fontWeight: FontWeight.w500,
+                          color: colors.labelTertiary,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -253,19 +358,24 @@ class _MermaidBlock extends StatelessWidget {
   Widget build(BuildContext context) {
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: SizedBox(
-        height: 320,
-        child: MermaidView(
-          source: source,
-          theme: dark
-              ? mermaid_core.MermaidTheme.darkTheme
-              : mermaid_core.MermaidTheme.defaultTheme,
-          keepLastGoodSceneOnError: true,
-          // 无可用图时降级为源码；此处宽度不受限，不能用 CodeField。
-          errorBuilder: (context, error) => Text(
-            source,
-            style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+      padding: const EdgeInsets.all(16),
+      // 关闭缩放/平移控件并吞掉手势：图表固定按适配比例展示，
+      // 手势交还给外层消息列表滚动。
+      child: IgnorePointer(
+        child: SizedBox(
+          height: 320,
+          child: MermaidView(
+            source: source,
+            showControls: false,
+            theme: dark
+                ? mermaid_core.MermaidTheme.darkTheme
+                : mermaid_core.MermaidTheme.defaultTheme,
+            keepLastGoodSceneOnError: true,
+            // 无可用图时降级为源码；此处宽度不受限，不能用 CodeField。
+            errorBuilder: (context, error) => Text(
+              source,
+              style: const TextStyle(fontFamily: 'monospace', fontSize: 12),
+            ),
           ),
         ),
       ),
