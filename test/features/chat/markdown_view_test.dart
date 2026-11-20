@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:open_chat/features/chat/markdown_view.dart';
 import 'package:open_chat/features/chat/reply_view.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:val_latex_flutter/val_latex_flutter.dart' show Math;
 
 Source _source(int index) => Source(
@@ -61,6 +62,18 @@ void main() {
     expect(find.textContaining('# ', findRichText: true), findsNothing);
   });
 
+  testWidgets('renders task items as checkboxes without list bullets', (
+    tester,
+  ) async {
+    await pumpMarkdown(tester, '- [x] 已完成任务\n- [ ] 未完成任务');
+
+    expect(find.byType(Checkbox), findsNothing);
+    expect(find.byIcon(LucideIcons.squareCheck), findsOneWidget);
+    expect(find.byIcon(LucideIcons.square), findsOneWidget);
+    expect(find.textContaining('[x]', findRichText: true), findsNothing);
+    expect(find.textContaining('已完成任务', findRichText: true), findsWidgets);
+  });
+
   testWidgets('renders LaTeX written with \\(...\\)', (tester) async {
     await pumpMarkdown(tester, r'公式 \(x^2 + y^2\)');
 
@@ -111,8 +124,14 @@ void main() {
       sources: [_source(1)],
     );
 
-    expect(find.textContaining('[citation:99]', findRichText: true), findsNothing);
-    expect(find.textContaining('[citation:1]', findRichText: true), findsNothing);
+    expect(
+      find.textContaining('[citation:99]', findRichText: true),
+      findsNothing,
+    );
+    expect(
+      find.textContaining('[citation:1]', findRichText: true),
+      findsNothing,
+    );
     expect(find.textContaining('1', findRichText: true), findsWidgets);
   });
 
