@@ -1,0 +1,213 @@
+Resolving dependencies...
+Downloading packages...
+  archive 3.6.1 (4.7.1 available)
+  built_collection 5.1.2 (6.0.0 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  dbus 0.8.0 (0.8.1 available)
+  flutter_svg 2.4.0 (2.5.0 available)
+  jni 1.1.2 (1.2.1 available)
+  jni_flutter 1.0.4+1 (1.1.0 available)
+  lucide_icons_flutter 3.1.25 (4.0.3 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  shadcn_ui 0.60.0 (0.61.1 available)
+  test_api 0.7.14 (0.7.15 available)
+  vector_math 2.4.3 (2.4.4 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+14 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleProfile'...                         1,668ms
+✓ Built build/app/outputs/flutter-apk/app-profile.apk (78.9MB)
+Installing build/app/outputs/flutter-apk/app-profile.apk...         6.8s
+VMServiceFlutterDriver: Connecting to Flutter application at http://127.0.0.1:63927/N6RaaHxp3Sc=/
+VMServiceFlutterDriver: Isolate found with number: 4026794866411739
+VMServiceFlutterDriver: Isolate 4026794866411739 is runnable.
+VMServiceFlutterDriver: Isolate is paused at start.
+VMServiceFlutterDriver: Attempting to resume isolate
+I/flutter (26786): 00:00 +0: 列表性能基线：1000 条消息与 1000 个会话
+I/GrallocExtra(26786): gralloc_extra_query:is_SW3D 0
+I/GrallocExtra(26786): gralloc_extra_query:is_SW3D 0
+E/MEMCWrapper(26786): isMEMCPostProcessingWhitelistApp false.
+D/BLASTBufferQueue(26786): [de6e545 SurfaceView[com.example.open_chat/com.example.open_chat.MainActivity]#1](f:0,a:1) acquireNextBufferLocked size=1216x2660 mFrameNumber=1 applyTransaction=true mTimestamp=353866382228480(auto) mPendingTransactions.size=0 graphicBufferId=115044993990668 transform=0
+VMServiceFlutterDriver: Connected to Flutter application.
+D/ProfileInstaller(26786): Installing profile for com.example.open_chat
+I/Choreographer(26786): Skipped 505 frames!  The application may be doing too much work on its main thread.
+D/skia    (26786): CacheMissBoost: pid=26786 loaded libvivo-vperfd-client.so, using NEW api (vperf2.0)
+W/HidlServiceManagement(26786): hwservicemanager is not supported on the device.
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+D/skia    (26786): CacheMissBoost: pid=26786(com.example.open_chat) new_api acquire FAIL ret=-1
+D/HWUI    (26786): /com.example.open_chat: shader [a3c114e8e12c8d1fd66ca538ad4a5aad] cache miss duration in 5 ms
+E/LayerState(26786): Unmerged SurfaceComposer Transaction properties. LayerState::merge needs updating? unmerged flags=000000001000000000000000000000000000000000000000000000000000000000000000000000000
+D/BLASTBufferQueue(26786): [VRI[MainActivity]#0](f:0,a:1) acquireNextBufferLocked size=1216x2660 mFrameNumber=1 applyTransaction=true mTimestamp=353872019863808(auto) mPendingTransactions.size=0 graphicBufferId=115044993990674 transform=0
+I/HWUI    (26786): Davey! duration=5630ms; Flags=1, FrameTimelineVsyncId=255094898, IntendedVsync=353866389936840, Vsync=353872001047895, InputEventId=0, HandleInputStart=353872003523456, AnimationStart=353872003526016, PerformTraversalsStart=353872003530496, DrawStart=353872005096960, FrameDeadline=353866403536840, FrameStartTime=353872003126144, FrameInterval=11111111, WorkloadTarget=13600000, AnimationTime=353872001047895, SyncQueued=353872006324736, SyncStart=353872006377984, IssueDrawCommandsStart=353872006708864, SwapBuffers=353872019538944, FrameCompleted=353872020974720, DequeueBufferDuration=961664, QueueBufferDuration=851456, GpuCompleted=353872020974720, SwapBuffersCompleted=353872020860800, DisplayPresentTime=468572971641, CommandSubmissionCompleted=353872019538944, 
+V/ImeFocusController(26786): onWindowFocus: com.android.internal.policy.DecorView{ec402e V.E...... R....... 0,0-1216,2660}[MainActivity] softInputMode=STATE_UNSPECIFIED|ADJUST_RESIZE|IS_FORWARD_NAVIGATION
+I/ImeTracker(26786): com.example.open_chat:38f08077: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+I/MAGT_SYNC(26786): [MAGT_SYNC] Successfully initialized queued_buffer sync: fd=216, addr=0x709f0d7000
+D/DesktopExperienceFlags(26786): Toggle override initialized to: false
+I/flutter (26786): BASELINE {"scenario":"cold_start_long_session","seed_ms":5638,"sessions":1001,"messages":1000,"ms":443,"rss_mb":394.86}
+I/ImeTracker(26786): com.example.open_chat:dc245266: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+I/HWUI    (26786): Using FreeType backend (prop=Auto)
+D/InsetsController(26786): Setting requestedVisibleTypes to 1023 (was 1015)
+I/AssistStructure(26786): Flattened final assist data: 424 bytes, containing 1 windows, 3 views
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): ImeOnBackInvokedCallback@34095722 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@acfdf7
+D/VRI[MainActivity](26786): WindowInsets changed: ime:[0,0,0,920] 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+W/InteractionJankMonitor(26786): Initializing without READ_DEVICE_CONFIG permission. enabled=false, interval=1, missedFrameThreshold=3, frameTimeThreshold=64, package=com.example.open_chat
+I/ImeTracker(26786): com.example.open_chat:dc245266: onShown
+I/flutter (26786): BASELINE {"scenario":"control_idle_new_chat","frames":45,"build_p50_ms":0.5,"build_p90_ms":0.92,"build_max_ms":1.62,"raster_p50_ms":0.81,"raster_p90_ms":1.42,"raster_max_ms":3.93,"total_p50_ms":1.34,"total_p90_ms":2.02,"total_max_ms":4.49,"slow_over_16_7_pct":0.0,"rss_mb":394.85}
+I/ImeTracker(26786): com.example.open_chat:d660529b: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@d88d49a
+D/InsetsController(26786): Setting requestedVisibleTypes to 1015 (was 1023)
+D/CompatChangeReporter(26786): Compat change id reported: 395521150; UID 10470; state: ENABLED
+D/VRI[MainActivity](26786): WindowInsets changed: ime:null 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): system_server:f8735712: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+I/flutter (26786): BASELINE {"scenario":"drawer_open_1000_sessions","frames":19,"build_p50_ms":0.82,"build_p90_ms":2.01,"build_max_ms":12.87,"raster_p50_ms":1.14,"raster_p90_ms":2.54,"raster_max_ms":7.0,"total_p50_ms":2.97,"total_p90_ms":3.98,"total_max_ms":13.69,"slow_over_16_7_pct":0.0,"first_row_ms":31,"total_ms":438,"rss_mb":397.34}
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2
+I/ample.open_chat(26786): vart_key_suspend, wait other thread over
+I/ample.open_chat(26786): key_suspend: WaitForThreadCritical
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2, pending_key_threads = 2
+I/ample.open_chat(26786): vart_key_suspend, key_thread_num= 2, exit thread num= 0, add thread num= 0
+I/ample.open_chat(26786): vart_key_suspend, wait key_thread over, key_thread_suspend_list= 2
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2
+I/ample.open_chat(26786): vart_key_suspend, wait other thread over
+I/ample.open_chat(26786): key_suspend: WaitForThreadCritical
+I/ample.open_chat(26786): vart_key_suspend, key_thread_suspend_list = 2, pending_key_threads = 2
+I/ample.open_chat(26786): vart_key_suspend, key_thread_num= 2, exit thread num= 0, add thread num= 0
+I/ample.open_chat(26786): vart_key_suspend, wait key_thread over, key_thread_suspend_list= 2
+I/ample.open_chat(26786): vart_dgc, 8192KB,32MB,0.5
+I/ample.open_chat(26786): Background concurrent copying GC freed 6244KB AllocSpace bytes, 4(180KB) LOS objects, 89% free, 3029KB(1756KB_100KB)/26MB, 2Fd, itvl 10.002s, cpu 32.932ms, paused 228us,89us total 35.563ms
+I/ample.open_chat(26786): vart_bigdata, last_report_time=1795161303570
+I/ImeTracker(26786): com.example.open_chat:a90f3dc0: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController(26786): Setting requestedVisibleTypes to 1023 (was 1015)
+D/VRI[MainActivity](26786): WindowInsets changed: ime:[0,0,0,920] 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/AssistStructure(26786): Flattened final assist data: 424 bytes, containing 1 windows, 3 views
+I/ImeTracker(26786): com.example.open_chat:a90f3dc0: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): ImeOnBackInvokedCallback@34095722 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@2a03cd9
+I/flutter (26786): BASELINE {"scenario":"control_open_small_session","frames":24,"build_p50_ms":1.39,"build_p90_ms":3.93,"build_max_ms":6.53,"raster_p50_ms":1.33,"raster_p90_ms":2.88,"raster_max_ms":12.21,"total_p50_ms":2.69,"total_p90_ms":7.32,"total_max_ms":16.14,"slow_over_16_7_pct":0.0,"first_screen_ms":29,"rss_mb":387.81}
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): com.example.open_chat:a90f3dc0: onShown
+I/flutter (26786): BASELINE {"scenario":"control_scroll_small_session","frames":97,"build_p50_ms":0.47,"build_p90_ms":0.98,"build_max_ms":1.7,"raster_p50_ms":0.83,"raster_p90_ms":1.04,"raster_max_ms":4.39,"total_p50_ms":1.27,"total_p90_ms":2.45,"total_max_ms":5.03,"slow_over_16_7_pct":0.0,"rss_mb":391.82}
+I/ImeTracker(26786): com.example.open_chat:e96b2879: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@d88d49a
+D/InsetsController(26786): Setting requestedVisibleTypes to 1015 (was 1023)
+D/VRI[MainActivity](26786): WindowInsets changed: ime:null 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): system_server:f64f964c: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): com.example.open_chat:97d68791: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController(26786): Setting requestedVisibleTypes to 1023 (was 1015)
+D/VRI[MainActivity](26786): WindowInsets changed: ime:[0,0,0,920] 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/AssistStructure(26786): Flattened final assist data: 424 bytes, containing 1 windows, 3 views
+I/ImeTracker(26786): com.example.open_chat:97d68791: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): ImeOnBackInvokedCallback@34095722 Callback=android.window.IOnBackInvokedCallback$Stub$Proxy@ff8e73a
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): com.example.open_chat:97d68791: onShown
+I/flutter (26786): BASELINE {"scenario":"open_long_session","frames":34,"build_p50_ms":0.69,"build_p90_ms":5.07,"build_max_ms":55.69,"raster_p50_ms":0.93,"raster_p90_ms":1.65,"raster_max_ms":7.07,"total_p50_ms":1.88,"total_p90_ms":6.72,"total_max_ms":57.23,"slow_over_16_7_pct":2.94,"first_screen_ms":133,"rss_mb":408.86}
+I/flutter (26786): BASELINE {"scenario":"memory_after_open","rss_mb":408.86}
+I/flutter (26786): BASELINE {"scenario":"chat_scroll_1000","frames":330,"build_p50_ms":0.55,"build_p90_ms":0.88,"build_max_ms":1.36,"raster_p50_ms":1.92,"raster_p90_ms":4.09,"raster_max_ms":5.05,"total_p50_ms":2.56,"total_p90_ms":4.77,"total_max_ms":5.58,"slow_over_16_7_pct":0.0,"rss_mb":409.28}
+I/ImeTracker(26786): com.example.open_chat:7123d0e0: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+I/ImeTracker(26786): com.example.open_chat:7123d0e0: onCancelled at PHASE_CLIENT_APPLY_ANIMATION
+W/event-thread(26786): type=1400 audit(0.0:2258854): avc:  denied  { read } for  name="u:object_r:vendor_feature_prop:s0" dev="tmpfs" ino=768 scontext=u:r:untrusted_app_34:s0:c214,c257,c512,c768 tcontext=u:object_r:vendor_feature_prop:s0 tclass=file permissive=0 app=com.example.open_chat
+D/Choreographer(26786): clearTouchStopVsyncGroup
+V/ActivityThread(26786): updateVmProcessStateForGc sceneId =26 state=197376
+I/ample.open_chat(26786): Open vivo delay for GC JIT .
+I/flutter (26786): Some possible finders for the widgets at Instance of 'Offset':
+W/libc    (26786): Access denied finding property "ro.vendor.vivo.software.ai.llm.disable"
+I/flutter (26786):   find.byType(SelectableRegion)
+I/flutter (26786):   find.byType(SelectionArea)
+I/flutter (26786):   find.byType(MarkdownView)
+I/flutter (26786):   find.byKey(const Key('assistant-body-3f10c0bf-d7fc-473c-9c1f-d037cec1cb18'))
+I/flutter (26786):   find.byKey(const Key('3f10c0bf-d7fc-473c-9c1f-d037cec1cb18'))
+I/flutter (26786):   find.byType(SliverList)
+I/flutter (26786):   find.byType(SliverPadding)
+I/flutter (26786):   find.byKey(const Key('98231f70-be27-4aa4-89f5-9338f0e3685e'))
+I/flutter (26786):   find.byElementType(InheritedModelElement<_ScaffoldAspect>)
+I/flutter (26786):   find.byElementType(InheritedModelElement<_ModalRouteAspect>)
+I/flutter (26786):   find.byElementType(InheritedModelElement<Object>)
+V/ActivityThread(26786): updateVmProcessStateForGc sceneId =26 state=196608
+I/ample.open_chat(26786): Close vivo delay for GC JIT .
+I/flutter (26786): BASELINE {"scenario":"streaming_idle","frames":90,"build_p50_ms":0.48,"build_p90_ms":0.82,"build_max_ms":1.66,"raster_p50_ms":1.69,"raster_p90_ms":3.88,"raster_max_ms":4.92,"total_p50_ms":2.22,"total_p90_ms":4.44,"total_max_ms":5.83,"slow_over_16_7_pct":0.0,"stream_ms":15002,"rss_mb":411.47}
+I/flutter (26786): BASELINE {"scenario":"streaming_scroll","frames":730,"build_p50_ms":0.4,"build_p90_ms":0.76,"build_max_ms":1.66,"raster_p50_ms":1.3,"raster_p90_ms":3.95,"raster_max_ms":6.97,"total_p50_ms":1.7,"total_p90_ms":4.47,"total_max_ms":7.37,"slow_over_16_7_pct":0.0,"flings":8,"rss_mb":411.47}
+I/flutter (26786): BASELINE {"scenario":"memory_after_streaming","rss_mb":411.47}
+I/ImeTracker(26786): com.example.open_chat:f2c32b16: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/WindowOnBackDispatcher(26786): setTopOnBackInvokedCallback (unwrapped): android.view.ViewRootImpl$$ExternalSyntheticLambda14@d88d49a
+D/InsetsController(26786): Setting requestedVisibleTypes to 1015 (was 1023)
+D/VRI[MainActivity](26786): WindowInsets changed: ime:null 
+D/Choreographer(26786): setVsyncGroup 0, 0, false
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/ImeTracker(26786): system_server:256a1a9d: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+D/InsetsAnimationCtrlImpl(26786): notify control request finished for types: 8
+I/ANDR-VIVO-PERF(26786): vivo inside perf_lock_rel of client
+I/HidlServiceManagement(26786): Trying to get transport of vendor.vivo.hardware.vperf@1.0::IVPerf/default without hwservicemanager
+E/ANDR-VIVO-PERF(26786): V1_0::IVPerf::tryGetService failed!
+E/ANDR-VIVO-PERF(26786): error no aidl or hidl 
+I/flutter (26786): BASELINE {"scenario":"drawer_scroll_1000_sessions","frames":284,"build_p50_ms":1.33,"build_p90_ms":3.37,"build_max_ms":6.35,"raster_p50_ms":1.77,"raster_p90_ms":4.83,"raster_max_ms":7.54,"total_p50_ms":3.25,"total_p90_ms":7.55,"total_max_ms":11.43,"slow_over_16_7_pct":0.0,"rss_mb":421.37}
+I/flutter (26786): BASELINE {"scenario":"memory_after_drawer_scroll","rss_mb":421.37}
+I/flutter (26786): 00:38 +1: (tearDownAll)
+I/flutter (26786): 00:38 +2: All tests passed!
+All tests passed.
