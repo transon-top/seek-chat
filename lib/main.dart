@@ -24,6 +24,10 @@ Future<void> main() async {
   final preferences = await SharedPreferences.getInstance();
   if (kDebugMode) {
     try {
+      // 压测样本只在显式开启时写入，默认不污染日常开发数据。
+      if (const bool.fromEnvironment('OPEN_CHAT_STRESS_SEED')) {
+        await seedStressSamples(database, preferences);
+      }
       // 历史样本先写，Markdown 样本保持最新，冷启动仍打开主样本会话。
       await seedHistorySamples(database, preferences);
       await seedMarkdownSamples(repository, preferences);
