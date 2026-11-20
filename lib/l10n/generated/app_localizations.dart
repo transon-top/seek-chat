@@ -345,6 +345,60 @@ abstract class AppLocalizations {
   /// **'Dark'**
   String get settingsThemeDark;
 
+  /// No description provided for @settingsFontSize.
+  ///
+  /// In en, this message translates to:
+  /// **'Text size'**
+  String get settingsFontSize;
+
+  /// No description provided for @settingsFontSizeSystem.
+  ///
+  /// In en, this message translates to:
+  /// **'Follow system'**
+  String get settingsFontSizeSystem;
+
+  /// No description provided for @settingsFontSizeStandard.
+  ///
+  /// In en, this message translates to:
+  /// **'Default'**
+  String get settingsFontSizeStandard;
+
+  /// No description provided for @settingsFontSizeSmallest.
+  ///
+  /// In en, this message translates to:
+  /// **'Smallest'**
+  String get settingsFontSizeSmallest;
+
+  /// No description provided for @settingsFontSizeSmall.
+  ///
+  /// In en, this message translates to:
+  /// **'Small'**
+  String get settingsFontSizeSmall;
+
+  /// No description provided for @settingsFontSizeMedium.
+  ///
+  /// In en, this message translates to:
+  /// **'Medium'**
+  String get settingsFontSizeMedium;
+
+  /// No description provided for @settingsFontSizeLarge.
+  ///
+  /// In en, this message translates to:
+  /// **'Large'**
+  String get settingsFontSizeLarge;
+
+  /// No description provided for @settingsFontSizeLarger.
+  ///
+  /// In en, this message translates to:
+  /// **'Larger'**
+  String get settingsFontSizeLarger;
+
+  /// No description provided for @settingsFontSizeLargest.
+  ///
+  /// In en, this message translates to:
+  /// **'Largest'**
+  String get settingsFontSizeLargest;
+
   /// No description provided for @settingsClearKey.
   ///
   /// In en, this message translates to:

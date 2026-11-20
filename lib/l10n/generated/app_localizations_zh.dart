@@ -152,6 +152,33 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsThemeDark => '深色';
 
   @override
+  String get settingsFontSize => '字体大小';
+
+  @override
+  String get settingsFontSizeSystem => '跟随系统';
+
+  @override
+  String get settingsFontSizeStandard => '标准';
+
+  @override
+  String get settingsFontSizeSmallest => '最小';
+
+  @override
+  String get settingsFontSizeSmall => '小';
+
+  @override
+  String get settingsFontSizeMedium => '较小';
+
+  @override
+  String get settingsFontSizeLarge => '较大';
+
+  @override
+  String get settingsFontSizeLarger => '大';
+
+  @override
+  String get settingsFontSizeLargest => '最大';
+
+  @override
   String get settingsClearKey => '清除已保存的 Key';
 
   @override

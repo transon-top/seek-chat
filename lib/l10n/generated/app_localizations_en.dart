@@ -155,6 +155,33 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsThemeDark => 'Dark';
 
   @override
+  String get settingsFontSize => 'Text size';
+
+  @override
+  String get settingsFontSizeSystem => 'Follow system';
+
+  @override
+  String get settingsFontSizeStandard => 'Default';
+
+  @override
+  String get settingsFontSizeSmallest => 'Smallest';
+
+  @override
+  String get settingsFontSizeSmall => 'Small';
+
+  @override
+  String get settingsFontSizeMedium => 'Medium';
+
+  @override
+  String get settingsFontSizeLarge => 'Large';
+
+  @override
+  String get settingsFontSizeLarger => 'Larger';
+
+  @override
+  String get settingsFontSizeLargest => 'Largest';
+
+  @override
   String get settingsClearKey => 'Clear saved key';
 
   @override
