@@ -76,6 +76,32 @@ void main() {
     expect(task.serverId, 'file-1');
   });
 
+  test('clear drops pending uploads and late successes', () async {
+    final gate = Completer<http.StreamedResponse>();
+    final container = containerWith(
+      DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) => gate.future),
+      ),
+    );
+    final tasks = tasksOf(container);
+    final pending = tasks.upload(
+      id: 'att-1',
+      path: sample.path,
+      name: 'a.txt',
+      isImage: false,
+    );
+
+    expect(container.read(uploadTasksProvider), isNotEmpty);
+    tasks.clear();
+    expect(container.read(uploadTasksProvider), isEmpty);
+    expect(await pending, isNull);
+
+    gate.complete(jsonResponse({'id': 'file-1'}));
+    await pumpEventQueue();
+    expect(container.read(uploadTasksProvider), isEmpty);
+  });
+
   test('failed uploads record a retryable reason and can be retried', () async {
     var call = 0;
     final container = containerWith(

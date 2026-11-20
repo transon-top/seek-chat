@@ -21,8 +21,10 @@ class ChatRepository {
 
   // ---------------------------------------------------------------- 会话
 
-  Future<List<SessionSummary>> listSessions() async =>
-      _toSummaries(await _sessionsQuery().get());
+  /// [includeEmpty] 为 true 时包含尚无消息的会话，供导出使用：
+  /// 官方归档可含空会话，导出遗漏会让往返丢失（`history.md` §3）。
+  Future<List<SessionSummary>> listSessions({bool includeEmpty = false}) async =>
+      _toSummaries(await _sessionsQuery(includeEmpty: includeEmpty).get());
 
   /// 会话列表的响应式来源；drift 在会话增删改后推送新列表。
   Stream<List<SessionSummary>> watchSessions() =>
@@ -30,15 +32,20 @@ class ChatRepository {
 
   /// 历史列表只含已有消息的会话；新建的草稿会话（尚未发出消息）不展示
   /// （chat-demo 同款）。消息写入后 drift 会重新推送同一查询。
-  Selectable<SessionRow> _sessionsQuery() => _db.select(_db.sessions)
-    ..where(
-      (t) => existsQuery(
-        _db.selectOnly(_db.messages)
-          ..addColumns([_db.messages.id])
-          ..where(_db.messages.sessionId.equalsExp(t.id)),
-      ),
-    )
-    ..orderBy([(t) => OrderingTerm.desc(t.updatedAt)]);
+  Selectable<SessionRow> _sessionsQuery({bool includeEmpty = false}) {
+    final query = _db.select(_db.sessions);
+    if (!includeEmpty) {
+      query.where(
+        (t) => existsQuery(
+          _db.selectOnly(_db.messages)
+            ..addColumns([_db.messages.id])
+            ..where(_db.messages.sessionId.equalsExp(t.id)),
+        ),
+      );
+    }
+    query.orderBy([(t) => OrderingTerm.desc(t.updatedAt)]);
+    return query;
+  }
 
   Future<Session?> getSession(String id) async {
     final row = await (_db.select(_db.sessions)..where((t) => t.id.equals(id)))

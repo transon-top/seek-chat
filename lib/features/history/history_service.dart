@@ -36,7 +36,7 @@ final class HistoryService {
   Future<({String fileName, Uint8List bytes})> exportArchive({
     required String? Function(AssistantMessage reply) notice,
   }) async {
-    final summaries = await _repository.listSessions();
+    final summaries = await _repository.listSessions(includeEmpty: true);
     final history = <SessionHistory>[];
     final imageBytes = <String, Uint8List>{};
 
@@ -136,7 +136,8 @@ final class HistoryService {
   /// 删除全部会话与附件；返回删除的会话数。
   Future<int> deleteAll({required void Function() stopGeneration}) async {
     stopGeneration();
-    final count = (await _repository.listSessions()).length;
+    final count =
+        (await _repository.listSessions(includeEmpty: true)).length;
     final removed = await _repository.deleteAllHistory();
     await _attachments.deleteAttachments(removed);
     return count;

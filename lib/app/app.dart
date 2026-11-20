@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../features/chat/chat_controller.dart';
 import '../features/chat/chat_page.dart';
 import '../features/chat/speech/speech_controller.dart';
+import '../features/chat/upload_tasks.dart';
 import '../features/history/history_section.dart';
 import '../features/sessions/session_drawer.dart';
 import '../features/settings/settings_page.dart';
@@ -90,6 +91,9 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
   bool _openedLatest = false;
   int _focusRequests = 0;
 
+  /// 导入替换数据后递增，强制重建聊天页，丢弃旧会话的界面状态。
+  int _historyEpoch = 0;
+
   /// 最近一次构建出的当前会话 id；列表数据变化时与它比较，
   /// 只有当前会话变了才重建整页（列表性能 P2）。
   String? _currentId;
@@ -158,6 +162,17 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
     }
   }
 
+  /// 导入成功后回到新对话：旧消息、草稿与上传任务都不能跨数据替换保留。
+  void _historyImported() {
+    ref.read(uploadTasksProvider.notifier).clear();
+    setState(() {
+      _historyEpoch++;
+      _selectedId = null;
+      _pendingCreatedId = null;
+      _draft = true;
+    });
+  }
+
   void _cancelSession(String sessionId) {
     for (final controller in ref.read(activeChatControllersProvider)) {
       if (controller.sessionId == sessionId) controller.stop();
@@ -166,7 +181,10 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
 
   Future<void> _openSettings() => showSettingsSheet(
     context,
-    dataManagement: HistorySection(stopGeneration: _stopAllGenerations),
+    dataManagement: HistorySection(
+      stopGeneration: _stopAllGenerations,
+      onImported: _historyImported,
+    ),
   );
 
   @override
@@ -194,6 +212,7 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
         final current = _current(ref.read(sessionsProvider).requireValue);
         _currentId = current;
         return ChatPage(
+          key: ValueKey(_historyEpoch),
           sessionId: current,
           focusRequest: _focusRequests,
           onNewChat: _newChat,

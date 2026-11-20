@@ -63,7 +63,8 @@ void main() {
     return session;
   }
 
-  Future<void> pumpSection(WidgetTester tester) async {
+  Future<void> pumpSection(WidgetTester tester,
+      {VoidCallback? onImported}) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -80,7 +81,10 @@ void main() {
               child: Scaffold(
                 body: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: HistorySection(stopGeneration: () => stopped++),
+                  child: HistorySection(
+                    stopGeneration: () => stopped++,
+                    onImported: onImported,
+                  ),
                 ),
               ),
             ),
@@ -113,8 +117,9 @@ void main() {
     final exported = await service.exportArchive(notice: (_) => null);
     files.pickBytes = exported.bytes;
     final other = await repository.createSession();
+    var imported = 0;
 
-    await pumpSection(tester);
+    await pumpSection(tester, onImported: () => imported++);
     await tester.tap(find.widgetWithText(OutlinedButton, '上传'));
     await tester.pumpAndSettle();
     expect(find.text('确认导入历史对话？'), findsOneWidget);
@@ -123,6 +128,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(stopped, 1);
+    expect(imported, 1);
     expect((await repository.listSessions()).single.id, seeded.id);
     expect(await repository.getSession(other.id), isNull);
     expect(find.text('已导入 1 个对话'), findsOneWidget);
