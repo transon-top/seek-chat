@@ -117,7 +117,7 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
     final chinese = locale == 'zh';
     final fontScale = ref.watch(fontScaleProvider);
     return ShadApp(
-      title: 'Open Chat',
+      title: 'SeekChat',
       scrollBehavior: appScrollBehavior,
       theme: buildShadTheme(brightness: Brightness.light, chinese: chinese),
       darkTheme: buildShadTheme(brightness: Brightness.dark, chinese: chinese),
