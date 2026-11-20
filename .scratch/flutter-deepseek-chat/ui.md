@@ -169,7 +169,7 @@
   1.5；操作按钮右对齐，间距 8。危险操作使用 `ShadButton.destructive`。
 - **Sheet**：底部圆角 24；顶部拖拽把手 36×4，`border`；标题 15sp / w600；
   内容滚动；最大高度按界面清单。
-- **Toast**：使用 `ShadToast`，底部安全区上方 16；最大宽 480；默认 4 s，
+- **Toast**：使用 `ShadToast`，顶部、聊天顶栏下方 8；最大宽 480；默认 4 s，
   错误 5 s；同屏只显示一条。权限拒绝带「打开系统设置」动作。
 - **进度 Dialog**：不可关闭、遮罩不可点、无取消按钮；不确定进度条 + 状态文案。
 - **图片查看**：全屏黑色；`InteractiveViewer` 最小 1×、最大 4×；右上关闭按钮
@@ -476,7 +476,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 - 安全区：聊天顶部与底部、抽屉、设置 Sheet、图片查看均使用 `SafeArea`；
   Sheet 底部留出系统手势区。
 - 键盘：`resizeToAvoidBottomInset` 保持 true；输入区随键盘上移；
-  Toast 显示在键盘上方。
+  Toast 固定在顶部，不受键盘影响。
 
 ## 5. 交互状态与按钮态
 
@@ -678,7 +678,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 - 用途：附件校验、上传配额、权限拒绝、导入 / 导出 / 删除结果、Key 校验、
   语音失败、朗读失败。
 - 权限拒绝 Toast 带动作；配额 Toast 带「删除文件」动作。
-- 自动消失时间 4 s；错误 5 s；用户可上滑关闭。
+- 自动消失时间 4 s；错误 5 s；到时自动消失，不提供滑动关闭。
 
 ## 6. 无障碍
 
