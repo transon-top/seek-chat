@@ -16,6 +16,7 @@ import '../../shared/prefs/chat_options_store.dart';
 import '../../shared/providers.dart';
 import '../../shared/speech/permissions.dart';
 import '../../shared/toast.dart';
+import '../../shared/widgets/push_menu.dart';
 import 'speech/speech_controller.dart';
 import 'upload_tasks.dart';
 import 'chat_controller.dart';
@@ -26,7 +27,7 @@ import 'messages_view.dart';
 /// 聊天页：顶部栏、可见路径、流式文本、停止、重新生成、续写、搜索与引用。
 ///
 /// 会话为空时停在新对话草稿上；首条消息发出时创建会话（ui.md §5.10）。
-/// 抽屉由 `app/` 注入，聊天功能不直接 import 会话功能。
+/// 侧栏内容由 `app/` 注入，推入式布局见 `shared/widgets/push_menu.dart`。
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({
     super.key,
@@ -426,72 +427,92 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       onStop: _stopGeneration,
       onVoice: () => _speech.toggleVoiceInput(onTranscript: _insertTranscript),
     );
-    return Scaffold(
-      drawer: widget.drawer,
-      body: Column(
-        children: [
-          SafeArea(
-            bottom: false,
-            child: ChatHeader(
-              title: state.title.isEmpty ? strings.untitledChat : state.title,
-              onNewChat: widget.onNewChat,
-              inConversation: messages.isNotEmpty,
-            ),
-          ),
-          if (state.error != null)
-            _ErrorBanner(
-              message: localMessageText(strings, state.error!),
-              onDismiss: _controller.clearError,
-            ),
-          Expanded(
-            child: messages.isEmpty
-                ? Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 24),
-                        child: Text(
-                          strings.chatEmptyTitle,
-                          textAlign: TextAlign.center,
-                          style: TextStyle(
-                            fontSize: 24,
-                            height: 32 / 24,
-                            fontWeight: FontWeight.w600,
-                            color: Theme.of(context).colorScheme.onSurface,
-                          ),
-                        ),
+    // 会话中的输入区不参与右滑；空对话没有可滚内容，输入区一并纳入。
+    return PushMenu(
+      menu: widget.drawer ?? const SizedBox.shrink(),
+      child: Scaffold(
+        body: Column(
+          children: [
+            Expanded(
+              child: PushMenuSwipeDetector(
+                child: Column(
+                  children: [
+                    SafeArea(
+                      bottom: false,
+                      child: ChatHeader(
+                        title: state.title.isEmpty
+                            ? strings.untitledChat
+                            : state.title,
+                        onNewChat: widget.onNewChat,
+                        inConversation: messages.isNotEmpty,
                       ),
-                      const SizedBox(height: 24),
-                      composer,
-                    ],
-                  )
-                : ChatMessageList(
-                    // 切换会话时重建状态，初始窗口随之重置。
-                    key: ValueKey(sessionId),
-                    messages: messages,
-                    versions: state.versions,
-                    busy: state.busy,
-                    speech: speech,
-                    onReadAloud: (reply, text) => _speech.toggleReadAloud(
-                      messageId: reply.id,
-                      text: text,
                     ),
-                    onEdit: state.busy ? null : _editMessage,
-                    onSelectVersion: state.busy ? null : _selectVersion,
-                    onRegenerate: state.busy ? null : _regenerate,
-                    onContinue: state.busy ? null : _continue,
-                    onRetryUpload: state.busy
-                        ? null
-                        : (reply) => _controller.retryUpload(
-                            reply,
-                            thinking: _thinking,
-                            search: _search,
-                          ),
-                  ),
-          ),
-          if (messages.isNotEmpty) composer,
-        ],
+                    if (state.error != null)
+                      _ErrorBanner(
+                        message: localMessageText(strings, state.error!),
+                        onDismiss: _controller.clearError,
+                      ),
+                    Expanded(
+                      child: messages.isEmpty
+                          ? Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 24,
+                                  ),
+                                  child: Text(
+                                    strings.chatEmptyTitle,
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: 24,
+                                      height: 32 / 24,
+                                      fontWeight: FontWeight.w600,
+                                      color: Theme.of(context)
+                                          .colorScheme
+                                          .onSurface,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 24),
+                                composer,
+                              ],
+                            )
+                          : ChatMessageList(
+                              // 切换会话时重建状态，初始窗口随之重置。
+                              key: ValueKey(sessionId),
+                              messages: messages,
+                              versions: state.versions,
+                              busy: state.busy,
+                              speech: speech,
+                              onReadAloud: (reply, text) =>
+                                  _speech.toggleReadAloud(
+                                    messageId: reply.id,
+                                    text: text,
+                                  ),
+                              onEdit: state.busy ? null : _editMessage,
+                              onSelectVersion: state.busy
+                                  ? null
+                                  : _selectVersion,
+                              onRegenerate: state.busy ? null : _regenerate,
+                              onContinue: state.busy ? null : _continue,
+                              onRetryUpload: state.busy
+                                  ? null
+                                  : (reply) => _controller.retryUpload(
+                                      reply,
+                                      thinking: _thinking,
+                                      search: _search,
+                                    ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            if (messages.isNotEmpty) composer,
+          ],
+        ),
       ),
     );
   }

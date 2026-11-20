@@ -11,6 +11,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
 import '../../shared/models/reply_rules.dart';
 import '../../shared/models/types.dart';
+import '../../shared/widgets/push_menu.dart';
 import '../../shared/widgets/scroll_edge_fade.dart';
 import 'attachments_view.dart';
 import 'markdown_view.dart';
@@ -495,12 +496,17 @@ class _UserMessageViewState extends State<_UserMessageView> {
                   color: colors.muted,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: SelectableText(
-                  message.text,
-                  style: TextStyle(
-                    fontSize: 16,
-                    height: 1.6,
-                    color: colors.foreground,
+                // 识别器放在 SelectionArea 内层：Android 的文本选择会抢横向拖拽。
+                child: SelectionArea(
+                  child: PushMenuSwipeDetector(
+                    child: Text(
+                      message.text,
+                      style: TextStyle(
+                        fontSize: 16,
+                        height: 1.6,
+                        color: colors.foreground,
+                      ),
+                    ),
                   ),
                 ),
               ),
