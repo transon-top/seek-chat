@@ -49,6 +49,17 @@ WebSearchResult _result(String url, {String? title}) => WebSearchResult(
   encryptedContent: '',
 );
 
+/// 消息列表自身的滚动视图（文本控件内部也有 Scrollable，取最外层）。
+final Finder _listScrollable = find
+    .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
+    .first;
+
+/// 消息列表当前渲染窗口的条数。
+int? _renderedCount(WidgetTester tester) =>
+    (tester.widget<ListView>(find.byType(ListView)).childrenDelegate
+            as SliverChildBuilderDelegate)
+        .childCount;
+
 void main() {
   late List<String> events;
 
@@ -66,6 +77,7 @@ void main() {
     ),
     double width = 800,
     bool settle = true,
+    Key? key,
   }) async {
     tester.view.physicalSize = Size(width, 900);
     tester.view.devicePixelRatio = 1;
@@ -79,6 +91,7 @@ void main() {
         supportedLocales: AppLocalizations.supportedLocales,
         home: Scaffold(
           body: ChatMessageList(
+            key: key,
             messages: messages,
             versions: versions,
             busy: busy,
@@ -155,6 +168,84 @@ void main() {
     final last = find.byKey(const Key('assistant-body-r29'));
     expect(last, findsOneWidget);
     expect(tester.getBottomLeft(last).dy, greaterThan(800));
+  });
+
+  testWidgets('long conversations render only the tail window first', (
+    tester,
+  ) async {
+    final messages = [
+      for (var i = 0; i < 200; i++)
+        UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+    ];
+    await pumpMessages(tester, messages);
+
+    expect(_renderedCount(tester), 50);
+    expect(find.byKey(const ValueKey('user-bubble-u199')), findsOneWidget);
+  });
+
+  testWidgets(
+    'scrolling to the top loads older messages without moving the anchor',
+    (tester) async {
+      final messages = [
+        for (var i = 0; i < 200; i++)
+          UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+      ];
+      await pumpMessages(tester, messages);
+      final position = tester.state<ScrollableState>(_listScrollable).position;
+
+      // 先停在触发线外，记下一条已渲染消息的屏幕位置。
+      position.jumpTo(230);
+      await tester.pump();
+      final anchor = find.byKey(const ValueKey('user-bubble-u152'));
+      final before = tester.getTopLeft(anchor).dy;
+
+      // 再向顶部走 31px：触发补历史，整块内容只应下移 31px 而不是被顶下去。
+      position.jumpTo(199);
+      await tester.pumpAndSettle();
+
+      expect(_renderedCount(tester), 90);
+      expect(
+        tester.getTopLeft(anchor).dy,
+        moreOrLessEquals(before + 31, epsilon: 0.5),
+      );
+
+      // 补进来的历史在锚点上方，继续滚到顶后可见。
+      position.jumpTo(0);
+      await tester.pumpAndSettle();
+      expect(find.byKey(const ValueKey('user-bubble-u110')), findsOneWidget);
+    },
+  );
+
+  testWidgets('reopening a conversation resets the window', (tester) async {
+    final messages = [
+      for (var i = 0; i < 200; i++)
+        UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+    ];
+    await pumpMessages(tester, messages, key: const ValueKey('first'));
+    tester.state<ScrollableState>(_listScrollable).position.jumpTo(100);
+    await tester.pumpAndSettle();
+    expect(_renderedCount(tester), 90);
+
+    await pumpMessages(tester, messages, key: const ValueKey('second'));
+    expect(_renderedCount(tester), 50);
+  });
+
+  testWidgets('switching to a shorter version keeps the window valid', (
+    tester,
+  ) async {
+    final messages = [
+      for (var i = 0; i < 200; i++)
+        UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+    ];
+    await pumpMessages(tester, messages);
+    tester.state<ScrollableState>(_listScrollable).position.jumpTo(100);
+    await tester.pumpAndSettle();
+    expect(_renderedCount(tester), 90);
+
+    await pumpMessages(tester, messages.take(20).toList());
+
+    expect(_renderedCount(tester), 20);
+    expect(find.byKey(const ValueKey('user-bubble-u19')), findsOneWidget);
   });
 
   testWidgets('assistant body spans the column up to 760 wide', (tester) async {

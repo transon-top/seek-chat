@@ -467,6 +467,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                     ],
                   )
                 : ChatMessageList(
+                    // 切换会话时重建状态，初始窗口随之重置。
+                    key: ValueKey(sessionId),
                     messages: messages,
                     versions: state.versions,
                     busy: state.busy,
