@@ -15,8 +15,20 @@ const String historySampleTitlePrefix = '历史样本';
 /// 历史会话样本条数：覆盖抽屉列表滚动、分组与渐隐的长时间场景。
 const int historySampleCount = 50;
 
+/// 压测样本前缀：一个长会话加大量会话，供列表性能基线测量使用。
+const String stressSampleTitlePrefix = '压测样本';
+const String longSessionSampleTitle = '压测样本 · 长会话 1000 条';
+const String stressSessionTitlePrefix = '$stressSampleTitlePrefix · 会话';
+
+/// 长会话的总消息条数（提问与回复各一半）。
+const int longSessionSampleMessages = 1000;
+
+/// 压测会话条数，与现有 50 条历史样本叠加。
+const int stressSessionSampleCount = 1000;
+
 const String _sampleHashKey = 'dev.markdownSampleHash';
 const String _historyHashKey = 'dev.historySampleHash';
+const String _stressHashKey = 'dev.stressSampleHash';
 
 /// debug 构建启动时写入 Markdown 样本会话。
 ///
@@ -123,6 +135,91 @@ Future<void> seedHistorySamples(
   await prefs.setInt(_historyHashKey, hash);
 }
 
+/// 写入压测样本：一个 1000 条消息的长会话与 1000 条会话。
+///
+/// 供列表性能基线测量使用；由 `OPEN_CHAT_STRESS_SEED` 或集成测试显式调用，
+/// 默认启动不写，避免污染日常开发数据。样本内容哈希不变时跳过，变化时按
+/// 前缀整体重建。
+Future<void> seedStressSamples(
+  AppDatabase database,
+  SharedPreferences prefs,
+) async {
+  final hash = _fnv1a([
+    'stress-v1',
+    '$longSessionSampleMessages',
+    '$stressSessionSampleCount',
+  ]);
+  if (prefs.getInt(_stressHashKey) == hash) return;
+
+  final now = DateTime.now();
+  var cursor = now;
+  final repository = ChatRepository(
+    database,
+    clock: () => cursor.millisecondsSinceEpoch,
+  );
+
+  for (final session in await repository.listSessions()) {
+    if (session.title.startsWith(stressSampleTitlePrefix)) {
+      await repository.deleteSession(session.id);
+    }
+  }
+
+  // 会话样本：每条一个问答，时间从最近往前每 30 分钟一条铺开约 21 天。
+  for (var index = 0; index < stressSessionSampleCount; index++) {
+    cursor = now.subtract(Duration(minutes: 30 * (index + 1)));
+    final session = await repository.createSession();
+    await repository.renameSession(
+      session.id,
+      '$stressSessionTitlePrefix ${(index + 1).toString().padLeft(4, '0')}',
+    );
+    final exchange = _stressExchanges[index % _stressExchanges.length];
+    final user = await repository.addUserMessage(
+      sessionId: session.id,
+      text: exchange.prompt,
+    );
+    final reply = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: user.id,
+      model: ChatModel.deepseekFlash,
+      thinking: false,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: reply.id,
+      status: ReplyStatus.done,
+      blocks: [TextBlock(text: exchange.reply)],
+    );
+  }
+
+  // 长会话放最后写入，成为最近会话，便于测量从抽屉首屏打开。
+  cursor = now;
+  final session = await repository.createSession();
+  await repository.renameSession(session.id, longSessionSampleTitle);
+  for (var index = 0; index < longSessionSampleMessages ~/ 2; index++) {
+    final user = await repository.addUserMessage(
+      sessionId: session.id,
+      text: '压测提问 ${index + 1}：请按第 ${index % 5 + 1} 种格式回答。',
+    );
+    final thinking = index % 5 == 0;
+    final reply = await repository.createReply(
+      sessionId: session.id,
+      userMessageId: user.id,
+      model: ChatModel.deepseekFlash,
+      thinking: thinking,
+      search: false,
+    );
+    await repository.updateReply(
+      messageId: reply.id,
+      status: ReplyStatus.done,
+      blocks: [
+        if (thinking) const ThinkingBlock(thinking: '先确认格式要求，再组织一段可测量的正文。'),
+        TextBlock(text: _stressReply(index)),
+      ],
+    );
+  }
+  await prefs.setInt(_stressHashKey, hash);
+}
+
 typedef _HistorySample = ({String title, String prompt, String reply});
 
 const List<String> _historyTopics = [
@@ -196,6 +293,97 @@ List<_HistorySample> _historySamples() {
         reply: exchanges[index % exchanges.length].reply,
       ),
   ];
+}
+
+/// 压测会话的问答池：五种格式各一条，循环使用。
+const List<({String prompt, String reply})> _stressExchanges = [
+  (
+    prompt: '压测：给一段带列表与图片的 Markdown。',
+    reply:
+        '## 列表与图片\n\n'
+        '**粗体**与*斜体*混排，用于测量段落排版。\n\n'
+        '- 第一项\n'
+        '- 第二项\n'
+        '  - 嵌套项\n\n'
+        '![示例图片](https://example.com/session.png)',
+  ),
+  (
+    prompt: '压测：给一个代码块。',
+    reply:
+        '### 代码块\n\n'
+        '```dart\n'
+        'int fib(int n) => n < 2 ? n : fib(n - 1) + fib(n - 2);\n'
+        '```',
+  ),
+  (
+    prompt: '压测：给一个表格。',
+    reply:
+        '### 表格\n\n'
+        '| 指标 | 目标 |\n'
+        '| --- | --- |\n'
+        '| 帧耗时 | ≤16.7ms |\n'
+        '| 首屏 | <300ms |',
+  ),
+  (
+    prompt: '压测：给一个 mermaid 图。',
+    reply:
+        '### mermaid\n\n'
+        '```mermaid\n'
+        'flowchart LR\n'
+        '  A[消息] --> B[解析]\n'
+        '  B --> C[渲染]\n'
+        '```',
+  ),
+  (
+    prompt: '压测：给一个公式。',
+    reply:
+        '### 公式\n\n'
+        r'\['
+        '\n'
+        r'\int_0^1 x^2 dx = \frac{1}{3}'
+        '\n'
+        r'\]',
+  ),
+];
+
+/// 长会话的回复池：五种格式循环，覆盖列表里最重的渲染路径。
+String _stressReply(int index) {
+  final label = '压测回复 ${index + 1}';
+  switch (index % 5) {
+    case 0:
+      return '## $label\n\n'
+          '这段正文用于测量长列表里 Markdown 段落、粗体与列表的渲染成本。'
+          '**重点**：每帧只应重建可见项。\n\n'
+          '- 第一项\n'
+          '- 第二项\n'
+          '  - 嵌套项\n\n'
+          '![示例图片](https://example.com/stress-$index.png)';
+    case 1:
+      return '### $label\n\n'
+          '```dart\n'
+          'int fib(int n) => n < 2 ? n : fib(n - 1) + fib(n - 2);\n'
+          '```';
+    case 2:
+      return '### $label\n\n'
+          '| 指标 | 目标 |\n'
+          '| --- | --- |\n'
+          '| 帧耗时 | ≤16.7ms |\n'
+          '| 首屏 | <300ms |';
+    case 3:
+      return '### $label\n\n'
+          '```mermaid\n'
+          'flowchart LR\n'
+          '  A[消息] --> B[解析]\n'
+          '  B --> C[渲染]\n'
+          '```';
+    default:
+      return '### $label\n\n'
+          r'\['
+          '\n'
+          r'\int_0^1 x^2 dx = \frac{1}{3}'
+          '\n'
+          r'\]';
+  }
 }
 
 /// 前 10 条在最近两小时内，接着 10 条在昨天，15 条在最近七天，其余更早。

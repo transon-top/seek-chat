@@ -1,0 +1,217 @@
+Resolving dependencies...
+Downloading packages...
+  archive 3.6.1 (4.7.1 available)
+  built_collection 5.1.2 (6.0.0 available)
+  cross_file 0.3.5+5 (0.4.0 available)
+  cupertino_icons 1.0.9 (2.0.0 available)
+  dbus 0.8.0 (0.8.1 available)
+  flutter_svg 2.4.0 (2.5.0 available)
+  jni 1.1.2 (1.2.1 available)
+  jni_flutter 1.0.4+1 (1.1.0 available)
+  lucide_icons_flutter 3.1.25 (4.0.3 available)
+  material_color_utilities 0.13.0 (0.13.1 available)
+  shadcn_ui 0.60.0 (0.61.1 available)
+  test_api 0.7.14 (0.7.15 available)
+  vector_math 2.4.3 (2.4.4 available)
+  xml 7.0.1 (7.1.0 available)
+Got dependencies!
+14 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+Running Gradle task 'assembleProfile'...                         1,895ms
+✓ Built build/app/outputs/flutter-apk/app-profile.apk (78.9MB)
+Installing build/app/outputs/flutter-apk/app-profile.apk...      1,807ms
+I/flutter ( 1934): [IMPORTANT:flutter/shell/platform/android/android_context_gl_impeller.cc(105)] Using the Impeller rendering backend (OpenGLES).
+D/CompatChangeReporter( 1934): Compat change id reported: 377864165; UID 10235; state: ENABLED
+W/HWUI    ( 1934): Unknown dataspace 0
+W/libc    ( 1934): Access denied finding property "vendor.mesa.virtgpu.kumquat"
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@119e910
+I/WindowExtensionsImpl( 1934): Initializing Window Extensions, vendor API level=10, activity embedding enabled=true
+W/UiContextUtils( 1934): Requested context is a non-UI Context. Creating a UI-Context with display: 0. Context: Context=android.app.Application@8188a8f, of which baseContext=android.app.ContextImpl@72ca704
+D/VRI[MainActivity]( 1934): WindowInsets changed: 1080x2400 statusBars:[0,63,0,0] navigationBars:[0,0,0,63] mandatorySystemGestures:[0,63,0,84] 
+I/Surface ( 1934): Creating surface for consumer unnamed-1934-0 with slotExpansion=1 for 64 slots
+I/Surface ( 1934): Creating surface for consumer VRI[MainActivity]#0(BLAST Consumer)0 with slotExpansion=1 for 64 slots
+I/Surface ( 1934): Creating surface for consumer unnamed-1934-1 with slotExpansion=1 for 64 slots
+I/Surface ( 1934): Creating surface for consumer cbfeb6e SurfaceView[com.example.open_chat/com.example.open_chat.MainActivity]#1(BLAST Consumer)1 with slotExpansion=1 for 64 slots
+VMServiceFlutterDriver: Connecting to Flutter application at http://127.0.0.1:62556/-wYaa8LGDdA=/
+I/Choreographer( 1934): Skipped 52 frames!  The application may be doing too much work on its main thread.
+D/WindowLayoutComponentImpl( 1934): Register WindowLayoutInfoListener on Context=com.example.open_chat.MainActivity@5064a5, of which baseContext=android.app.ContextImpl@f87a621
+VMServiceFlutterDriver: Isolate found with number: 7020894871759055
+VMServiceFlutterDriver: Isolate 7020894871759055 is runnable.
+VMServiceFlutterDriver: Isolate is paused at start.
+VMServiceFlutterDriver: Attempting to resume isolate
+I/flutter ( 1934): 00:00 +0: 列表性能基线：1000 条消息与 1000 个会话
+VMServiceFlutterDriver: Connected to Flutter application.
+I/ample.open_chat( 1934): Thread[2,tid=1937,WaitingInMainSignalCatcherLoop,Thread*=0xb400007b53c127b0,peer=0x2170020,"Signal Catcher"]: reacting to signal 3
+I/ample.open_chat( 1934): 
+I/ample.open_chat( 1934): Wrote stack traces to tombstoned
+I/ample.open_chat( 1934): Background concurrent mark compact GC freed 3043KB AllocSpace bytes, 1(56KB) LOS objects, 49% free, 2485KB/4971KB, paused 4.344ms,27.784ms total 299.758ms
+I/ample.open_chat( 1934): Compiler allocated 5293KB to compile void android.view.ViewRootImpl.performTraversals(long)
+D/ProfileInstaller( 1934): Installing profile for com.example.open_chat
+D/DesktopExperienceFlags( 1934): Toggle override initialized to: false
+I/ample.open_chat( 1934): Thread[2,tid=1937,WaitingInMainSignalCatcherLoop,Thread*=0xb400007b53c127b0,peer=0x2000cb0,"Signal Catcher"]: reacting to signal 3
+I/ample.open_chat( 1934): Mutator lock exclusive owner tid: -1
+I/ample.open_chat( 1934): ThreadList lock owner tid: 0
+I/ample.open_chat( 1934): ClassLinker classes lock owner tid: 0
+I/ample.open_chat( 1934): ClassLinker dex lock owner tid: 0
+I/ample.open_chat( 1934): Wrote stack traces to tombstoned
+W/ample.open_chat( 1934): Suspending all threads took: 6.718ms
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 2782KB AllocSpace bytes, 2(104KB) LOS objects, 39% free, 3013KB/4971KB, paused 7.920ms,102.813ms total 2.639s
+W/ample.open_chat( 1934): Suspending all threads took: 5.925ms
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 1563KB AllocSpace bytes, 0(0B) LOS objects, 37% free, 3088KB/4971KB, paused 7.299ms,99.590ms total 1.452s
+I/flutter ( 1934): BASELINE {"scenario":"cold_start_long_session","seed_ms":41431,"sessions":1001,"messages":1000,"ms":19396,"rss_mb":569.08}
+I/flutter ( 1934): BASELINE {"scenario":"control_idle_new_chat","frames":5,"build_p50_ms":0.27,"build_p90_ms":0.47,"build_max_ms":0.47,"raster_p50_ms":160.59,"raster_p90_ms":414.94,"raster_max_ms":414.94,"total_p50_ms":160.86,"total_p90_ms":415.14,"total_max_ms":415.14,"slow_over_16_7_pct":100.0,"rss_mb":560.02}
+I/flutter ( 1934): BASELINE {"scenario":"drawer_open_1000_sessions","frames":2,"build_p50_ms":298.15,"build_p90_ms":298.15,"build_max_ms":298.15,"raster_p50_ms":15.22,"raster_p90_ms":15.22,"raster_max_ms":15.22,"total_p50_ms":307.07,"total_p90_ms":307.07,"total_max_ms":307.07,"slow_over_16_7_pct":50.0,"first_row_ms":386,"total_ms":1911,"rss_mb":424.53}
+I/flutter ( 1934): BASELINE {"scenario":"control_open_small_session","frames":4,"build_p50_ms":2.39,"build_p90_ms":224.46,"build_max_ms":224.46,"raster_p50_ms":508.45,"raster_p90_ms":858.9,"raster_max_ms":858.9,"total_p50_ms":509.62,"total_p90_ms":861.29,"total_max_ms":861.29,"slow_over_16_7_pct":100.0,"first_screen_ms":643,"rss_mb":423.45}
+W/ample.open_chat( 1934): Suspending all threads took: 20.914ms
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 1787KB AllocSpace bytes, 0(0B) LOS objects, 39% free, 3011KB/4971KB, paused 21.511ms,506.943ms total 4.964s
+I/ImeTracker( 1934): com.example.open_chat:28c9ac6: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+I/HWUI    ( 1934): Using FreeType backend (prop=Auto)
+D/InsetsController( 1934): show(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 511 (was 503)
+I/flutter ( 1934): BASELINE {"scenario":"control_scroll_small_session","frames":42,"build_p50_ms":0.57,"build_p90_ms":25.92,"build_max_ms":266.85,"raster_p50_ms":227.13,"raster_p90_ms":359.39,"raster_max_ms":439.95,"total_p50_ms":230.84,"total_p90_ms":361.11,"total_max_ms":644.78,"slow_over_16_7_pct":92.86,"rss_mb":389.32}
+I/ImeTracker( 1934): com.example.open_chat:a74fe50: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): hide(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 503 (was 511)
+D/CompatChangeReporter( 1934): Compat change id reported: 395521150; UID 10235; state: ENABLED
+I/flutter ( 1934): 
+I/flutter ( 1934): Warning: A call to tap() with finder "Found 1 widget with text "压测样本 · 长会话 1000 条" (ignoring all but first): [
+I/flutter ( 1934):   Instance of 'StatelessElement',
+I/flutter ( 1934): ]" derived an Offset (Instance of 'Offset') that would not hit test on the specified widget.
+I/flutter ( 1934): Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+I/flutter ( 1934): Indeed, Instance of 'Offset' is outside the bounds of the root of the render tree, Instance of 'Size'.
+I/flutter ( 1934): The finder corresponds to this RenderBox: Instance of 'RenderParagraph'
+I/flutter ( 1934): The hit test result at that offset is: Instance of 'HitTestResult'
+I/flutter ( 1934): #0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2164)
+I/flutter ( 1934): #1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1946)
+I/flutter ( 1934): #2      WidgetController.tap (package:flutter_test/src/controller.dart:1079)
+I/flutter ( 1934): #3      main.<anonymous closure> (file:///Users/transon/ZoneCode/open-chat/integration_test/list_perf_test.dart:155)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1968)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #6      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:1723)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): To silence this warning, pass "warnIfMissed: false" to "tap()".
+I/flutter ( 1934): To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+I/flutter ( 1934): 
+I/ImeTracker( 1934): com.example.open_chat:1f3054a1: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): show(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 511 (was 503)
+D/InsetsController( 1934): hide(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 503 (was 511)
+I/Choreographer( 1934): Skipped 121 frames!  The application may be doing too much work on its main thread.
+I/AssistStructure( 1934): Flattened final assist data: 424 bytes, containing 1 windows, 3 views
+W/RemoteInputConnectionImpl( 1934): requestCursorUpdates on inactive InputConnection
+I/ImeTracker( 1934): com.example.open_chat:ec34bda5: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): hide(ime())
+I/ImeTracker( 1934): com.example.open_chat:ec34bda5: onCancelled at PHASE_CLIENT_ALREADY_HIDDEN
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@b7ba875
+I/AssistStructure( 1934): Flattened final assist data: 272 bytes, containing 1 windows, 2 views
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@119e910
+W/RemoteInputConnectionImpl( 1934): requestCursorUpdates on inactive InputConnection
+W/RemoteInputConnectionImpl( 1934): getSurroundingText on inactive InputConnection
+I/ImeTracker( 1934): com.example.open_chat:1f3054a1: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@b7ba875
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@119e910
+I/flutter ( 1934): BASELINE {"scenario":"open_long_session","frames":175,"build_p50_ms":0.18,"build_p90_ms":1.13,"build_max_ms":260.96,"raster_p50_ms":5.38,"raster_p90_ms":272.48,"raster_max_ms":518.03,"total_p50_ms":5.75,"total_p90_ms":273.36,"total_max_ms":520.23,"slow_over_16_7_pct":43.43,"first_screen_ms":20157,"rss_mb":341.77}
+I/flutter ( 1934): BASELINE {"scenario":"memory_after_open","rss_mb":341.77}
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 1968KB AllocSpace bytes, 0(0B) LOS objects, 38% free, 3073KB/4971KB, paused 725us,15.807ms total 3.151s
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 1700KB AllocSpace bytes, 0(0B) LOS objects, 39% free, 3005KB/4971KB, paused 369us,28.857ms total 1.326s
+I/ample.open_chat( 1934): Background young concurrent mark compact GC freed 1948KB AllocSpace bytes, 0(0B) LOS objects, 38% free, 3041KB/4971KB, paused 155us,325.018ms total 1.032s
+I/flutter ( 1934): BASELINE {"scenario":"chat_scroll_1000","frames":165,"build_p50_ms":3.58,"build_p90_ms":23.19,"build_max_ms":435.0,"raster_p50_ms":213.38,"raster_p90_ms":312.86,"raster_max_ms":426.15,"total_p50_ms":218.86,"total_p90_ms":318.38,"total_max_ms":486.41,"slow_over_16_7_pct":95.76,"rss_mb":347.95}
+I/ImeTracker( 1934): com.example.open_chat:af402cf2: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): show(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 511 (was 503)
+I/flutter ( 1934): 
+I/flutter ( 1934): Warning: A call to tap() with finder "Found 1 widget with key [<'send-button'>]: [
+I/flutter ( 1934):   Instance of 'StatelessElement',
+I/flutter ( 1934): ]" derived an Offset (Instance of 'Offset') that would not hit test on the specified widget.
+I/flutter ( 1934): Maybe the widget is actually off-screen, or another widget is obscuring it, or the widget cannot receive pointer events.
+I/flutter ( 1934): The finder corresponds to this RenderBox: Instance of 'RenderSemanticsGestureHandler'
+I/flutter ( 1934): The hit test result at that offset is: Instance of 'HitTestResult'
+I/flutter ( 1934): #0      WidgetController._getElementPoint (package:flutter_test/src/controller.dart:2164)
+I/flutter ( 1934): #1      WidgetController.getCenter (package:flutter_test/src/controller.dart:1946)
+I/flutter ( 1934): #2      WidgetController.tap (package:flutter_test/src/controller.dart:1079)
+I/flutter ( 1934): #3      main.<anonymous closure> (file:///Users/transon/ZoneCode/open-chat/integration_test/list_perf_test.dart:189)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #4      testWidgets.<anonymous closure>.<anonymous closure> (package:flutter_test/src/widget_tester.dart:192)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #5      TestWidgetsFlutterBinding._runTestBody (package:flutter_test/src/binding.dart:1968)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): #6      TestWidgetsFlutterBinding._createTestCompletionHandler.<anonymous closure> (package:flutter_test/src/binding.dart:1723)
+I/flutter ( 1934): <asynchronous suspension>
+I/flutter ( 1934): To silence this warning, pass "warnIfMissed: false" to "tap()".
+I/flutter ( 1934): To make this warning fatal, set WidgetController.hitTestWarningShouldBeFatal to true.
+I/flutter ( 1934): 
+I/AssistStructure( 1934): Flattened final assist data: 424 bytes, containing 1 windows, 3 views
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@b7ba875
+W/libbinder.Binder( 1934): Binder transaction to com.android.internal.os.IResultReceiver, function: UNKNOWN_FUNCTION_NAME, code: 1, took 1060ms. Data bytes: 228 Reply bytes: 0 Flags: 17
+W/InteractionJankMonitor( 1934): Initializing without READ_DEVICE_CONFIG permission. enabled=false, interval=1, missedFrameThreshold=3, frameTimeThreshold=64, package=com.example.open_chat
+I/ImeTracker( 1934): com.example.open_chat:af402cf2: onShown
+I/flutter ( 1934): BASELINE {"scenario":"streaming_idle","frames":6,"build_p50_ms":5.68,"build_p90_ms":37.57,"build_max_ms":37.57,"raster_p50_ms":205.79,"raster_p90_ms":628.72,"raster_max_ms":628.72,"total_p50_ms":243.36,"total_p90_ms":634.4,"total_max_ms":634.4,"slow_over_16_7_pct":100.0,"stream_ms":17091,"rss_mb":348.01}
+I/flutter ( 1934): BASELINE {"scenario":"streaming_scroll","frames":76,"build_p50_ms":0.67,"build_p90_ms":7.32,"build_max_ms":170.83,"raster_p50_ms":211.99,"raster_p90_ms":381.8,"raster_max_ms":628.72,"total_p50_ms":213.58,"total_p90_ms":392.01,"total_max_ms":634.4,"slow_over_16_7_pct":94.74,"flings":6,"rss_mb":348.01}
+I/flutter ( 1934): BASELINE {"scenario":"memory_after_streaming","rss_mb":347.13}
+I/ImeTracker( 1934): com.example.open_chat:a0a6b6c3: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): hide(ime())
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@119e910
+D/InsetsController( 1934): Setting requestedVisibleTypes to 503 (was 511)
+I/Choreographer( 1934): Skipped 43 frames!  The application may be doing too much work on its main thread.
+I/ImeTracker( 1934): system_server:cb8ce025: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED
+I/HWUI    ( 1934): Davey! duration=976ms; Flags=0, FrameTimelineVsyncId=1546871, IntendedVsync=75262129539780, Vsync=75262846206418, InputEventId=0, HandleInputStart=75262860829220, AnimationStart=75262860859637, PerformTraversalsStart=75262860860428, DrawStart=75262866164928, FrameDeadline=75262146206446, FrameStartTime=75262860287178, FrameInterval=16666666, WorkloadTarget=16666666, AnimationTime=75262846206418, SyncQueued=75262869444553, SyncStart=75262869549970, IssueDrawCommandsStart=75262870211220, SwapBuffers=75262879257345, FrameCompleted=75263106003345, DequeueBufferDuration=33333, QueueBufferDuration=5682667, GpuCompleted=75263105838303, SwapBuffersCompleted=75263106003345, DisplayPresentTime=187630212874265, CommandSubmissionCompleted=75262879257345, 
+D/InteractionJankMonitor( 1934): Build configuration failed!
+D/InteractionJankMonitor( 1934): java.lang.IllegalArgumentException: Must pass in a valid surface control if only instrument surface; 
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.validate(InteractionJankMonitor.java:946)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.<init>(InteractionJankMonitor.java:882)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.<init>(InteractionJankMonitor.java:0)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration$Builder.build(InteractionJankMonitor.java:852)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor.begin(InteractionJankMonitor.java:400)
+D/InteractionJankMonitor( 1934): 	at android.view.inputmethod.ImeTracker$ImeJankTracker.lambda$onRequestAnimation$0(ImeTracker.java:970)
+D/InteractionJankMonitor( 1934): 	at android.view.inputmethod.ImeTracker$ImeJankTracker$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.handleCallback(Handler.java:1095)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.dispatchMessage(Handler.java:125)
+D/InteractionJankMonitor( 1934): 	at android.os.Looper.loopOnce(Looper.java:296)
+D/InteractionJankMonitor( 1934): 	at android.os.Looper.loop(Looper.java:397)
+D/InteractionJankMonitor( 1934): 	at android.app.ActivityThread.main(ActivityThread.java:9523)
+D/InteractionJankMonitor( 1934): 	at java.lang.reflect.Method.invoke(Native Method)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:939)
+I/Choreographer( 1934): Skipped 39 frames!  The application may be doing too much work on its main thread.
+I/HWUI    ( 1934): Davey! duration=902ms; Flags=0, FrameTimelineVsyncId=1546947, IntendedVsync=75262862884187, Vsync=75263512884122, InputEventId=0, HandleInputStart=75263521346804, AnimationStart=75263521349137, PerformTraversalsStart=75263523451137, DrawStart=75263523551804, FrameDeadline=75263129539740, FrameStartTime=75263518179262, FrameInterval=16666665, WorkloadTarget=16666666, AnimationTime=75263512884122, SyncQueued=75263523657970, SyncStart=75263523690595, IssueDrawCommandsStart=75263523732095, SwapBuffers=75263532932887, FrameCompleted=75263765915054, DequeueBufferDuration=6041, QueueBufferDuration=476459, GpuCompleted=75263765915054, SwapBuffersCompleted=75263578125720, DisplayPresentTime=526752481316, CommandSubmissionCompleted=75263532932887, 
+I/ImeTracker( 1934): com.example.open_chat:c3359e5: onRequestShow at ORIGIN_CLIENT reason SHOW_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): show(ime())
+D/InsetsController( 1934): Setting requestedVisibleTypes to 511 (was 503)
+D/InteractionJankMonitor( 1934): Build configuration failed!
+D/InteractionJankMonitor( 1934): java.lang.IllegalArgumentException: Must pass in a valid surface control if only instrument surface; 
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.validate(InteractionJankMonitor.java:946)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.<init>(InteractionJankMonitor.java:882)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration.<init>(InteractionJankMonitor.java:0)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor$Configuration$Builder.build(InteractionJankMonitor.java:852)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.jank.InteractionJankMonitor.begin(InteractionJankMonitor.java:400)
+D/InteractionJankMonitor( 1934): 	at android.view.inputmethod.ImeTracker$ImeJankTracker.lambda$onRequestAnimation$0(ImeTracker.java:970)
+D/InteractionJankMonitor( 1934): 	at android.view.inputmethod.ImeTracker$ImeJankTracker$$ExternalSyntheticLambda0.run(D8$$SyntheticClass:0)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.handleCallback(Handler.java:1095)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.dispatchMessageImpl(Handler.java:135)
+D/InteractionJankMonitor( 1934): 	at android.os.Handler.dispatchMessage(Handler.java:125)
+D/InteractionJankMonitor( 1934): 	at android.os.Looper.loopOnce(Looper.java:296)
+D/InteractionJankMonitor( 1934): 	at android.os.Looper.loop(Looper.java:397)
+D/InteractionJankMonitor( 1934): 	at android.app.ActivityThread.main(ActivityThread.java:9523)
+D/InteractionJankMonitor( 1934): 	at java.lang.reflect.Method.invoke(Native Method)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.os.RuntimeInit$MethodAndArgsCaller.run(RuntimeInit.java:575)
+D/InteractionJankMonitor( 1934): 	at com.android.internal.os.ZygoteInit.main(ZygoteInit.java:939)
+I/ImeTracker( 1934): com.example.open_chat:c3359e5: onShown
+I/HWUI    ( 1934): Davey! duration=787ms; Flags=0, FrameTimelineVsyncId=1547474, IntendedVsync=75267096218145, Vsync=75267512884770, InputEventId=0, HandleInputStart=75267516506097, AnimationStart=75267516507639, PerformTraversalsStart=75267692184389, DrawStart=75267703209097, FrameDeadline=75267562872896, FrameStartTime=75267516351931, FrameInterval=16666665, WorkloadTarget=16666666, AnimationTime=75267512884770, SyncQueued=75267703323514, SyncStart=75267707686931, IssueDrawCommandsStart=75267707737639, SwapBuffers=75267744614556, FrameCompleted=75267887702597, DequeueBufferDuration=7042, QueueBufferDuration=142461083, GpuCompleted=75267887615181, SwapBuffersCompleted=75267887702597, DisplayPresentTime=187797715550233, CommandSubmissionCompleted=75267744614556, 
+W/RemoteInputConnectionImpl( 1934): requestCursorUpdates on inactive InputConnection
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.view.ImeBackAnimationController@b7ba875
+I/ImeTracker( 1934): com.example.open_chat:c3359e5: onShown
+I/flutter ( 1934): BASELINE {"scenario":"drawer_scroll_1000_sessions","frames":129,"build_p50_ms":0.58,"build_p90_ms":4.31,"build_max_ms":702.25,"raster_p50_ms":234.8,"raster_p90_ms":444.49,"raster_max_ms":757.84,"total_p50_ms":240.32,"total_p90_ms":469.41,"total_max_ms":759.86,"slow_over_16_7_pct":89.15,"rss_mb":344.31}
+I/flutter ( 1934): BASELINE {"scenario":"memory_after_drawer_scroll","rss_mb":344.31}
+I/flutter ( 1934): 03:06 +1: (tearDownAll)
+I/ImeTracker( 1934): com.example.open_chat:438092bf: onRequestHide at ORIGIN_CLIENT reason HIDE_SOFT_INPUT fromUser false userId 0 displayId 0
+D/InsetsController( 1934): hide(ime())
+D/WindowOnBackDispatcher( 1934): setTopOnBackInvokedCallback (unwrapped): android.app.Activity$$ExternalSyntheticLambda0@119e910
+D/InsetsController( 1934): Setting requestedVisibleTypes to 503 (was 511)
+All tests passed.
+I/flutter ( 1934): 03:06 +2: All tests passed!
+I/ImeTracker( 1934): system_server:b9c70270: onCancelled at PHASE_CLIENT_ON_CONTROLS_CHANGED

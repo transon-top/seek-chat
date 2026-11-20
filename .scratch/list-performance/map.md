@@ -22,6 +22,7 @@
 
 - [Flutter 虚拟滚动与高性能列表方案调研](issues/01-research-vscroll-options.md): 内置方案已够（`ListView.builder` 本身即虚拟化）；备选 `super_sliver_list` 0.4.1（维护停滞，仅在跳转/极端甩动需要时引入）；不选 `scrollable_positioned_list` / `flutter_list_view` / `two_dimensional_scrollables`。
 - [每消息渲染成本与重建范围调研](issues/02-research-render-cost.md): 流式每个 SSE 事件会让所有可见助手正文整篇重解析（`InlinePattern` 每次 build 新建导致分段缓存失效）；P0 是稳定 `GptMarkdown` 输入 + 补 `isStreaming`；表格、mermaid、`SelectionArea`、图片为次要成本。
+- [列表基线测量](issues/03-task-baseline-measure.md): 打开 1000 条消息首屏 2.0–5.6s，成本是跳到底部时单帧 1.6–4.5s 的构建（对照小会话 89–555ms）；滚动 build 便宜（p90 <1ms），掉帧来自 raster（慢帧 9.5–16.6%）；流式期间滚动未阻塞（mock 约 13 增量/秒）；抽屉打开 106–247ms、滚动慢帧波动 1.4–71.6%；RSS 峰值 531–561MB。环境为模拟器 + 宿主 Metal。
 
 ## Not yet specified
 
