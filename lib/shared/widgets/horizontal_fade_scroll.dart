@@ -121,4 +121,4 @@ LinearGradient horizontalFadeGradient({
 }
 
 /// 渐隐带宽度，与纵向 `ScrollEdgeFade` 一致。
-const horizontalFadeExtent = 24.0;
+const horizontalFadeExtent = 12.0;

@@ -13,6 +13,7 @@ import '../../shared/prefs/speech_store.dart';
 import '../../shared/prefs/theme_store.dart';
 import '../../shared/prefs/user_metadata_store.dart';
 import '../../shared/speech/permissions.dart';
+import '../../shared/widgets/scroll_edge_fade.dart';
 
 /// 打开系统设置底部 Sheet（`ui.md` §1.5）。
 Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
@@ -49,6 +50,13 @@ enum _SettingsView { general, data }
 
 class _SettingsSheetState extends State<SettingsSheet> {
   _SettingsView _view = _SettingsView.general;
+  final _scroll = ScrollController();
+
+  @override
+  void dispose() {
+    _scroll.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -112,19 +120,24 @@ class _SettingsSheetState extends State<SettingsSheet> {
             ),
           ),
           Expanded(
-            child: SingleChildScrollView(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                24,
-                20,
-                48 + MediaQuery.paddingOf(context).bottom,
-              ),
-              child: Center(
-                child: ConstrainedBox(
-                  constraints: const BoxConstraints(maxWidth: 640),
-                  child: _view == _SettingsView.general
-                      ? const _GeneralSettings()
-                      : _DataSettings(dataManagement: widget.dataManagement),
+            child: ScrollEdgeFade(
+              controller: _scroll,
+              color: colors.background,
+              child: SingleChildScrollView(
+                controller: _scroll,
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  24,
+                  20,
+                  48 + MediaQuery.paddingOf(context).bottom,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 640),
+                    child: _view == _SettingsView.general
+                        ? const _GeneralSettings()
+                        : _DataSettings(dataManagement: widget.dataManagement),
+                  ),
                 ),
               ),
             ),

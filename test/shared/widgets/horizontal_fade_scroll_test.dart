@@ -66,7 +66,7 @@ void main() {
   });
 
   group('horizontalFadeGradient', () {
-    test('渐隐带为 24 像素宽', () {
+    test('渐隐带为 12 像素宽', () {
       final gradient = horizontalFadeGradient(
         left: true,
         width: 480,
