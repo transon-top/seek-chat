@@ -18,6 +18,58 @@ import '../shared/prefs/user_metadata_store.dart';
 import 'localization.dart';
 import 'theme.dart';
 
+/// 回弹物理：默认 `BouncingScrollPhysics` 按视口高度决定超界距离，能拉出一整屏；
+/// 这里改成固定上限的小幅拉伸，起手不跟手，越拉越硬。
+class AppBounceScrollPhysics extends BouncingScrollPhysics {
+  const AppBounceScrollPhysics({super.parent});
+
+  /// 单向最大超界距离（逻辑像素）。
+  static const double maxOverscroll = 48;
+
+  /// 起手跟手比例；随已拉伸距离平方递减，到 [maxOverscroll] 归零。
+  static const double _startFactor = 0.3;
+
+  @override
+  AppBounceScrollPhysics applyTo(ScrollPhysics? ancestor) =>
+      AppBounceScrollPhysics(parent: buildParent(ancestor));
+
+  @override
+  double applyPhysicsToUserOffset(ScrollMetrics position, double offset) {
+    // 手指想去的位置；offset 与手指方向相反。
+    final target = position.pixels - offset;
+    final lower = position.minScrollExtent;
+    final upper = position.maxScrollExtent;
+    final pastEnd = target > upper;
+    final pastStart = target < lower;
+    if (!pastEnd && !pastStart) return offset;
+
+    final past = pastEnd
+        ? (position.pixels > upper ? position.pixels - upper : 0.0)
+        : (position.pixels < lower ? lower - position.pixels : 0.0);
+    // 从当前位置到边界的部分保持 1:1，越界部分才受阻力。
+    final toEdge = pastEnd
+        ? (position.pixels < upper ? upper - position.pixels : 0.0)
+        : (position.pixels > lower ? position.pixels - lower : 0.0);
+    final outTravel = pastEnd
+        ? (position.pixels < upper ? target - upper : target - position.pixels)
+        : (position.pixels > lower ? lower - target : position.pixels - target);
+
+    final allowed = maxOverscroll - past;
+    if (allowed <= 0) return offset.sign * toEdge;
+    final remaining = 1 - past / maxOverscroll;
+    final damped = outTravel * _startFactor * remaining * remaining;
+    return offset.sign * (toEdge + (damped < allowed ? damped : allowed));
+  }
+}
+
+/// 全局滚动行为：去掉 Android 默认的白色光晕，所有可滚动区域统一橡皮筋回弹。
+final appScrollBehavior = const ShadScrollBehavior().copyWith(
+  overscroll: false,
+  physics: const AppBounceScrollPhysics(
+    parent: RangeMaintainingScrollPhysics(),
+  ),
+);
+
 /// 应用壳：主题、双语、路由与生命周期接线。
 ///
 /// 语言与主题由设置驱动（票 18）；偏好同步读取，首帧即为最终样式。
@@ -64,6 +116,7 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
     final chinese = locale == 'zh';
     return ShadApp(
       title: 'Open Chat',
+      scrollBehavior: appScrollBehavior,
       theme: buildShadTheme(brightness: Brightness.light, chinese: chinese),
       darkTheme: buildShadTheme(brightness: Brightness.dark, chinese: chinese),
       themeMode: ref.watch(themeModeProvider),

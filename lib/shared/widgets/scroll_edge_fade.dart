@@ -29,7 +29,7 @@ class ScrollEdgeFade extends StatefulWidget {
 }
 
 class _ScrollEdgeFadeState extends State<ScrollEdgeFade> {
-  static const _fadeExtent = 24.0;
+  static const _fadeExtent = 12.0;
   static const _fadeDuration = Duration(milliseconds: 150);
 
   /// 内容尺寸 / 视口变化的刷新信号：只唤醒渐隐带，不重建整块。
