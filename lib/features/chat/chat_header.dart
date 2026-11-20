@@ -32,7 +32,7 @@ class ChatHeader extends StatelessWidget {
             child: ShadIconButton.ghost(
               key: const Key('chat-open-drawer'),
               onPressed: () => Scaffold.of(context).openDrawer(),
-              icon: const Icon(LucideIcons.menu),
+              icon: _MenuIcon(color: theme.colorScheme.foreground),
               iconSize: 18,
               width: 44,
               height: 44,
@@ -79,4 +79,44 @@ class ChatHeader extends StatelessWidget {
       ),
     );
   }
+}
+
+/// 照抄 chat-demo 的 IconMenuOutline20：上长下短两条左对齐横杠。
+class _MenuIcon extends StatelessWidget {
+  const _MenuIcon({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final size = IconTheme.of(context).size ?? 20;
+    return CustomPaint(
+      size: Size.square(size),
+      painter: _MenuIconPainter(color),
+    );
+  }
+}
+
+class _MenuIconPainter extends CustomPainter {
+  const _MenuIconPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final s = size.width / 20;
+    final paint = Paint()..color = color;
+    canvas.drawRect(
+      Rect.fromLTRB(2.79724 * s, 4.90034 * s, 17.2027 * s, 6.43655 * s),
+      paint,
+    );
+    canvas.drawRect(
+      Rect.fromLTRB(2.79724 * s, 13.0634 * s, 10.9603 * s, 14.5996 * s),
+      paint,
+    );
+  }
+
+  @override
+  bool shouldRepaint(_MenuIconPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
