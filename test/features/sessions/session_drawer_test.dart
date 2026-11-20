@@ -11,6 +11,7 @@ import 'package:open_chat/shared/data/chat_repository.dart';
 import 'package:open_chat/shared/data/database.dart';
 import 'package:open_chat/shared/models/types.dart';
 import 'package:open_chat/shared/providers.dart';
+import 'package:open_chat/shared/widgets/push_menu.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 SessionSummary session(String id, DateTime updatedAt) => SessionSummary(
@@ -90,6 +91,66 @@ void main() {
     await tester.tap(find.text('重试'));
     await tester.pumpAndSettle();
     expect(find.text('无法加载会话'), findsOneWidget);
+  });
+
+  testWidgets('lays out and opens inside the push menu', (tester) async {
+    final db = AppDatabase(NativeDatabase.memory());
+    final repository = ChatRepository(db);
+    final session = await repository.createSession();
+    await repository.addUserMessage(sessionId: session.id, text: 'q');
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          appDatabaseProvider.overrideWithValue(db),
+          chatRepositoryProvider.overrideWithValue(repository),
+        ],
+        child: ShadApp(
+          locale: const Locale('zh'),
+          theme: buildShadTheme(brightness: Brightness.light, chinese: true),
+          localizationsDelegates: appLocalizationDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Builder(
+            builder: (context) => MediaQuery(
+              data: MediaQuery.of(context)
+                  .copyWith(textScaler: const TextScaler.linear(0.88)),
+              child: PushMenu(
+                menu: SessionDrawer(
+                  currentSessionId: session.id,
+                  onOpen: (_) {},
+                  onNewChat: () {},
+                  onOpenSettings: () {},
+                  cancelSession: (_) {},
+                  onDeleted: (_) {},
+                ),
+                child: const PushMenuSwipeDetector(
+                  child: Scaffold(body: Center(child: Text('CHAT'))),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.text('CHAT')),
+    );
+    await gesture.moveBy(const Offset(120, 0));
+    await tester.pump();
+    expect(tester.takeException(), isNull);
+    // 侧栏内容随进度整屏从左侧滑入：部分打开时大部分仍在屏幕外。
+    expect(tester.getTopLeft(find.text('Fleepseek')).dx, lessThan(-300));
+
+    await gesture.moveBy(const Offset(400, 0));
+    await gesture.up();
+    await tester.pumpAndSettle();
+    expect(tester.takeException(), isNull);
+    expect(find.byKey(ValueKey('session-row-${session.id}')), findsOneWidget);
+
+    await db.close();
   });
 
   testWidgets(

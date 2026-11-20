@@ -1,6 +1,8 @@
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../shared/widgets/push_menu.dart';
+
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/toast.dart';
 
@@ -32,7 +34,7 @@ class ChatHeader extends StatelessWidget {
             label: l10n.openSessionList,
             child: ShadIconButton.ghost(
               key: const Key('chat-open-drawer'),
-              onPressed: () => Scaffold.of(context).openDrawer(),
+              onPressed: () => PushMenuScope.maybeOf(context)?.toggle(),
               icon: _MenuIcon(color: theme.colorScheme.foreground),
               iconSize: 18,
               width: 44,

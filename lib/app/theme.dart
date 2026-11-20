@@ -41,7 +41,8 @@ class AppSidebarColors {
   );
 
   static const dark = AppSidebarColors(
-    fill: Color(0xFF1B1B1C),
+    // OLED 纯黑：侧栏背景与分组头、边缘渐隐共用。
+    fill: Color(0xFF000000),
     border: Color(0x0FFFFFFF),
     labelPrimary: Color(0xFFF9FAFB),
     labelTertiary: Color(0xFFADB2B8),

@@ -16,6 +16,7 @@ import 'package:open_chat/features/chat/speech/player.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
 import 'package:open_chat/features/chat/speech/speech_api.dart';
 import 'package:open_chat/features/chat/speech/speech_controller.dart';
+import 'package:open_chat/features/sessions/session_drawer.dart';
 import 'package:open_chat/features/settings/settings_page.dart';
 import 'package:open_chat/shared/api/client.dart';
 import 'package:open_chat/shared/data/attachment_store.dart';
@@ -354,7 +355,34 @@ void main() {
 
     await openDrawer(tester);
     expect(
-      find.descendant(of: find.byType(Drawer), matching: find.text('Greeting')),
+      find.descendant(
+        of: find.byType(SessionDrawer),
+        matching: find.text('Greeting'),
+      ),
+      findsOneWidget,
+    );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('swiping right on the chat opens the session drawer', (
+    tester,
+  ) async {
+    final session = await repository.createSession();
+    await repository.renameSession(session.id, 'Swipe target');
+    await repository.addUserMessage(sessionId: session.id, text: 'hello');
+
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('hello'), const Offset(400, 0));
+    await tester.pumpAndSettle();
+
+    expect(
+      find.descendant(
+        of: find.byType(SessionDrawer),
+        matching: find.text('Swipe target'),
+      ),
       findsOneWidget,
     );
 
@@ -1163,7 +1191,10 @@ void main() {
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     expect(
-      find.descendant(of: find.byType(Drawer), matching: find.text('Renamed')),
+      find.descendant(
+        of: find.byType(SessionDrawer),
+        matching: find.text('Renamed'),
+      ),
       findsOneWidget,
     );
 

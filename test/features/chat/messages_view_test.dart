@@ -128,8 +128,8 @@ void main() {
     final colors = ShadTheme.of(tester.element(bubble)).colorScheme;
     expect((container.decoration! as BoxDecoration).color, colors.muted);
     expect(tester.getCenter(bubble).dx, greaterThan(400));
-    final text = tester.widget<SelectableText>(
-      find.descendant(of: bubble, matching: find.byType(SelectableText)),
+    final text = tester.widget<Text>(
+      find.descendant(of: bubble, matching: find.byType(Text)),
     );
     expect(text.style?.fontSize, 16);
   });

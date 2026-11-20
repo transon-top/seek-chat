@@ -13,6 +13,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../app/markdown_theme.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/widgets/horizontal_fade_scroll.dart';
+import '../../shared/widgets/push_menu.dart';
 import 'reply_view.dart';
 
 /// 渲染回复中的 Markdown 文本。
@@ -138,7 +139,11 @@ class _MarkdownViewState extends State<MarkdownView> {
     final theme = Theme.of(context).textTheme;
     final style =
         widget.textStyle ?? (widget.dense ? theme.bodySmall : theme.bodyMedium);
-    return SelectionArea(child: _buildBody(style));
+    // 识别器必须放在 SelectionArea 内层：Android 上文本选择会抢横向拖拽，
+    // 内层先注册才能赢；表格等内层横向滚动仍在更深层，优先于抽屉。
+    return SelectionArea(
+      child: PushMenuSwipeDetector(child: _buildBody(style)),
+    );
   }
 
   Widget _buildBody(TextStyle? style) {
@@ -464,9 +469,8 @@ class _MermaidBlockState extends State<_MermaidBlock> {
     if (_checkedSource == widget.source) return _parses;
     _checkedSource = widget.source;
     try {
-      mermaid_core.Mermaid(
-        measurer: const FlutterTextMeasurer(),
-      ).render(widget.source);
+      mermaid_core.Mermaid(measurer: const FlutterTextMeasurer())
+          .render(widget.source);
       _parses = true;
     } catch (_) {
       _parses = false;
