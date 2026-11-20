@@ -21,6 +21,8 @@
 
 <!-- 每个已关闭的票一行：票名 + 一句话结论。详细答案在票内。 -->
 
+- [P0 稳定 GptMarkdown 输入](issues/01-p0-stable-markdown-input.md): 空来源不装 pattern，pattern 与正文 widget 按内容缓存，正文补 `isStreaming`；模拟器流式滚动慢帧 1.58%，首屏仍 1651ms（留给《初始窗口》）。
+
 ## Not yet specified
 
 - 总验收不达标时的补强票：真机数据出来前无法切分（候选：数据层分页触发判定、进一步重建隔离）。只有 §7 未达标才毕业成票。

@@ -264,6 +264,62 @@ graph TD
     expect(find.textContaining('abcde', findRichText: true), findsWidgets);
   });
 
+  testWidgets('builds no citation pattern for an empty source list', (
+    tester,
+  ) async {
+    await pumpMarkdown(tester, 'answer[citation:1]', sources: const []);
+
+    expect(
+      tester.widget<GptMarkdown>(find.byType(GptMarkdown)).inlinePatterns,
+      isNull,
+    );
+    expect(
+      find.textContaining('[citation:1]', findRichText: true),
+      findsWidgets,
+    );
+  });
+
+  testWidgets('reuses the rendered markdown until a source changes', (
+    tester,
+  ) async {
+    const text = 'answer[citation:1]';
+    final sources = [_source(1)];
+    await tester.pumpWidget(app(text, sources: sources));
+    await tester.pumpAndSettle();
+    final first = tester.widget<GptMarkdown>(find.byType(GptMarkdown));
+
+    await tester.pumpWidget(app(text, sources: sources));
+    expect(
+      identical(first, tester.widget<GptMarkdown>(find.byType(GptMarkdown))),
+      isTrue,
+    );
+
+    await tester.pumpWidget(
+      app(text, sources: [_source(1)..title = 'Renamed']),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      identical(first, tester.widget<GptMarkdown>(find.byType(GptMarkdown))),
+      isFalse,
+    );
+  });
+
+  testWidgets('passes the streaming flag to the markdown renderer', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app('partial', streaming: true));
+    expect(
+      tester.widget<GptMarkdown>(find.byType(GptMarkdown)).isStreaming,
+      isTrue,
+    );
+
+    await tester.pumpWidget(app('partial'));
+    expect(
+      tester.widget<GptMarkdown>(find.byType(GptMarkdown)).isStreaming,
+      isFalse,
+    );
+  });
+
   testWidgets('falls back to the mermaid source when parsing fails', (
     tester,
   ) async {

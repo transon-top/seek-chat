@@ -66,6 +66,15 @@ class _MarkdownViewState extends State<MarkdownView> {
   DateTime? _renderStartedAt;
   Duration _lastCost = Duration.zero;
 
+  // 正文、来源与样式都不变时复用同一个 widget 实例：新实例会让
+  // GptMarkdown 整棵子树重建，复用则被 Flutter 的 identical 短路跳过。
+  (String, String, bool, TextStyle?, bool, bool)? _bodyKey;
+  Widget? _body;
+
+  // 引用角标模式按来源内容缓存；来源内容变化时重建。
+  String _patternSources = '';
+  InlinePattern? _pattern;
+
   @override
   void initState() {
     super.initState();
@@ -129,43 +138,72 @@ class _MarkdownViewState extends State<MarkdownView> {
     final theme = Theme.of(context).textTheme;
     final style =
         widget.textStyle ?? (widget.dense ? theme.bodySmall : theme.bodyMedium);
-    return SelectionArea(
-      child: _shown.length > MarkdownView.plainTextLimit
-          ? Text(_shown, style: style)
-          : GptMarkdown(
-              _detachedTaskItems(_shown),
-              style: style,
-              useDollarSignsForLatex: false,
-              onLinkTap: widget.disableLinks ? null : openExternalLink,
-              inlineLinkBuilder: widget.disableLinks
-                  ? (details) =>
-                        TextSpan(text: details.label, style: details.style)
-                  : null,
-              inlinePatterns: widget.sources == null
-                  ? null
-                  : [_citationPattern(widget.sources!)],
-              // 与 chat-demo 一致：图片不加载，只显示可点击的地址（票 08）。
-              imageBuilder: _imageAsLink,
-              // chat-demo 的 h1-h3 上方留 32，h4-h6 保持段间距。
-              headingBuilder: widget.dense ? null : _headingBuilder,
-              // chat-demo 的表格只保留行分隔线，表头无底色。
-              tableBuilder: _tableBuilder,
-              // chat-demo 不识别 GitHub Alert，按普通引用块渲染。
-              alertBuilder: (context, details) => details.asBlockQuote(),
-              // chat-demo 的任务项画成 `☑`/`□` 文本，不用 Material 复选框。
-              checkboxBuilder: _taskCheckbox,
-              // 思考内容比正文更紧凑。
-              styleSheet: widget.dense
-                  ? const GptMarkdownStyleSheet(blockSpacing: 12)
-                  : null,
-              codeBuilder: (context, name, code, closed) {
-                if (name.trim().toLowerCase() == 'mermaid') {
-                  return _MermaidBlock(source: code);
-                }
-                return CodeField(name: name, codes: code);
-              },
-            ),
+    return SelectionArea(child: _buildBody(style));
+  }
+
+  Widget _buildBody(TextStyle? style) {
+    final sources = widget.sources;
+    final sourcesKey = _sourcesKey(sources);
+    final key = (
+      _shown,
+      sourcesKey,
+      widget.streaming,
+      style,
+      widget.dense,
+      widget.disableLinks,
     );
+    if (_bodyKey == key && _body != null) return _body!;
+    if (_patternSources != sourcesKey) {
+      _patternSources = sourcesKey;
+      _pattern = sourcesKey.isEmpty ? null : _citationPattern(sources!);
+    }
+    final body = _shown.length > MarkdownView.plainTextLimit
+        ? Text(_shown, style: style)
+        : GptMarkdown(
+            _detachedTaskItems(_shown),
+            style: style,
+            useDollarSignsForLatex: false,
+            isStreaming: widget.streaming,
+            onLinkTap: widget.disableLinks ? null : openExternalLink,
+            inlineLinkBuilder: widget.disableLinks
+                ? (details) =>
+                      TextSpan(text: details.label, style: details.style)
+                : null,
+            inlinePatterns: _pattern == null ? null : [_pattern!],
+            // 与 chat-demo 一致：图片不加载，只显示可点击的地址（票 08）。
+            imageBuilder: _imageAsLink,
+            // chat-demo 的 h1-h3 上方留 32，h4-h6 保持段间距。
+            headingBuilder: widget.dense ? null : _headingBuilder,
+            // chat-demo 的表格只保留行分隔线，表头无底色。
+            tableBuilder: _tableBuilder,
+            // chat-demo 不识别 GitHub Alert，按普通引用块渲染。
+            alertBuilder: (context, details) => details.asBlockQuote(),
+            // chat-demo 的任务项画成 `☑`/`□` 文本，不用 Material 复选框。
+            checkboxBuilder: _taskCheckbox,
+            // 思考内容比正文更紧凑。
+            styleSheet: widget.dense
+                ? const GptMarkdownStyleSheet(blockSpacing: 12)
+                : null,
+            codeBuilder: (context, name, code, closed) {
+              if (name.trim().toLowerCase() == 'mermaid') {
+                return _MermaidBlock(source: code);
+              }
+              return CodeField(name: name, codes: code);
+            },
+          );
+    _bodyKey = key;
+    _body = body;
+    return body;
+  }
+
+  /// 只取角标渲染用到的字段；无来源与空来源等价，都表示不装 pattern。
+  static String _sourcesKey(List<Source>? sources) {
+    if (sources == null || sources.isEmpty) return '';
+    return sources
+        .map(
+          (source) => '${source.index}\u0000${source.url}\u0000${source.title}',
+        )
+        .join('\u0001');
   }
 }
 
