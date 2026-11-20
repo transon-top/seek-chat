@@ -39,12 +39,13 @@ void main() {
   ScrollPosition position(WidgetTester tester) =>
       tester.state<ScrollableState>(find.byType(Scrollable)).position;
 
-  testWidgets('内容不足一屏时两侧都无渐隐', (tester) async {
+  testWidgets('内容不足一屏时不挂渐隐遮罩', (tester) async {
     await tester.pumpWidget(build(itemWidth: 30));
     await tester.pumpAndSettle();
 
-    expect(fadeTarget(tester, 'left'), 0);
-    expect(fadeTarget(tester, 'right'), 0);
+    expect(find.byKey(const Key('fade-left')), findsNothing);
+    expect(find.byKey(const Key('fade-right')), findsNothing);
+    expect(find.byType(ShaderMask), findsNothing);
   });
 
   testWidgets('按剩余可滚动距离显示渐隐', (tester) async {

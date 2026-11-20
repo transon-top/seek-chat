@@ -23,6 +23,7 @@
 
 - [P0 稳定 GptMarkdown 输入](issues/01-p0-stable-markdown-input.md): 空来源不装 pattern，pattern 与正文 widget 按内容缓存，正文补 `isStreaming`；模拟器流式滚动慢帧 1.58%，首屏仍 1651ms（留给《初始窗口》）。
 - [初始窗口](issues/02-initial-window.md): 只渲染末 50 条、向上距顶 200px 内每次补 40 条；补历史在布局阶段两段修正偏移（估算 + 锚点 `layoutOffset` 实测），视口不跳动；模拟器首屏 347ms、`build max` 95.56ms（改造前 1966–5623ms），build 侧大跳帧消除，慢帧余量受模拟器光栅化影响。
+- [渲染降级](issues/03-render-degradation.md): mermaid 围栏闭合后才渲染，解析失败降级为代码块；表格固定列宽（可视宽度均分、每列最少 100）+ 纯文本单元格 + 无溢出不挂 `ShaderMask`；缩略图按显示尺寸解码。模拟器首屏 345ms、列表滚动慢帧 4.35%（build p90 0.64ms）；流式滚动慢帧 12.74% 来自光栅噪声，构建侧无回归。
 
 ## Not yet specified
 

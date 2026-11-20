@@ -63,6 +63,39 @@ void main() {
     expect(find.byType(HorizontalFadeScroll), findsOneWidget);
   });
 
+  testWidgets('renders table cells as plain text without nested markdown', (
+    tester,
+  ) async {
+    await pumpMarkdown(tester, '| **标题** | 值 |\n| --- | --- |\n| 1 | 2 |');
+
+    expect(
+      find.descendant(
+        of: find.byType(Table),
+        matching: find.byType(GptMarkdown),
+      ),
+      findsNothing,
+    );
+    expect(
+      find.descendant(of: find.byType(Table), matching: find.text('标题')),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets('drops the fade mask when the table fits', (tester) async {
+    await pumpMarkdown(tester, '| 左 | 右 |\n| --- | --- |\n| 1 | 2 |');
+
+    expect(find.byType(ShaderMask), findsNothing);
+  });
+
+  testWidgets('keeps the fade mask when the table overflows', (tester) async {
+    final header = List.generate(9, (index) => '列$index').join(' | ');
+    final divider = List.filled(9, '---').join(' | ');
+    final body = List.generate(9, (index) => '$index').join(' | ');
+    await pumpMarkdown(tester, '| $header |\n| $divider |\n| $body |');
+
+    expect(find.byType(ShaderMask), findsNWidgets(2));
+  });
+
   testWidgets('renders markdown syntax as text', (tester) async {
     await pumpMarkdown(tester, '# 标题\n\n**粗体**');
 
@@ -195,6 +228,31 @@ graph TD
     expect(find.byType(MermaidView), findsOneWidget);
   });
 
+  testWidgets('renders an unclosed mermaid fence as code', (tester) async {
+    await pumpMarkdown(tester, '```mermaid\ngraph TD\n  A --> B');
+
+    expect(find.byType(MermaidView), findsNothing);
+    expect(find.byType(CodeField), findsOneWidget);
+  });
+
+  testWidgets('switches a mermaid fence to a diagram once it closes', (
+    tester,
+  ) async {
+    await pumpMarkdown(
+      tester,
+      '```mermaid\ngraph TD\n  A --> B',
+      streaming: true,
+    );
+    expect(find.byType(MermaidView), findsNothing);
+
+    await pumpMarkdown(
+      tester,
+      '```mermaid\ngraph TD\n  A --> B\n```',
+      streaming: true,
+    );
+    expect(find.byType(MermaidView), findsOneWidget);
+  });
+
   testWidgets('keeps non-mermaid fences as code', (tester) async {
     await pumpMarkdown(tester, '```dart\nfinal x = 1;\n```');
 
@@ -320,12 +378,14 @@ graph TD
     );
   });
 
-  testWidgets('falls back to the mermaid source when parsing fails', (
+  testWidgets('falls back to the mermaid source as a code block', (
     tester,
   ) async {
     await pumpMarkdown(tester, '```mermaid\nnot a diagram\n```');
 
     expect(tester.takeException(), isNull);
+    expect(find.byType(MermaidView), findsNothing);
+    expect(find.byType(CodeField), findsOneWidget);
     expect(
       find.textContaining('not a diagram', findRichText: true),
       findsWidgets,

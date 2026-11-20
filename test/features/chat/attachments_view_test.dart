@@ -61,6 +61,13 @@ void main() {
     expect(find.text('上传中...'), findsNothing);
     expect(find.text('服务器繁忙'), findsOneWidget);
 
+    // 缩略图按显示尺寸解码：64 逻辑像素 × 测试设备 3x，等比内切不拉伸。
+    final provider = tester.widget<Image>(find.byType(Image)).image;
+    expect(provider, isA<ResizeImage>());
+    final resize = provider as ResizeImage;
+    expect((resize.width, resize.height), (192, 192));
+    expect(resize.policy, ResizeImagePolicy.fit);
+
     await tester.tap(find.byIcon(LucideIcons.refreshCw));
     expect(retried, ['doc']);
 

@@ -35,10 +35,13 @@ class _HorizontalFadeScrollState extends State<HorizontalFadeScroll> {
         animation: _controller,
         builder: (context, child) {
           final position = _controller.hasClients ? _controller.position : null;
-          final left = position != null && position.pixels > _threshold;
-          final right =
-              position != null &&
-              position.maxScrollExtent - position.pixels > _threshold;
+          // 没有横向溢出时不挂遮罩：省掉两层 ShaderMask 的光栅化成本
+          // （表格滚动逐帧重绘时最明显）。此时偏移必为 0，重建滚动视图无副作用。
+          if (position == null || position.maxScrollExtent <= _threshold) {
+            return child!;
+          }
+          final left = position.pixels > _threshold;
+          final right = position.maxScrollExtent - position.pixels > _threshold;
           return _EdgeFadeMask(
             key: const Key('fade-right'),
             left: false,
@@ -63,8 +66,8 @@ class _HorizontalFadeScrollState extends State<HorizontalFadeScroll> {
 
 /// 单侧渐隐遮罩；[active] 变化时用 150ms 过渡。
 ///
-/// 遮罩常驻（无渐隐时是全白渐变），避免淡入瞬间切换控件类型重建
-/// `Scrollable`、丢失滚动位置。
+/// 可滚动期间遮罩常驻（无渐隐时是全白渐变），避免淡入瞬间切换控件类型重建
+/// `Scrollable`、丢失滚动位置；不可滚动时外层不挂遮罩（见 `build`）。
 class _EdgeFadeMask extends StatelessWidget {
   const _EdgeFadeMask({
     super.key,

@@ -17,6 +17,26 @@ const double _draftDocumentWidth = 210;
 const double _singleImageSize = 120;
 const double _mixedImageSize = 64;
 
+/// 缩略图按显示尺寸解码：`fit` 内切，既不拉伸、也限制长截图的解码内存。
+Widget _thumbnail(
+  BuildContext context,
+  String path,
+  double size,
+  ImageErrorWidgetBuilder errorBuilder,
+) {
+  final pixels = (size * MediaQuery.devicePixelRatioOf(context)).ceil();
+  return Image(
+    image: ResizeImage(
+      FileImage(File(path)),
+      width: pixels,
+      height: pixels,
+      policy: ResizeImagePolicy.fit,
+    ),
+    fit: BoxFit.cover,
+    errorBuilder: errorBuilder,
+  );
+}
+
 /// 输入区的附件条：图片缩略图或文档卡片，带上传中、失败与移除（`attachments.md` §7）。
 class DraftAttachmentStrip extends StatelessWidget {
   const DraftAttachmentStrip({
@@ -101,10 +121,11 @@ class _DraftImage extends StatelessWidget {
       child: Stack(
         fit: StackFit.expand,
         children: [
-          Image.file(
-            File(attachment.path),
-            fit: BoxFit.cover,
-            errorBuilder: (context, error, stackTrace) => ColoredBox(
+          _thumbnail(
+            context,
+            attachment.path,
+            _draftImageSize,
+            (context, error, stackTrace) => ColoredBox(
               color: colors.surfaceContainerHighest,
               child: Icon(LucideIcons.imageOff, color: colors.outline),
             ),
@@ -353,10 +374,11 @@ class _MessageImage extends StatelessWidget {
             height: size,
             child: missing
                 ? placeholder
-                : Image.file(
-                    File(path!),
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => placeholder,
+                : _thumbnail(
+                    context,
+                    path!,
+                    size,
+                    (context, error, stackTrace) => placeholder,
                   ),
           ),
         ),
