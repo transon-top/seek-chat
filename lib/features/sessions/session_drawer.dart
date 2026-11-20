@@ -61,7 +61,8 @@ const _newChatDarkShadows = [
   BoxShadow(color: Color(0x146A6F75), offset: Offset(0, 2), blurRadius: 4),
 ];
 
-const _menuShadows = [
+/// 浮层阴影：会话菜单与删除确认弹窗共用，照搬 chat-demo。
+const _overlayShadows = [
   BoxShadow(color: Color(0x33000000), blurRadius: 1),
   BoxShadow(color: Color(0x05000000), blurRadius: 4),
   BoxShadow(color: Color(0x14000000), offset: Offset(0, 12), blurRadius: 32),
@@ -262,25 +263,67 @@ class SessionDrawer extends ConsumerWidget {
     SessionSummary session,
   ) async {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
+    final theme = ShadTheme.of(context);
+    final colors = theme.colorScheme;
+    final sidebar = _sidebarColorsOf(context);
+    final dark = theme.brightness == Brightness.dark;
+    final width = math.min(380.0, MediaQuery.sizeOf(context).width - 32);
     final confirmed = await showShadDialog<bool>(
       context: context,
-      builder: (context) => ShadDialog.alert(
-        title: Text(l10n.deleteSession),
-        description: Text(l10n.deleteSessionDescription),
-        actions: [
-          ShadButton.outline(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: Text(l10n.cancel),
+      // 照搬 chat-demo：遮罩浅色 36%、深色 60%。
+      barrierColor: dark ? const Color(0x99000000) : const Color(0x5C000000),
+      builder: (context) => ShadTheme(
+        // 只把弹窗内按钮改成 chat-demo 的胶囊形。
+        data: ShadTheme.of(context)
+            .copyWith(radius: const BorderRadius.all(Radius.circular(999))),
+        child: ShadDialog.alert(
+          title: Text(l10n.deleteSession),
+          description: Padding(
+            // chat-demo 标题与描述间距 12、描述与按钮间距 20。
+            padding: const EdgeInsets.only(bottom: 8),
+            child: Text(l10n.deleteSessionDescription),
           ),
-          ShadButton.destructive(
-            onPressed: () => Navigator.of(context).pop(true),
-            child: Text(
-              l10n.delete,
-              style: TextStyle(color: colors.destructiveForeground),
+          actions: [
+            ShadButton.outline(
+              onPressed: () => Navigator.of(context).pop(false),
+              foregroundColor: colors.foreground,
+              child: Text(l10n.cancel),
             ),
+            ShadButton.destructive(
+              onPressed: () => Navigator.of(context).pop(true),
+              backgroundColor: sidebar.danger,
+              foregroundColor: const Color(0xFFFFFFFF),
+              child: Text(l10n.delete),
+            ),
+          ],
+          constraints: BoxConstraints(minWidth: width, maxWidth: width),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+          radius: const BorderRadius.all(Radius.circular(24)),
+          removeBorderRadiusWhenTiny: false,
+          backgroundColor: colors.card,
+          border: Border.all(
+            color: dark ? const Color(0x0FFFFFFF) : const Color(0x00000000),
           ),
-        ],
+          shadows: _overlayShadows,
+          gap: 12,
+          titleStyle: TextStyle(
+            fontSize: 16,
+            height: 24 / 16,
+            fontWeight: FontWeight.w500,
+            color: colors.foreground,
+          ),
+          descriptionStyle: TextStyle(
+            fontSize: 14,
+            height: 22 / 14,
+            color: colors.mutedForeground,
+          ),
+          titleTextAlign: TextAlign.start,
+          descriptionTextAlign: TextAlign.start,
+          actionsAxis: Axis.horizontal,
+          actionsMainAxisAlignment: MainAxisAlignment.end,
+          actionsGap: 8,
+          expandActionsWhenTiny: false,
+        ),
       ),
     );
     if (confirmed != true) return;
@@ -645,7 +688,7 @@ class _SessionRowState extends State<_SessionRow> {
               padding: EdgeInsets.zero,
               decoration: ShadDecoration(
                 color: colors.menuFill,
-                shadows: _menuShadows,
+                shadows: _overlayShadows,
                 border: ShadBorder.fromBorderSide(
                   const ShadBorderSide(),
                   radius: BorderRadius.circular(12),

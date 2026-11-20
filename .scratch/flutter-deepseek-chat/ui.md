@@ -122,6 +122,9 @@
     内边距 8 / 10，圆角 8，文案 14sp / 24；删除项文字与图标 `danger`。
   - 重命名：整行变输入框（高 44，圆角 16，`brand` 1px 描边，`inputFill` 底，
     16sp）；回车或失焦提交，`Escape` 取消；`trim` 后为空或未改动不写库。
+  - 删除确认：Dialog 宽 `min(380, 屏宽-32)`，圆角 24，内边距 24 / 22，`card` 底；
+    标题 16sp / 24 / w500，描述 14sp / 22 / `mutedForeground`；按钮胶囊形右对齐，
+    间距 8；危险按钮 `AppSidebarColors.danger` 底白字；遮罩浅色 36%、深色 60%。
 - 底部设置行：上下留白 12；左侧 `settings` 20，间距 10，文案「设置」16sp / 22 /
   `labelPrimary`；内边距 9 / 10，圆角 12；点击关闭抽屉并打开系统设置 Sheet。
 - 空态：居中「还没有会话」14sp / `labelTertiary`。加载：进度条 `brand` + 14sp 文案；
