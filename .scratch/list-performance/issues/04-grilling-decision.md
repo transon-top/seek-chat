@@ -1,7 +1,8 @@
 # 方案决策：两个列表的最终建议
 
 Type: grilling
-Status: open
+Status: resolved
+Assignee: TransonQ
 Blocked by: 01, 02, 03
 
 ## Question
@@ -21,3 +22,14 @@ Blocked by: 01, 02, 03
 ## Deliverable
 
 `decision.md` + 票内 Answer 摘要。结束后本图到达终点。
+
+## Answer
+
+决策完成（2026-11-20）。产出 `.scratch/list-performance/decision.md`（方案对比、验收口径、风险、实施顺序）。
+
+- 消息列表：保持 `ListView.builder`，不引第三方；备选仅留 `super_sliver_list` 封装路径，不现在做。
+- 会话列表：保持 `SliverList.builder`；只做 `sessionsProvider` select 与 `ScrollEdgeFade` 局部重建两项 P2。
+- 首屏定位：UI 层初始窗口（最后 50 条，向上滚动每次补 40 条），保留非反向 `jumpTo` 与 Sticky Bottom；数据层分页不进实施范围，只写触发条件与要点。
+- 流式重建：P0 稳定 `GptMarkdown` 输入 + `isStreaming` 必做；P1 用 `select` 收窄重建范围，先测后拆，不建每消息 provider。
+- 渲染降级：取 mermaid 围栏闭合后渲染、表格列宽/单元格/`ShaderMask`、图片 `cacheWidth/cacheHeight`；不取 `SliverGptMarkdown` 与全局 keep-alive；LaTeX 不动。
+- 实施顺序：P0 → 初始窗口 → 渲染降级 → （按测量决定）P1 → 会话列表 P2；每步按 decision.md 第 7 节口径真机复测。

@@ -23,12 +23,13 @@
 - [Flutter 虚拟滚动与高性能列表方案调研](issues/01-research-vscroll-options.md): 内置方案已够（`ListView.builder` 本身即虚拟化）；备选 `super_sliver_list` 0.4.1（维护停滞，仅在跳转/极端甩动需要时引入）；不选 `scrollable_positioned_list` / `flutter_list_view` / `two_dimensional_scrollables`。
 - [每消息渲染成本与重建范围调研](issues/02-research-render-cost.md): 流式每个 SSE 事件会让所有可见助手正文整篇重解析（`InlinePattern` 每次 build 新建导致分段缓存失效）；P0 是稳定 `GptMarkdown` 输入 + 补 `isStreaming`；表格、mermaid、`SelectionArea`、图片为次要成本。
 - [列表基线测量](issues/03-task-baseline-measure.md): 打开 1000 条消息首屏 2.0–5.6s，成本是跳到底部时单帧 1.6–4.5s 的构建（对照小会话 89–555ms）；滚动 build 便宜（p90 <1ms），掉帧来自 raster（慢帧 9.5–16.6%）；流式期间滚动未阻塞（mock 约 13 增量/秒）；抽屉打开 106–247ms、滚动慢帧波动 1.4–71.6%；RSS 峰值 531–561MB。环境为模拟器 + 宿主 Metal。
+- [方案决策：两个列表的最终建议](issues/04-grilling-decision.md): 两列表均保留内置实现；首屏改 UI 层初始窗口（50 起步，向上每次补 40）；流式先做稳定 `GptMarkdown` 输入 P0，`select` 收窄先测后拆；渲染降级取 mermaid 闭合渲染、表格列宽、图片 `cacheWidth`；数据层分页仅写触发条件。详见 `decision.md`。
 
 ## Not yet specified
 
-- 若选第三方列表包：迁移方案与回退策略（依赖决策票结论）
-- 若结论建议分页：历史消息分页加载的数据层设计（依赖决策票结论）
-- 重建隔离的落地切法：流式期间按消息拆分订阅（依赖决策票结论）
+<!-- 本图已到达终点：无剩余雾。 -->
+
+
 
 ## Out of scope
 
