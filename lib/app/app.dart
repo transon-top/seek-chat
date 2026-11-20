@@ -13,6 +13,7 @@ import '../features/sessions/session_drawer.dart';
 import '../features/settings/settings_page.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../shared/models/types.dart';
+import '../shared/prefs/font_scale_store.dart';
 import '../shared/prefs/theme_store.dart';
 import '../shared/prefs/user_metadata_store.dart';
 import 'localization.dart';
@@ -114,6 +115,7 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
   Widget build(BuildContext context) {
     final locale = ref.watch(userMetadataProvider).locale;
     final chinese = locale == 'zh';
+    final fontScale = ref.watch(fontScaleProvider);
     return ShadApp(
       title: 'Open Chat',
       scrollBehavior: appScrollBehavior,
@@ -125,6 +127,16 @@ class _OpenChatAppState extends ConsumerState<OpenChatApp>
       supportedLocales: AppLocalizations.supportedLocales,
       materialThemeBuilder: (context, theme) =>
           buildAppTheme(brightness: theme.brightness, chinese: chinese),
+      // 字号设置位于 Navigator 之上，覆盖所有路由、Sheet 与弹窗。
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: fontScale.textScaler(media.textScaler),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: const ChatHome(),
     );
   }

@@ -16,12 +16,14 @@ import 'package:open_chat/features/chat/speech/player.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
 import 'package:open_chat/features/chat/speech/speech_api.dart';
 import 'package:open_chat/features/chat/speech/speech_controller.dart';
+import 'package:open_chat/features/settings/settings_page.dart';
 import 'package:open_chat/shared/api/client.dart';
 import 'package:open_chat/shared/data/attachment_store.dart';
 import 'package:open_chat/shared/data/chat_repository.dart';
 import 'package:open_chat/shared/data/database.dart';
 import 'package:open_chat/shared/models/types.dart';
 import 'package:open_chat/shared/prefs/chat_options_store.dart';
+import 'package:open_chat/shared/prefs/font_scale_store.dart';
 import 'package:open_chat/shared/prefs/preferences_provider.dart';
 import 'package:open_chat/shared/providers.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -442,7 +444,10 @@ void main() {
     await tester.pumpAndSettle();
 
     await openSettings(tester);
-    await tester.tap(find.byKey(const Key('settings-language')));
+    final language = find.byKey(const Key('settings-language'));
+    await tester.ensureVisible(language);
+    await tester.pumpAndSettle();
+    await tester.tap(language);
     await tester.pumpAndSettle();
     await tester.tap(find.text('English').last);
     await tester.pumpAndSettle();
@@ -1334,6 +1339,29 @@ void main() {
     expect(player.sessions.single.stopped, isTrue);
     expect(find.byTooltip('朗读'), findsOneWidget);
 
+    await unmountApp(tester);
+  });
+
+  testWidgets('font size setting scales the whole app immediately', (
+    tester,
+  ) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+    await openSettings(tester);
+
+    final tick = find.byKey(const Key('settings-font-tick-6'));
+    await tester.ensureVisible(tick);
+    await tester.pumpAndSettle();
+    await tester.tap(tick);
+    await tester.pumpAndSettle();
+
+    expect(prefs.getBool(FontScaleStore.followKey), isFalse);
+    expect(prefs.getInt(FontScaleStore.levelKey), 6);
+    final sheet = tester.element(find.byType(SettingsSheet));
+    expect(MediaQuery.textScalerOf(sheet).scale(16), 21.6);
+
+    await tester.tap(find.byKey(const Key('settings-close')));
+    await tester.pumpAndSettle();
     await unmountApp(tester);
   });
 }

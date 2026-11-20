@@ -160,12 +160,14 @@ void main() {
     final store = FakeApiKeyStore();
     await pumpSettings(tester, client: clientResponding(200), store: store);
 
+    await reveal(tester, find.byKey(const Key('settings-language')));
     await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('English').last);
     await tester.pumpAndSettle();
     expect(prefs.getString('user.locale'), 'en');
 
+    await reveal(tester, find.byKey(const Key('settings-province')));
     await tester.tap(find.byKey(const Key('settings-province')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('北京市').last);
@@ -175,6 +177,7 @@ void main() {
       'province': '110000',
     });
 
+    await reveal(tester, find.byKey(const Key('settings-city')));
     await tester.tap(find.byKey(const Key('settings-city')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('北京市').last);
@@ -185,6 +188,7 @@ void main() {
       'city': '110100',
     });
 
+    await reveal(tester, find.byKey(const Key('settings-province')));
     await tester.tap(find.byKey(const Key('settings-province')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('不指定').last);
@@ -200,6 +204,7 @@ void main() {
       store: FakeApiKeyStore(),
     );
 
+    await reveal(tester, find.byKey(const Key('settings-language')));
     await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('跟随系统').last);
@@ -250,6 +255,7 @@ void main() {
     );
 
     expect(find.byKey(const Key('settings-province')), findsNothing);
+    await reveal(tester, find.byKey(const Key('settings-region')));
     await tester.tap(find.byKey(const Key('settings-region')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Afghanistan').last);
