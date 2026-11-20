@@ -10,6 +10,7 @@ import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:open_chat/app/app.dart';
+import 'package:open_chat/features/chat/chat_page.dart';
 import 'package:open_chat/features/chat/composer.dart';
 import 'package:open_chat/features/chat/speech/player.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
@@ -1185,6 +1186,35 @@ void main() {
           ?.hasFocus,
       isTrue,
     );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('session data changes do not rebuild the page while the '
+      'current session is stable', (tester) async {
+    final first = await repository.createSession();
+    await repository.renameSession(first.id, 'First');
+    await repository.addUserMessage(sessionId: first.id, text: 'a');
+
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+    final before = tester.widget<ChatPage>(find.byType(ChatPage));
+    expect(before.sessionId, first.id);
+
+    // 标题变化只更新列表数据，当前会话不变：页面 widget 实例保持不变。
+    await repository.renameSession(first.id, 'Renamed');
+    await tester.pumpAndSettle();
+    expect(
+      identical(tester.widget<ChatPage>(find.byType(ChatPage)), before),
+      isTrue,
+    );
+
+    // 当前会话被删除：当前 id 变化，页面重建并回到空对话。
+    await repository.deleteSession(first.id);
+    await tester.pumpAndSettle();
+    final after = tester.widget<ChatPage>(find.byType(ChatPage));
+    expect(identical(after, before), isFalse);
+    expect(after.sessionId, isNull);
 
     await unmountApp(tester);
   });

@@ -32,16 +32,25 @@ class _ScrollEdgeFadeState extends State<ScrollEdgeFade> {
   static const _fadeExtent = 24.0;
   static const _fadeDuration = Duration(milliseconds: 150);
 
+  /// 内容尺寸 / 视口变化的刷新信号：只唤醒渐隐带，不重建整块。
+  final _metrics = ValueNotifier<int>(0);
+
+  @override
+  void dispose() {
+    _metrics.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     return NotificationListener<ScrollMetricsNotification>(
       // 内容尺寸 / 视口变化时刷新可滚动状态。
       onNotification: (_) {
-        setState(() {});
+        _metrics.value++;
         return false;
       },
       child: AnimatedBuilder(
-        animation: widget.controller,
+        animation: Listenable.merge([widget.controller, _metrics]),
         builder: (context, child) {
           final position = widget.controller.hasClients
               ? widget.controller.position
