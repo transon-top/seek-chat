@@ -2,6 +2,8 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import 'markdown_theme.dart';
+
 /// 主题种子；浅深两套由同一个 seed 生成（票 18）。
 const appThemeSeed = Color(0xFF4D6BFE);
 
@@ -96,6 +98,8 @@ ThemeData buildAppTheme({
     colorScheme: scheme,
     scaffoldBackgroundColor: scheme.surface,
     canvasColor: scheme.surface,
+    // Markdown 样式照搬 chat-demo，见 `markdown_theme.dart`。
+    extensions: [...base.extensions.values, buildMarkdownTheme(brightness)],
     textTheme: chinese
         ? text.copyWith(
             bodyLarge: text.bodyLarge?.copyWith(height: 1.6),

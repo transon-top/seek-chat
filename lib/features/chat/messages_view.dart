@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+import '../../app/markdown_theme.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
 import '../../shared/models/reply_rules.dart';
@@ -545,11 +546,7 @@ class _AssistantMessageView extends StatelessWidget {
                 text: view.answer!.markdown,
                 streaming: reply.isInFlight,
                 sources: view.sources,
-                textStyle: TextStyle(
-                  fontSize: 16,
-                  height: 1.6,
-                  color: ShadTheme.of(context).colorScheme.foreground,
-                ),
+                textStyle: markdownBodyStyle(context),
               ),
             if (reply.status == ReplyStatus.error)
               _ReplyError(
@@ -562,11 +559,7 @@ class _AssistantMessageView extends StatelessWidget {
                 padding: const EdgeInsets.symmetric(vertical: 4),
                 child: MarkdownView(
                   text: refusal,
-                  textStyle: TextStyle(
-                    fontSize: 16,
-                    height: 1.6,
-                    color: ShadTheme.of(context).colorScheme.foreground,
-                  ),
+                  textStyle: markdownBodyStyle(context),
                 ),
               ),
             if (reply.isInFlight && !refused) const _StreamingCursor(),
@@ -1024,11 +1017,7 @@ class _StepItem extends StatelessWidget {
           streaming: streaming && isLast,
           dense: true,
           disableLinks: true,
-          textStyle: TextStyle(
-            fontSize: 13,
-            height: 1.6,
-            color: colors.mutedForeground,
-          ),
+          textStyle: markdownSmallStyle(context),
         ),
       );
     }
@@ -1040,11 +1029,7 @@ class _StepItem extends StatelessWidget {
           streaming: streaming && isLast,
           sources: sources,
           dense: true,
-          textStyle: TextStyle(
-            fontSize: 13,
-            height: 1.6,
-            color: ShadTheme.of(context).colorScheme.mutedForeground,
-          ),
+          textStyle: markdownSmallStyle(context),
         ),
       );
     }
