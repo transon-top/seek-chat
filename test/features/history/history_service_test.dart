@@ -114,6 +114,22 @@ void main() {
     expect((reply.blocks.single as TextBlock).text, 'answer');
   });
 
+  test('exports and reimports sessions without messages', () async {
+    final session = await repository.createSession();
+    await repository.renameSession(session.id, 'Empty');
+
+    final exported = await service.exportArchive(notice: (_) => null);
+    final decoded = decodeHistoryZip(exported.bytes, newId: () => 'unused');
+    expect(decoded.sessions, hasLength(1));
+    expect(decoded.sessions.single.session.id, session.id);
+    expect(decoded.sessions.single.messages, isEmpty);
+
+    await service.importArchive(exported.bytes, stopGeneration: () {});
+    final restored = await repository.listSessions(includeEmpty: true);
+    expect(restored.single.id, session.id);
+    expect(restored.single.title, 'Empty');
+  });
+
   test('import replaces other sessions and keeps the restored image file',
       () async {
     final (seeded, _) = await seedConversation();

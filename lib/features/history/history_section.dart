@@ -14,10 +14,17 @@ import 'history_zip.dart';
 
 /// 设置页的「数据管理」：导入会覆盖全部本地对话与附件（`history.md` §8）。
 class HistorySection extends ConsumerStatefulWidget {
-  const HistorySection({super.key, required this.stopGeneration});
+  const HistorySection({
+    super.key,
+    required this.stopGeneration,
+    this.onImported,
+  });
 
   /// 导入校验通过后、写库之前停止全部活动会话的生成。
   final void Function() stopGeneration;
+
+  /// 导入成功、数据库已替换后调用；宿主据此清空旧页面状态。
+  final VoidCallback? onImported;
 
   @override
   ConsumerState<HistorySection> createState() => _HistorySectionState();
@@ -62,6 +69,7 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
       final count = await ref
           .read(historyServiceProvider)
           .importArchive(bytes, stopGeneration: widget.stopGeneration);
+      widget.onImported?.call();
       if (!mounted) return;
       _closeProgress();
       _showMessage(

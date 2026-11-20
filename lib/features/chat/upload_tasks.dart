@@ -103,6 +103,17 @@ class UploadTasks extends Notifier<Map<String, UploadTask>> {
     state = next;
   }
 
+  /// 导入替换数据后清空全部任务；进行中的请求结果不再写回任务表。
+  void clear() {
+    for (final job in _jobs.values) {
+      job.cancelled = true;
+      if (!job.completer.isCompleted) job.completer.complete(null);
+    }
+    _jobs.clear();
+    _queue.clear();
+    state = const {};
+  }
+
   void _pump() {
     while (_running < maxConcurrent && _queue.isNotEmpty) {
       final job = _queue.removeAt(0);
@@ -128,8 +139,8 @@ class UploadTasks extends Notifier<Map<String, UploadTask>> {
             purpose: uploadPurposeFor(job.name, isImage: job.isImage)?.wire,
           );
       _jobs.remove(job.id);
-      // 移除后迟到的成功只更新任务表，不再展示。
-      _set(job.id, UploadTask.done(serverId));
+      // 已取消或清空的任务不再写回任务表。
+      if (!job.cancelled) _set(job.id, UploadTask.done(serverId));
       if (!job.cancelled && !job.completer.isCompleted) {
         job.completer.complete(serverId);
       }
