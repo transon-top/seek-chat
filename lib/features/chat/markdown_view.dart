@@ -442,13 +442,39 @@ class _MermaidBlock extends StatefulWidget {
 class _MermaidBlockState extends State<_MermaidBlock> {
   bool _failed = false;
 
+  /// 当前 source 的解析结果，按 source 缓存。
+  String? _checkedSource;
+  bool _parses = true;
+
   @override
   void didUpdateWidget(_MermaidBlock oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.source != oldWidget.source) _failed = false;
+    if (widget.source != oldWidget.source) {
+      _failed = false;
+      _checkedSource = null;
+    }
   }
 
-  /// 解析失败时整块换成代码块；错误回调发生在 build 中，延到帧后再换。
+  /// 在 build 中同步试解析一次：失败时当帧就换成代码块。
+  ///
+  /// 若等 errorBuilder 回调再换，块会先按图表容器撑高、下一帧才缩回，
+  /// 滚动中视口上方的高度突变会让列表跳位。
+  /// 校验与图表绘制各解析一次，只有首次构建该 source 时付这份成本。
+  bool _sourceParses() {
+    if (_checkedSource == widget.source) return _parses;
+    _checkedSource = widget.source;
+    try {
+      mermaid_core.Mermaid(
+        measurer: const FlutterTextMeasurer(),
+      ).render(widget.source);
+      _parses = true;
+    } catch (_) {
+      _parses = false;
+    }
+    return _parses;
+  }
+
+  /// 兜底：校验通过但绘制仍出错时，下一帧换成代码块。
   void _markFailed() {
     if (_failed) return;
     WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -459,7 +485,9 @@ class _MermaidBlockState extends State<_MermaidBlock> {
   @override
   Widget build(BuildContext context) {
     // 无可用图时按普通代码块展示源码，不用图表容器里的纯文本降级。
-    if (_failed) return CodeField(name: 'mermaid', codes: widget.source);
+    if (_failed || !_sourceParses()) {
+      return CodeField(name: 'mermaid', codes: widget.source);
+    }
     final dark = Theme.of(context).brightness == Brightness.dark;
     return Padding(
       padding: const EdgeInsets.all(16),
