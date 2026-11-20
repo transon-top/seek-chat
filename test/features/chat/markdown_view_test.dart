@@ -5,6 +5,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_flutter/mermaid_flutter.dart';
 import 'package:open_chat/features/chat/markdown_view.dart';
 import 'package:open_chat/features/chat/reply_view.dart';
+import 'package:open_chat/shared/widgets/horizontal_fade_scroll.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:val_latex_flutter/val_latex_flutter.dart' show Math;
 
@@ -52,6 +53,15 @@ void main() {
     );
     await tester.pumpAndSettle();
   }
+
+  testWidgets('wraps a table in a horizontally fading scroller', (
+    tester,
+  ) async {
+    await pumpMarkdown(tester, '| 左 | 右 |\n| --- | --- |\n| 1 | 2 |');
+
+    expect(find.byType(Table), findsOneWidget);
+    expect(find.byType(HorizontalFadeScroll), findsOneWidget);
+  });
 
   testWidgets('renders markdown syntax as text', (tester) async {
     await pumpMarkdown(tester, '# 标题\n\n**粗体**');

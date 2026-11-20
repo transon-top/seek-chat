@@ -12,6 +12,7 @@ import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/markdown_theme.dart';
 import '../../l10n/generated/app_localizations.dart';
+import '../../shared/widgets/horizontal_fade_scroll.dart';
 import 'reply_view.dart';
 
 /// 渲染回复中的 Markdown 文本。
@@ -257,8 +258,7 @@ Widget _tableBuilder(
     minWidth: 100,
     maxWidth: math.min(MediaQuery.sizeOf(context).width * 0.3, 320),
   );
-  return SingleChildScrollView(
-    scrollDirection: Axis.horizontal,
+  return HorizontalFadeScroll(
     child: Table(
       defaultColumnWidth: const IntrinsicColumnWidth(),
       border: TableBorder(horizontalInside: border, bottom: border),
