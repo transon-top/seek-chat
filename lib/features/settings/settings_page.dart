@@ -231,8 +231,7 @@ class _GeneralSettings extends ConsumerWidget {
         const _RowDivider(),
         _TtsVoiceRow(),
         const _RowDivider(),
-        const SizedBox(height: 32),
-        _LocationSection(),
+        const _LocationRow(),
         const SizedBox(height: 24),
         const _SpeechSection(),
       ],
@@ -355,7 +354,7 @@ class _RowDivider extends StatelessWidget {
   }
 }
 
-/// 主题：浅色 / 深色 两列，跟随系统整行（参考图）。
+/// 主题：浅色 / 深色 / 跟随系统 三张等宽卡片一行，高度随内容撑开。
 class _ThemeSection extends ConsumerWidget {
   const _ThemeSection();
 
@@ -365,41 +364,41 @@ class _ThemeSection extends ConsumerWidget {
     final mode = ref.watch(themeModeProvider);
     void select(ThemeMode value) =>
         ref.read(themeModeProvider.notifier).setThemeMode(value);
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Row(
-          children: [
-            Expanded(
-              child: _ThemeCard(
-                key: const Key('settings-theme-light'),
-                icon: LucideIcons.sun,
-                label: l10n.settingsThemeLight,
-                selected: mode == ThemeMode.light,
-                onTap: () => select(ThemeMode.light),
-              ),
+    return IntrinsicHeight(
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Expanded(
+            child: _ThemeCard(
+              key: const Key('settings-theme-light'),
+              icon: LucideIcons.sun,
+              label: l10n.settingsThemeLight,
+              selected: mode == ThemeMode.light,
+              onTap: () => select(ThemeMode.light),
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ThemeCard(
-                key: const Key('settings-theme-dark'),
-                icon: LucideIcons.moon,
-                label: l10n.settingsThemeDark,
-                selected: mode == ThemeMode.dark,
-                onTap: () => select(ThemeMode.dark),
-              ),
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ThemeCard(
+              key: const Key('settings-theme-dark'),
+              icon: LucideIcons.moon,
+              label: l10n.settingsThemeDark,
+              selected: mode == ThemeMode.dark,
+              onTap: () => select(ThemeMode.dark),
             ),
-          ],
-        ),
-        const SizedBox(height: 8),
-        _ThemeCard(
-          key: const Key('settings-theme-system'),
-          icon: LucideIcons.monitor,
-          label: l10n.settingsThemeSystem,
-          selected: mode == ThemeMode.system,
-          onTap: () => select(ThemeMode.system),
-        ),
-      ],
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: _ThemeCard(
+              key: const Key('settings-theme-system'),
+              icon: LucideIcons.monitor,
+              label: l10n.settingsThemeSystem,
+              selected: mode == ThemeMode.system,
+              onTap: () => select(ThemeMode.system),
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -428,13 +427,14 @@ class _ThemeCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         onTap: onTap,
         child: Container(
-          height: 88,
+          padding: const EdgeInsets.symmetric(vertical: 16),
           decoration: BoxDecoration(
             color: selected ? colors.muted : colors.card,
             border: Border.all(color: colors.border),
             borderRadius: BorderRadius.circular(14),
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Icon(icon, size: 20, color: colors.foreground),
@@ -575,7 +575,7 @@ class _FontScaleSlider extends StatefulWidget {
 }
 
 class _FontScaleSliderState extends State<_FontScaleSlider> {
-  static const _thumbSize = 32.0;
+  static const _thumbSize = 26.0;
 
   /// 触摸区保持 44；thumb 视觉上小于触摸区。
   static const _touchHeight = 44.0;
@@ -730,8 +730,10 @@ class _TtsVoiceRow extends ConsumerWidget {
   }
 }
 
-class _LocationSection extends ConsumerWidget {
-  const _LocationSection();
+/// 位置信息：与语言 / 朗读音色同版式，左侧标签 + 右侧省份 / 城市胶囊；
+/// 行下说明与语音区间距一致。
+class _LocationRow extends ConsumerWidget {
+  const _LocationRow();
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -745,69 +747,70 @@ class _LocationSection extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        _SectionTitle(l10n.settingsLocation),
-        const SizedBox(height: 20),
-        if (metadata.systemChinese)
-          Row(
+        _SettingRow(
+          label: l10n.settingsLocation,
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: _SettingsSelect<String>(
-                  key: const Key('settings-province'),
-                  value: selected?.province ?? '',
-                  displayText: province?.name,
-                  placeholder: l10n.settingsProvincePlaceholder,
-                  align: Alignment.bottomLeft,
-                  fill: true,
-                  options: [
-                    ('', l10n.settingsLocationNone),
-                    for (final item in provinces) (item.code, item.name),
-                  ],
-                  onChanged: (value) => notifier.setLocation(
-                    value.isEmpty
-                        ? null
-                        : UserLocation(region: 'CN', province: value),
+              if (metadata.systemChinese) ...[
+                Flexible(
+                  child: _SettingsSelect<String>(
+                    key: const Key('settings-province'),
+                    value: selected?.province ?? '',
+                    displayText: province?.name,
+                    placeholder: l10n.settingsProvincePlaceholder,
+                    align: Alignment.bottomLeft,
+                    options: [
+                      ('', l10n.settingsLocationNone),
+                      for (final item in provinces) (item.code, item.name),
+                    ],
+                    onChanged: (value) => notifier.setLocation(
+                      value.isEmpty
+                          ? null
+                          : UserLocation(region: 'CN', province: value),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: _SettingsSelect<String>(
-                  key: const Key('settings-city'),
-                  value: selected?.city ?? '',
-                  placeholder: l10n.settingsCityPlaceholder,
-                  align: Alignment.bottomRight,
-                  fill: true,
-                  options: [
-                    ('', l10n.settingsLocationNone),
-                    for (final city in province?.cities ?? const <City>[])
-                      (city.code, city.name),
-                  ],
-                  onChanged: province == null
-                      ? (_) {}
-                      : (value) => notifier.setLocation(
-                          UserLocation(
-                            region: 'CN',
-                            province: province.code,
-                            city: value.isEmpty ? null : value,
+                const SizedBox(width: 8),
+                Flexible(
+                  child: _SettingsSelect<String>(
+                    key: const Key('settings-city'),
+                    value: selected?.city ?? '',
+                    placeholder: l10n.settingsCityPlaceholder,
+                    align: Alignment.bottomRight,
+                    options: [
+                      ('', l10n.settingsLocationNone),
+                      for (final city in province?.cities ?? const <City>[])
+                        (city.code, city.name),
+                    ],
+                    onChanged: province == null
+                        ? (_) {}
+                        : (value) => notifier.setLocation(
+                            UserLocation(
+                              region: 'CN',
+                              province: province.code,
+                              city: value.isEmpty ? null : value,
+                            ),
                           ),
-                        ),
+                  ),
                 ),
-              ),
+              ] else
+                Flexible(
+                  child: _SettingsSelect<String>(
+                    key: const Key('settings-region'),
+                    value: location?.region ?? '',
+                    placeholder: l10n.settingsLocationNone,
+                    align: Alignment.bottomLeft,
+                    options: _regionOptions(metadata.locale, l10n),
+                    onChanged: (value) => notifier.setLocation(
+                      value.isEmpty ? null : UserLocation(region: value),
+                    ),
+                  ),
+                ),
             ],
-          )
-        else
-          _SettingsSelect<String>(
-            key: const Key('settings-region'),
-            value: location?.region ?? '',
-            placeholder: l10n.settingsLocationNone,
-            align: Alignment.bottomLeft,
-            fill: true,
-            options: _regionOptions(metadata.locale, l10n),
-            onChanged: (value) => notifier.setLocation(
-              value.isEmpty ? null : UserLocation(region: value),
-            ),
           ),
-        const SizedBox(height: 12),
+        ),
+        const SizedBox(height: 8),
         Text(
           l10n.settingsLocationDescription,
           style: TextStyle(
@@ -846,6 +849,8 @@ class _SettingRow extends StatelessWidget {
           Expanded(
             child: Text(
               label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
               style: TextStyle(
                 fontSize: 15,
                 height: 20 / 15,
@@ -870,7 +875,6 @@ class _SettingsSelect<T> extends StatefulWidget {
     this.displayText,
     this.placeholder,
     this.align = Alignment.bottomRight,
-    this.fill = false,
   });
 
   final T value;
@@ -879,9 +883,6 @@ class _SettingsSelect<T> extends StatefulWidget {
   final String? displayText;
   final String? placeholder;
   final Alignment align;
-
-  /// 铺满可用宽度并把箭头推到右端（位置信息胶囊）。
-  final bool fill;
 
   @override
   State<_SettingsSelect<T>> createState() => _SettingsSelectState<T>();
@@ -967,12 +968,9 @@ class _SettingsSelectState<T> extends State<_SettingsSelect<T>> {
               borderRadius: BorderRadius.circular(999),
             ),
             child: Row(
-              mainAxisSize: widget.fill ? MainAxisSize.max : MainAxisSize.min,
+              mainAxisSize: MainAxisSize.min,
               children: [
-                if (widget.fill)
-                  Expanded(child: labelWidget)
-                else
-                  Flexible(child: labelWidget),
+                Flexible(child: labelWidget),
                 const SizedBox(width: 6),
                 Icon(
                   LucideIcons.chevronDown,
