@@ -24,10 +24,12 @@ Future<void> main() async {
   final preferences = await SharedPreferences.getInstance();
   if (kDebugMode) {
     try {
+      // 历史样本先写，Markdown 样本保持最新，冷启动仍打开主样本会话。
+      await seedHistorySamples(database, preferences);
       await seedMarkdownSamples(repository, preferences);
     } on Object catch (error) {
       // 样本写入失败不阻塞启动。
-      debugLog('markdown sample seed failed', error);
+      debugLog('dev sample seed failed', error);
     }
   }
   try {
