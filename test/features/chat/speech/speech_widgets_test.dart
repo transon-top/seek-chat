@@ -276,6 +276,60 @@ void main() {
     expect(taps, 1);
   });
 
+  final waveBars = find.byWidgetPredicate(
+    (widget) =>
+        widget.key is ValueKey<String> &&
+        (widget.key! as ValueKey<String>).value.startsWith('voice-wave-bar-'),
+  );
+
+  List<double> barHeights(WidgetTester tester) => [
+    for (final element in waveBars.evaluate())
+      (element.renderObject! as RenderBox).size.height,
+  ];
+
+  testWidgets('the starting overlay shows a static 32-bar low skeleton', (
+    tester,
+  ) async {
+    await pumpHost(tester, const RecordingOverlay(phase: SpeechPhase.starting));
+    expect(waveBars, findsNWidgets(32));
+    final before = barHeights(tester);
+    expect(before.every((height) => height <= 8), isTrue);
+
+    await tester.pump(const Duration(milliseconds: 300));
+    expect(barHeights(tester), before);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('recognizing keeps the waveform at a low amplitude', (
+    tester,
+  ) async {
+    await pumpHost(
+      tester,
+      const RecordingOverlay(phase: SpeechPhase.transcribing),
+    );
+    expect(waveBars, findsNWidgets(32));
+    expect(barHeights(tester).every((height) => height <= 8), isTrue);
+    await tester.pumpWidget(const SizedBox());
+  });
+
+  testWidgets('the overlay freezes when animations are reduced', (
+    tester,
+  ) async {
+    await pumpHost(
+      tester,
+      const RecordingOverlay(phase: SpeechPhase.recording, level: 1),
+      disableAnimations: true,
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('松手发送，上滑取消'), findsOneWidget);
+    // 漂移与高光脉动由 ticker 驱动；冻结后不再请求帧。
+    expect(tester.binding.hasScheduledFrame, isFalse);
+    final before = barHeights(tester);
+
+    await tester.pump(const Duration(milliseconds: 500));
+    expect(barHeights(tester), before);
+  });
+
   testWidgets('read-aloud button shows idle, loading and playing states', (
     tester,
   ) async {

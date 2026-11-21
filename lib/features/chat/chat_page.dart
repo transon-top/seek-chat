@@ -764,13 +764,13 @@ class _RecordingOverlaySlot extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final phase = ref.watch(
-      speechControllerProvider.select((state) => state.phase),
+    final (phase, level) = ref.watch(
+      speechControllerProvider.select((state) => (state.phase, state.level)),
     );
     if (!phase.voiceBusy) return const SizedBox.shrink();
     return SizedBox(
       height: MediaQuery.sizeOf(context).height * 0.6,
-      child: RecordingOverlay(phase: phase),
+      child: RecordingOverlay(phase: phase, level: level),
     );
   }
 }
