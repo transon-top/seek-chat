@@ -1,73 +1,153 @@
+import 'dart:async';
+
+import 'package:flutter/semantics.dart';
+import 'package:flutter/services.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
 
-/// 输入区的语音按钮：空闲、录音中、转写中三态（`speech.md` §2.1）。
+/// 取消阈值：以按下瞬间的全局 Y 为基准，上滑 ≥80dp 进入取消态
+/// （`speech.md` §3.2）。纯函数，便于单测。
+bool shouldCancelVoice({
+  required double startY,
+  required double currentY,
+  double threshold = 80,
+}) => startY - currentY >= threshold;
+
+/// 输入区的语音按钮：`Listener` 按住说话 + 语义 tap 切换与「取消录音」动作
+/// （`speech.md` §2.1、§3.2；ui.md §5.8）。
 ///
-/// `onPressed` 为 null 表示禁用（生成中、朗读中）。
-class VoiceButton extends StatelessWidget {
-  const VoiceButton({super.key, required this.phase, required this.onPressed});
+/// 录音与识别期间按钮被浮层覆盖，但保留在语义树里，读屏用户可结束或取消。
+class VoiceButton extends StatefulWidget {
+  const VoiceButton({
+    super.key,
+    required this.phase,
+    required this.enabled,
+    required this.onStart,
+    required this.onEnd,
+    required this.onGestureCancel,
+    required this.onCancelArmedChanged,
+    required this.onCancelRecording,
+  });
 
   final SpeechPhase phase;
-  final VoidCallback? onPressed;
+  final bool enabled;
+  final VoidCallback onStart;
+  final VoidCallback onEnd;
+  final VoidCallback onGestureCancel;
+  final ValueChanged<bool> onCancelArmedChanged;
+  final VoidCallback onCancelRecording;
+
+  @override
+  State<VoiceButton> createState() => _VoiceButtonState();
+}
+
+class _VoiceButtonState extends State<VoiceButton> {
+  int? _pointer;
+  double _startY = 0;
+  bool _armed = false;
+
+  bool get _cancelable => widget.phase.voiceCancelable;
+
+  String _label(AppLocalizations l10n) => switch (widget.phase) {
+    SpeechPhase.starting ||
+    SpeechPhase.recording ||
+    SpeechPhase.cancelling => l10n.voiceRecordSemantics,
+    SpeechPhase.transcribing => l10n.voiceRecognizingSemantics,
+    SpeechPhase.idle ||
+    SpeechPhase.loading ||
+    SpeechPhase.playing => l10n.holdToTalk,
+  };
+
+  void _handleSemanticTap() {
+    if (widget.phase == SpeechPhase.idle) {
+      if (widget.enabled) widget.onStart();
+      return;
+    }
+    if (_cancelable) widget.onEnd();
+  }
+
+  void _handleDown(PointerDownEvent event) {
+    if (_pointer != null ||
+        widget.phase != SpeechPhase.idle ||
+        !widget.enabled) {
+      return;
+    }
+    _pointer = event.pointer;
+    _startY = event.position.dy;
+    _armed = false;
+    widget.onStart();
+  }
+
+  void _handleMove(PointerMoveEvent event) {
+    if (event.pointer != _pointer) return;
+    final armed = shouldCancelVoice(
+      startY: _startY,
+      currentY: event.position.dy,
+    );
+    if (armed == _armed) return;
+    _armed = armed;
+    unawaited(
+      armed ? HapticFeedback.mediumImpact() : HapticFeedback.lightImpact(),
+    );
+    widget.onCancelArmedChanged(armed);
+  }
+
+  void _handleUp(PointerUpEvent event) {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
+    _armed = false;
+    widget.onEnd();
+  }
+
+  void _handleCancel(PointerCancelEvent event) {
+    if (event.pointer != _pointer) return;
+    _pointer = null;
+    _armed = false;
+    widget.onGestureCancel();
+  }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
-    final Widget icon;
-    final String tooltip;
-    switch (phase) {
-      case SpeechPhase.recording:
-        icon = Stack(
-          alignment: Alignment.center,
-          children: [
-            Icon(LucideIcons.mic, size: 18, color: colors.destructive),
-            Positioned(
-              right: 0,
-              top: 0,
-              child: Container(
-                width: 8,
-                height: 8,
-                decoration: BoxDecoration(
-                  color: colors.destructive,
-                  shape: BoxShape.circle,
-                ),
+    final label = _label(l10n);
+    final interactive = widget.enabled || _cancelable;
+    return Semantics(
+      key: const Key('voice-button'),
+      button: true,
+      enabled: interactive,
+      label: label,
+      onTap: interactive ? _handleSemanticTap : null,
+      customSemanticsActions: _cancelable
+          ? {
+              CustomSemanticsAction(label: l10n.voiceCancelRecording):
+                  widget.onCancelRecording,
+            }
+          : null,
+      child: Tooltip(
+        message: label,
+        child: Listener(
+          behavior: HitTestBehavior.opaque,
+          onPointerDown: _handleDown,
+          onPointerMove: _handleMove,
+          onPointerUp: _handleUp,
+          onPointerCancel: _handleCancel,
+          child: SizedBox(
+            width: 40,
+            height: 40,
+            child: Opacity(
+              opacity: interactive ? 1 : 0.4,
+              child: Icon(
+                LucideIcons.mic,
+                size: 18,
+                color: colors.mutedForeground,
               ),
             ),
-          ],
-        );
-        tooltip = l10n.voiceInputStop;
-      case SpeechPhase.transcribing:
-        icon = SizedBox(
-          width: 18,
-          height: 18,
-          child: CircularProgressIndicator(
-            strokeWidth: 2,
-            color: colors.mutedForeground,
           ),
-        );
-        tooltip = l10n.voiceInputCancel;
-      case SpeechPhase.idle:
-      case SpeechPhase.loading:
-      case SpeechPhase.playing:
-        icon = const Icon(LucideIcons.mic, size: 18);
-        tooltip = l10n.voiceInput;
-    }
-    return Tooltip(
-      message: tooltip,
-      child: ShadIconButton.ghost(
-        key: const Key('voice-button'),
-        onPressed: onPressed,
-        enabled: onPressed != null,
-        icon: icon,
-        iconSize: 18,
-        width: 40,
-        height: 40,
-        padding: EdgeInsets.zero,
-        foregroundColor: colors.mutedForeground,
+        ),
       ),
     );
   }

@@ -36,6 +36,11 @@ enum VoiceInputFailure {
   empty,
   limitReached,
   interrupted,
+  micGrantedRetry,
+  insertedGenerating,
+  insertedUploading,
+  insertedNotSent,
+  sendFailedInserted,
 }
 
 String voiceInputErrorText(AppLocalizations l10n, VoiceInputFailure failure) =>
@@ -47,6 +52,11 @@ String voiceInputErrorText(AppLocalizations l10n, VoiceInputFailure failure) =>
       VoiceInputFailure.empty => l10n.voiceInputEmpty,
       VoiceInputFailure.limitReached => l10n.voiceInputLimitReached,
       VoiceInputFailure.interrupted => l10n.voiceInputInterrupted,
+      VoiceInputFailure.micGrantedRetry => l10n.voiceMicGrantedRetry,
+      VoiceInputFailure.insertedGenerating => l10n.voiceInsertedGenerating,
+      VoiceInputFailure.insertedUploading => l10n.voiceInsertedUploading,
+      VoiceInputFailure.insertedNotSent => l10n.voiceInsertedNotSent,
+      VoiceInputFailure.sendFailedInserted => l10n.voiceSendFailedInserted,
     };
 
 /// 朗读失败的可见类别（`speech.md` §6.2）。
@@ -110,13 +120,13 @@ String localMessageText(AppLocalizations l10n, LocalMessage message) {
     case LocalMessageKeys.apiErrorContentRejected:
       return l10n.apiErrorContentRejected;
     case LocalMessageKeys.errorSaveAttachmentFailed:
-      return l10n.errorSaveAttachmentFailed(
-        '${message.params['error'] ?? ''}',
-      );
+      return l10n.errorSaveAttachmentFailed('${message.params['error'] ?? ''}');
     case LocalMessageKeys.uploadUnsupportedFormat:
       return l10n.uploadUnsupportedFormat;
     case LocalMessageKeys.uploadMaxMBSize:
-      return l10n.uploadMaxMBSize((message.params['size'] as num?)?.toInt() ?? 0);
+      return l10n.uploadMaxMBSize(
+        (message.params['size'] as num?)?.toInt() ?? 0,
+      );
     case LocalMessageKeys.uploadMaxFiles:
       return l10n.uploadMaxFiles(
         (message.params['count'] as num?)?.toInt() ?? 0,

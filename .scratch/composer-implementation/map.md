@@ -39,6 +39,9 @@
 - [04: 草稿附件行样式](issues/04-draft-attachment-row.md):
   图片 64 圆角 12、文件卡 210×64 带 36 扩展名色块、卡内 20 移除徽标、
   上传 / 失败覆盖层与 tooltip 修正；analyze、453 测试通过。
+- [05: 按住说话状态机与手势](issues/05-hold-to-talk.md):
+  五相状态机 + 显式开始 / 松手 / 取消、80dp 上滑取消、首次授权提示、
+  先插入再按闸门自动发送、基础浮层与语义动作；analyze、471 测试通过。
 
 ## Not yet specified
 

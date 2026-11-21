@@ -69,7 +69,11 @@ void main() {
           onRemoveAttachment: (id) => events.add('remove:$id'),
           onSend: () => events.add('send'),
           onStop: () => events.add('stop'),
-          onVoice: () => events.add('voice'),
+          onVoiceStart: () => events.add('voice-start'),
+          onVoiceEnd: () => events.add('voice-end'),
+          onVoicePointerCancel: () => events.add('voice-cancel'),
+          onVoiceCancelArmed: (armed) => events.add('voice-armed:$armed'),
+          onVoiceCancel: () => events.add('voice-cancel-recording'),
         ),
       ),
     ),
@@ -225,20 +229,48 @@ void main() {
     expect(events, ['retry:a']);
   });
 
-  testWidgets('voice button shows recording and transcribing states', (
+  testWidgets('voice button starts on press and ends on release', (
     tester,
   ) async {
-    await tester.pumpWidget(host(phase: SpeechPhase.recording));
+    await tester.pumpWidget(host());
     await tester.pumpAndSettle();
-    expect(find.byIcon(LucideIcons.mic), findsOneWidget);
-    expect(find.byTooltip('结束录音并转写'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('voice-button')));
-    expect(events, ['voice']);
+    expect(find.byTooltip('按住说话'), findsOneWidget);
 
-    await tester.pumpWidget(host(phase: SpeechPhase.transcribing));
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const Key('voice-button'))),
+    );
     await tester.pump();
-    expect(find.byTooltip('正在转写，点击取消'), findsOneWidget);
-    expect(find.byType(CircularProgressIndicator), findsOneWidget);
+    expect(events, ['voice-start']);
+    await gesture.up();
+    await tester.pump();
+    expect(events, ['voice-start', 'voice-end']);
+  });
+
+  testWidgets('voice overlay states keep the send slot disabled', (
+    tester,
+  ) async {
+    input.text = 'Hello';
+    await tester.pumpWidget(host(phase: SpeechPhase.transcribing));
+    await tester.pumpAndSettle();
+    expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isFalse);
+    expect(
+      tester
+          .widget<ShadIconButton>(find.byKey(const Key('attach-button')))
+          .onPressed,
+      isNull,
+    );
+    expect(
+      tester
+          .widget<ComposerToggle>(find.byKey(const Key('thinking-toggle')))
+          .enabled,
+      isFalse,
+    );
+    expect(
+      tester
+          .widget<ComposerToggle>(find.byKey(const Key('search-toggle')))
+          .enabled,
+      isFalse,
+    );
   });
 
   testWidgets('voice input is disabled while a reply is being read aloud', (
@@ -246,10 +278,9 @@ void main() {
   ) async {
     await tester.pumpWidget(host(phase: SpeechPhase.playing));
     await tester.pumpAndSettle();
-    final button = tester.widget<ShadIconButton>(
-      find.byKey(const Key('voice-button')),
-    );
-    expect(button.onPressed, isNull);
+    await tester.tap(find.byKey(const Key('voice-button')));
+    await tester.pump();
+    expect(events, isEmpty);
   });
 
   testWidgets('composer hint follows attachments and hides with text', (
@@ -304,12 +335,10 @@ void main() {
     input.clear();
     await tester.pumpWidget(host(phase: SpeechPhase.playing));
     await tester.pumpAndSettle();
-    expect(
-      tester
-          .widget<ShadIconButton>(find.byKey(const Key('voice-button')))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const Key('voice-button')), findsOneWidget);
+    await tester.tap(find.byKey(const Key('voice-button')));
+    await tester.pump();
+    expect(events, isEmpty);
   });
 
   testWidgets('plus toggles to close and renders the panel', (tester) async {

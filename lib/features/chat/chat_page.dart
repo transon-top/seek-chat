@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
@@ -24,6 +25,7 @@ import '../../shared/speech/permissions.dart';
 import '../../shared/toast.dart';
 import '../../shared/widgets/push_menu.dart';
 import 'speech/speech_controller.dart';
+import 'speech/recording_overlay.dart';
 import 'upload_tasks.dart';
 import 'chat_controller.dart';
 import 'composer.dart';
@@ -135,31 +137,50 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     super.dispose();
   }
 
-  /// 转写结果替换当前选区；光标落在插入内容之后（`speech.md` §3.4）。
-  void _insertTranscript(String text) {
+  /// 转写结果先替换当前选区，再按发送闸门尝试自动发送（`speech.md` §3.4）。
+  Future<VoiceAutoSendOutcome> _insertTranscriptAndSend(String text) async {
+    // 麦克风在有文本时隐藏，故插入前非空即转写期间用户手动输入过。
+    final typedDuring = _input.value.text.isNotEmpty;
     _input.value = insertTranscript(_input.value, text);
+    if (!mounted) return VoiceAutoSendOutcome.notSent;
+    final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
+    if (!mounted) return VoiceAutoSendOutcome.notSent;
+    final blocked = voiceAutoSendBlocker(
+      apiKey: apiKey,
+      generating:
+          _sessionId != null &&
+          ref.read(chatControllerProvider(_sessionId!)).busy,
+      uploadsDone: allUploadsDone(_attachments, ref.read(uploadTasksProvider)),
+      typedDuring: typedDuring,
+    );
+    if (blocked != null) return blocked;
+    return await _send()
+        ? VoiceAutoSendOutcome.sent
+        : VoiceAutoSendOutcome.failed;
   }
 
   void _stopReading() {
     unawaited(_speech.stopReadAloud());
   }
 
-  Future<void> _send() async {
+  Future<bool> _send() async {
     final text = _input.text;
     final hadText = text.trim().isNotEmpty;
-    if (!hadText && _attachments.isEmpty) return;
-    if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
+    if (!hadText && _attachments.isEmpty) return false;
+    if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) {
+      return false;
+    }
     final l10n = AppLocalizations.of(context)!;
     final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
     if (apiKey == null || apiKey.isEmpty) {
       if (mounted) _showToast(l10n.errorNoApiKey);
-      return;
+      return false;
     }
     var sessionId = _sessionId;
     var createdHere = false;
     if (sessionId == null) {
       final session = await ref.read(chatRepositoryProvider).createSession();
-      if (!mounted) return;
+      if (!mounted) return false;
       _sessionId = session.id;
       _holdController(session.id);
       widget.onSessionCreated?.call(session.id);
@@ -178,9 +199,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         );
     if (!sent) {
       if (createdHere) await _discardEmptySession(sessionId);
-      return;
+      return false;
     }
-    if (!mounted) return;
+    if (!mounted) return true;
     _deletePhotoDrafts(_attachments);
     _input.clear();
     setState(() {
@@ -188,6 +209,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       // 有文本发送后收起面板；纯附件发送保持展开供继续选照片（ui.md §5.2）。
       if (hadText) _panelOpen = false;
     });
+    return true;
   }
 
   /// 请求未发出时不留下空会话；发送失败的空会话直接删除。
@@ -223,10 +245,32 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() => _panelOpen = true);
   }
 
-  /// 面板展开时点麦克风：先收面板，再开始语音（ui.md §5.2）。
-  void _voice() {
+  /// 按下麦克风：同步失焦、收键盘与面板，再启动录音（`speech.md` §3.2）。
+  void _voiceStart() {
+    _inputFocus.unfocus();
+    FocusScope.of(context).unfocus();
     if (_panelOpen) setState(() => _panelOpen = false);
-    _speech.toggleVoiceInput(onTranscript: _insertTranscript);
+    unawaited(_speech.startFromPress(onTranscript: _insertTranscriptAndSend));
+  }
+
+  void _voiceEnd() => _speech.finishFromRelease();
+
+  void _voicePointerCancel() => _speech.cancelFromGesture();
+
+  void _voiceCancelArmed(bool armed) => _speech.setCancelArmed(armed);
+
+  /// 读屏「取消录音」：丢弃并播报「已取消」。
+  void _voiceCancel() {
+    _speech.cancelFromSemantics();
+    if (!MediaQuery.supportsAnnounceOf(context)) return;
+    final l10n = AppLocalizations.of(context)!;
+    unawaited(
+      SemanticsService.sendAnnouncement(
+        View.of(context),
+        l10n.voiceCancelled,
+        Directionality.of(context),
+      ),
+    );
   }
 
   Future<void> _takePhoto() async {
@@ -613,84 +657,120 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       onRemoveAttachment: _removeAttachment,
       onSend: _send,
       onStop: _stopGeneration,
-      onVoice: _voice,
+      onVoiceStart: _voiceStart,
+      onVoiceEnd: _voiceEnd,
+      onVoicePointerCancel: _voicePointerCancel,
+      onVoiceCancelArmed: _voiceCancelArmed,
+      onVoiceCancel: _voiceCancel,
     );
+    // 录音 / 识别浮层覆盖输入卡并向上延伸 60% 屏高（ui.md §8.2）。
+    final voiceCancelable = speech.phase.voiceCancelable;
     // 输入卡始终贴底；空态问候语在顶部栏与输入卡之间居中（ui.md §1.3）。
     return PushMenu(
       menu: widget.drawer ?? const SizedBox.shrink(),
       child: PopScope(
-        canPop: !_panelOpen,
+        canPop: !_panelOpen && !voiceCancelable,
         onPopInvokedWithResult: (didPop, result) {
-          if (!didPop && _panelOpen) {
+          if (didPop) return;
+          if (_panelOpen) {
             setState(() => _panelOpen = false);
+            return;
           }
+          _speech.cancelFromBack();
         },
         child: Scaffold(
-          body: Column(
+          body: Stack(
             children: [
-              Expanded(
-                child: PushMenuSwipeDetector(
-                  child: Column(
-                    children: [
-                      SafeArea(
-                        bottom: false,
-                        child: ChatHeader(
-                          title: state.title.isEmpty
-                              ? strings.untitledChat
-                              : state.title,
-                          onNewChat: widget.onNewChat,
-                          inConversation: messages.isNotEmpty,
-                        ),
+              Column(
+                children: [
+                  Expanded(
+                    child: PushMenuSwipeDetector(
+                      child: Column(
+                        children: [
+                          SafeArea(
+                            bottom: false,
+                            child: ChatHeader(
+                              title: state.title.isEmpty
+                                  ? strings.untitledChat
+                                  : state.title,
+                              onNewChat: widget.onNewChat,
+                              inConversation: messages.isNotEmpty,
+                            ),
+                          ),
+                          if (state.error != null)
+                            _ErrorBanner(
+                              message: localMessageText(strings, state.error!),
+                              onDismiss: _controller.clearError,
+                            ),
+                          Expanded(
+                            child: AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 150),
+                              child: messages.isEmpty
+                                  ? const _EmptyGreeting()
+                                  : ChatMessageList(
+                                      // 切换会话时重建状态，初始窗口随之重置。
+                                      key: ValueKey(sessionId),
+                                      messages: messages,
+                                      versions: state.versions,
+                                      busy: state.busy,
+                                      speech: speech,
+                                      onReadAloud: (reply, text) =>
+                                          _speech.toggleReadAloud(
+                                            messageId: reply.id,
+                                            text: text,
+                                          ),
+                                      onEdit: state.busy ? null : _editMessage,
+                                      onSelectVersion: state.busy
+                                          ? null
+                                          : _selectVersion,
+                                      onRegenerate: state.busy
+                                          ? null
+                                          : _regenerate,
+                                      onContinue: state.busy ? null : _continue,
+                                      onRetryUpload: state.busy
+                                          ? null
+                                          : (reply) => _controller.retryUpload(
+                                              reply,
+                                              thinking: _thinking,
+                                              search: _search,
+                                            ),
+                                    ),
+                            ),
+                          ),
+                        ],
                       ),
-                      if (state.error != null)
-                        _ErrorBanner(
-                          message: localMessageText(strings, state.error!),
-                          onDismiss: _controller.clearError,
-                        ),
-                      Expanded(
-                        child: AnimatedSwitcher(
-                          duration: const Duration(milliseconds: 150),
-                          child: messages.isEmpty
-                              ? const _EmptyGreeting()
-                              : ChatMessageList(
-                                  // 切换会话时重建状态，初始窗口随之重置。
-                                  key: ValueKey(sessionId),
-                                  messages: messages,
-                                  versions: state.versions,
-                                  busy: state.busy,
-                                  speech: speech,
-                                  onReadAloud: (reply, text) =>
-                                      _speech.toggleReadAloud(
-                                        messageId: reply.id,
-                                        text: text,
-                                      ),
-                                  onEdit: state.busy ? null : _editMessage,
-                                  onSelectVersion: state.busy
-                                      ? null
-                                      : _selectVersion,
-                                  onRegenerate: state.busy
-                                      ? null
-                                      : _regenerate,
-                                  onContinue: state.busy ? null : _continue,
-                                  onRetryUpload: state.busy
-                                      ? null
-                                      : (reply) => _controller.retryUpload(
-                                          reply,
-                                          thinking: _thinking,
-                                          search: _search,
-                                        ),
-                                ),
-                        ),
-                      ),
-                    ],
+                    ),
                   ),
-                ),
+                  composer,
+                ],
               ),
-              composer,
+              const Positioned(
+                left: 0,
+                right: 0,
+                bottom: 0,
+                child: _RecordingOverlaySlot(),
+              ),
             ],
           ),
         ),
       ),
+    );
+  }
+}
+
+/// 只在录音相关阶段重建浮层，不触发整页重建（`speech.md` §7）。
+class _RecordingOverlaySlot extends ConsumerWidget {
+  const _RecordingOverlaySlot();
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final phase = ref.watch(
+      speechControllerProvider.select((state) => state.phase),
+    );
+    if (!phase.voiceBusy) return const SizedBox.shrink();
+    return SizedBox(
+      height: MediaQuery.sizeOf(context).height * 0.6,
+      child: RecordingOverlay(phase: phase),
     );
   }
 }
