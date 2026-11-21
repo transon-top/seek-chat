@@ -462,10 +462,25 @@ class AppLocalizationsZh extends AppLocalizations {
   String get searchResults => '搜索结果';
 
   @override
-  String get composerHint => '输入消息';
+  String get composerHint => '发消息或按住说话';
+
+  @override
+  String get composerHintWithAttachments => '发消息';
 
   @override
   String get composerPlaceholder => '给 Fleepseek 发送消息';
+
+  @override
+  String get addAttachment => '添加附件';
+
+  @override
+  String get closeAttachmentPanel => '收起附件面板';
+
+  @override
+  String get takePhoto => '拍照';
+
+  @override
+  String get photoUnreadable => '无法读取这张照片';
 
   @override
   String get send => '发送';

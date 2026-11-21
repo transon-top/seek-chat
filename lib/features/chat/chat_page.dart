@@ -2,12 +2,14 @@ import 'dart:async';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
+import 'attachment_panel.dart';
 import 'attachment_rules.dart';
 import 'chat_header.dart';
+import 'photo_import.dart';
 import '../../shared/error_text.dart';
 import '../../shared/logging.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -62,6 +64,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   late final SpeechController _speech;
   late bool _thinking;
   late bool _search;
+  late final ImagePicker _picker = createImagePicker();
+  bool _panelOpen = false;
   String? _sessionId;
 
   /// 草稿会话创建后，先占住控制器，避免自动销毁丢掉首轮流式状态。
@@ -75,6 +79,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _thinking = _options.thinking;
     _search = _options.search;
     _sessionId = widget.sessionId;
+    _inputFocus.addListener(_handleInputFocus);
     _holdController(_sessionId);
     if (_sessionId != null) _load(_sessionId!);
   }
@@ -112,6 +117,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   void dispose() {
     _controllerHold?.close();
     unawaited(_speech.stopAll());
+    _inputFocus.removeListener(_handleInputFocus);
     _input.dispose();
     _inputFocus.dispose();
     super.dispose();
@@ -128,7 +134,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Future<void> _send() async {
     final text = _input.text;
-    if (text.trim().isEmpty && _attachments.isEmpty) return;
+    final hadText = text.trim().isNotEmpty;
+    if (!hadText && _attachments.isEmpty) return;
     if (!allUploadsDone(_attachments, ref.read(uploadTasksProvider))) return;
     final l10n = AppLocalizations.of(context)!;
     final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
@@ -163,7 +170,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
     if (!mounted) return;
     _input.clear();
-    setState(_attachments.clear);
+    setState(() {
+      _attachments.clear();
+      // 有文本发送后收起面板；纯附件发送保持展开供继续选照片（ui.md §5.2）。
+      if (hadText) _panelOpen = false;
+    });
   }
 
   /// 请求未发出时不留下空会话；发送失败的空会话直接删除。
@@ -182,47 +193,103 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() => _sessionId = null);
   }
 
-  Future<void> _addAttachments() async {
-    final l10n = AppLocalizations.of(context)!;
-    final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
-    if (apiKey == null || apiKey.isEmpty) {
-      _showToast(l10n.errorNoApiKey);
+  /// 点输入框时收起面板；键盘与面板不同时出现（ui.md §5.2）。
+  void _handleInputFocus() {
+    if (_inputFocus.hasFocus && _panelOpen) {
+      setState(() => _panelOpen = false);
+    }
+  }
+
+  void _togglePanel() {
+    if (_panelOpen) {
+      setState(() => _panelOpen = false);
       return;
     }
-    if (!mounted) return;
-    final source = await showShadSheet<_AttachmentSource>(
-      context: context,
-      builder: (context) => SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              _AttachmentSourceRow(
-                icon: LucideIcons.image,
-                label: l10n.uploadFromPhotos,
-                onTap: () =>
-                    Navigator.of(context).pop(_AttachmentSource.photos),
-              ),
-              _AttachmentSourceRow(
-                icon: LucideIcons.paperclip,
-                label: l10n.uploadFromFiles,
-                onTap: () => Navigator.of(context).pop(_AttachmentSource.files),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-    if (source == null || !mounted) return;
+    _inputFocus.unfocus();
+    FocusScope.of(context).unfocus();
+    setState(() => _panelOpen = true);
+  }
 
+  /// 面板展开时点麦克风：先收面板，再开始语音（ui.md §5.2）。
+  void _voice() {
+    if (_panelOpen) setState(() => _panelOpen = false);
+    _speech.toggleVoiceInput(onTranscript: _insertTranscript);
+  }
+
+  Future<void> _takePhoto() async {
+    final l10n = AppLocalizations.of(context)!;
+    try {
+      final file = await _picker.pickImage(source: ImageSource.camera);
+      if (file == null || !mounted) return;
+      await _addPickedPhotos([file]);
+    } on Object catch (error) {
+      debugLog('camera pick failed', error);
+      if (mounted) _showToast(l10n.uploadFileStatusFailed);
+    }
+  }
+
+  Future<void> _pickPhotos() async {
+    final l10n = AppLocalizations.of(context)!;
+    final remaining = maxAttachmentCount - _attachments.length;
+    if (remaining <= 0) {
+      _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+      return;
+    }
+    try {
+      final files = await _picker.pickMultiImage(limit: remaining);
+      if (files.isEmpty || !mounted) return;
+      await _addPickedPhotos(files);
+    } on Object catch (error) {
+      debugLog('photo picker failed', error);
+      if (mounted) _showToast(l10n.uploadFileStatusFailed);
+    }
+  }
+
+  /// 相机 / 相册产物：嗅探 JPEG 后加入草稿并上传；非 JPEG 提示且不入草稿。
+  Future<void> _addPickedPhotos(List<XFile> files) async {
+    final l10n = AppLocalizations.of(context)!;
+    final drafts = <DraftAttachment>[];
+    var unreadable = false;
+    for (final file in files) {
+      try {
+        final draft = draftFromPickedPhoto(file);
+        if (draft == null) {
+          unreadable = true;
+        } else {
+          drafts.add(draft);
+        }
+      } on Object catch (error) {
+        debugLog('photo import failed', error);
+        unreadable = true;
+      }
+    }
+    if (!mounted) return;
+    if (unreadable) _showToast(l10n.photoUnreadable);
+    if (drafts.isEmpty) return;
+
+    final error = validateAttachmentSelection(
+      files: [
+        for (final item in drafts)
+          SelectedFile(name: item.name, size: item.size),
+      ],
+      currentCount: _attachments.length,
+    );
+    if (error != null) {
+      _showToast(localMessageText(l10n, error));
+      return;
+    }
+
+    setState(() => _attachments.addAll(drafts));
+    for (final item in drafts) {
+      _startUpload(item);
+    }
+  }
+
+  Future<void> _pickFiles() async {
+    final l10n = AppLocalizations.of(context)!;
     final List<PlatformFile> files;
     try {
-      files = await FilePicker.pickFiles(
-        type: source == _AttachmentSource.photos
-            ? FileType.image
-            : FileType.any,
-      );
+      files = await FilePicker.pickFiles(type: FileType.any);
     } on Object {
       if (mounted) _showToast(l10n.uploadFileStatusFailed);
       return;
@@ -408,7 +475,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         _showQuotaToast(quota);
       }
     });
-    // 空对话时输入框与问候语居中成组；有消息后回到底部停靠。
+    // 输入卡空态与有消息状态共用同一实例，始终贴底（ui.md §1.3）。
     final composer = Composer(
       input: _input,
       inputFocus: _inputFocus,
@@ -418,102 +485,130 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       search: _search,
       attachments: _attachments,
       tasks: tasks,
+      panelOpen: _panelOpen,
+      attachmentPanel: AttachmentPanel(
+        attachmentCount: _attachments.length,
+        onTakePhoto: _takePhoto,
+        onPickPhotos: _pickPhotos,
+        onPickFiles: _pickFiles,
+        onLimitReached: () =>
+            _showToast(strings.uploadMaxFiles(maxAttachmentCount)),
+      ),
       onThinkingChanged: _setThinking,
       onSearchChanged: _setSearch,
-      onAddAttachment: _addAttachments,
+      onTogglePanel: _togglePanel,
       onRetryAttachment: _retryAttachment,
       onRemoveAttachment: _removeAttachment,
       onSend: _send,
       onStop: _stopGeneration,
-      onVoice: () => _speech.toggleVoiceInput(onTranscript: _insertTranscript),
+      onVoice: _voice,
     );
-    // 会话中的输入区不参与右滑；空对话没有可滚内容，输入区一并纳入。
+    // 输入卡始终贴底；空态问候语在顶部栏与输入卡之间居中（ui.md §1.3）。
     return PushMenu(
       menu: widget.drawer ?? const SizedBox.shrink(),
-      child: Scaffold(
-        body: Column(
-          children: [
-            Expanded(
-              child: PushMenuSwipeDetector(
-                child: Column(
-                  children: [
-                    SafeArea(
-                      bottom: false,
-                      child: ChatHeader(
-                        title: state.title.isEmpty
-                            ? strings.untitledChat
-                            : state.title,
-                        onNewChat: widget.onNewChat,
-                        inConversation: messages.isNotEmpty,
+      child: PopScope(
+        canPop: !_panelOpen,
+        onPopInvokedWithResult: (didPop, result) {
+          if (!didPop && _panelOpen) {
+            setState(() => _panelOpen = false);
+          }
+        },
+        child: Scaffold(
+          body: Column(
+            children: [
+              Expanded(
+                child: PushMenuSwipeDetector(
+                  child: Column(
+                    children: [
+                      SafeArea(
+                        bottom: false,
+                        child: ChatHeader(
+                          title: state.title.isEmpty
+                              ? strings.untitledChat
+                              : state.title,
+                          onNewChat: widget.onNewChat,
+                          inConversation: messages.isNotEmpty,
+                        ),
                       ),
-                    ),
-                    if (state.error != null)
-                      _ErrorBanner(
-                        message: localMessageText(strings, state.error!),
-                        onDismiss: _controller.clearError,
-                      ),
-                    Expanded(
-                      child: messages.isEmpty
-                          ? Column(
-                              mainAxisAlignment: MainAxisAlignment.center,
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 24,
-                                  ),
-                                  child: Text(
-                                    strings.chatEmptyTitle,
-                                    textAlign: TextAlign.center,
-                                    style: TextStyle(
-                                      fontSize: 24,
-                                      height: 32 / 24,
-                                      fontWeight: FontWeight.w600,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .onSurface,
-                                    ),
-                                  ),
+                      if (state.error != null)
+                        _ErrorBanner(
+                          message: localMessageText(strings, state.error!),
+                          onDismiss: _controller.clearError,
+                        ),
+                      Expanded(
+                        child: AnimatedSwitcher(
+                          duration: const Duration(milliseconds: 150),
+                          child: messages.isEmpty
+                              ? const _EmptyGreeting()
+                              : ChatMessageList(
+                                  // 切换会话时重建状态，初始窗口随之重置。
+                                  key: ValueKey(sessionId),
+                                  messages: messages,
+                                  versions: state.versions,
+                                  busy: state.busy,
+                                  speech: speech,
+                                  onReadAloud: (reply, text) =>
+                                      _speech.toggleReadAloud(
+                                        messageId: reply.id,
+                                        text: text,
+                                      ),
+                                  onEdit: state.busy ? null : _editMessage,
+                                  onSelectVersion: state.busy
+                                      ? null
+                                      : _selectVersion,
+                                  onRegenerate: state.busy
+                                      ? null
+                                      : _regenerate,
+                                  onContinue: state.busy ? null : _continue,
+                                  onRetryUpload: state.busy
+                                      ? null
+                                      : (reply) => _controller.retryUpload(
+                                          reply,
+                                          thinking: _thinking,
+                                          search: _search,
+                                        ),
                                 ),
-                                const SizedBox(height: 24),
-                                composer,
-                              ],
-                            )
-                          : ChatMessageList(
-                              // 切换会话时重建状态，初始窗口随之重置。
-                              key: ValueKey(sessionId),
-                              messages: messages,
-                              versions: state.versions,
-                              busy: state.busy,
-                              speech: speech,
-                              onReadAloud: (reply, text) =>
-                                  _speech.toggleReadAloud(
-                                    messageId: reply.id,
-                                    text: text,
-                                  ),
-                              onEdit: state.busy ? null : _editMessage,
-                              onSelectVersion: state.busy
-                                  ? null
-                                  : _selectVersion,
-                              onRegenerate: state.busy ? null : _regenerate,
-                              onContinue: state.busy ? null : _continue,
-                              onRetryUpload: state.busy
-                                  ? null
-                                  : (reply) => _controller.retryUpload(
-                                      reply,
-                                      thinking: _thinking,
-                                      search: _search,
-                                    ),
-                            ),
-                    ),
-                  ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
-            if (messages.isNotEmpty) composer,
-          ],
+              composer,
+            ],
+          ),
         ),
       ),
+    );
+  }
+}
+
+/// 空态问候语：在剩余区域内垂直居中，剩余高度不足 96 时隐藏（ui.md §1.3）。
+class _EmptyGreeting extends StatelessWidget {
+  const _EmptyGreeting();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        if (constraints.maxHeight < 96) return const SizedBox.shrink();
+        final strings = AppLocalizations.of(context)!;
+        return Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 24),
+            child: Text(
+              strings.chatEmptyTitle,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                fontSize: 20,
+                height: 28 / 20,
+                fontWeight: FontWeight.w500,
+                color: Theme.of(context).colorScheme.onSurface,
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 }
@@ -552,43 +647,3 @@ class _ErrorBanner extends StatelessWidget {
   }
 }
 
-enum _AttachmentSource { photos, files }
-
-/// 附件来源行：图标 + 文案，整行可点（ui.md §1.2 附件来源）。
-class _AttachmentSourceRow extends StatelessWidget {
-  const _AttachmentSourceRow({
-    required this.icon,
-    required this.label,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String label;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final colors = ShadTheme.of(context).colorScheme;
-    return Semantics(
-      button: true,
-      label: label,
-      child: GestureDetector(
-        onTap: onTap,
-        behavior: HitTestBehavior.opaque,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 14),
-          child: Row(
-            children: [
-              Icon(icon, size: 18, color: colors.mutedForeground),
-              const SizedBox(width: 12),
-              Text(
-                label,
-                style: TextStyle(fontSize: 15, color: colors.foreground),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
