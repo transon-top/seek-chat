@@ -125,8 +125,11 @@ void main() {
     final bubble = find.byKey(const Key('user-bubble-u1'));
     expect(bubble, findsOneWidget);
     final container = tester.widget<Container>(bubble);
-    final colors = ShadTheme.of(tester.element(bubble)).colorScheme;
-    expect((container.decoration! as BoxDecoration).color, colors.muted);
+    final colors = Theme.of(tester.element(bubble)).colorScheme;
+    expect(
+      (container.decoration! as BoxDecoration).color,
+      colors.surfaceContainer,
+    );
     expect(tester.getCenter(bubble).dx, greaterThan(400));
     final text = tester.widget<Text>(
       find.descendant(of: bubble, matching: find.byType(Text)),
