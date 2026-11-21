@@ -1,15 +1,19 @@
 import 'dart:async';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
 import 'attachment_panel.dart';
 import 'attachment_rules.dart';
 import 'chat_header.dart';
 import 'photo_import.dart';
+import 'photo_strip.dart';
 import '../../shared/error_text.dart';
 import '../../shared/logging.dart';
 import '../../l10n/generated/app_localizations.dart';
@@ -68,6 +72,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   bool _panelOpen = false;
   String? _sessionId;
 
+  /// 横条转码登记：第二次点击取消，迟到结果作废。
+  final PendingPhotoImports _pendingPhotoImports = PendingPhotoImports();
+
+  /// 相机 / 相册 / 文件选择器打开期间不因回到前台刷新横条。
+  bool _pickerActive = false;
+
   /// 草稿会话创建后，先占住控制器，避免自动销毁丢掉首轮流式状态。
   ProviderSubscription<ChatState>? _controllerHold;
 
@@ -97,6 +107,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _sessionId = widget.sessionId;
     _holdController(_sessionId);
     _input.clear();
+    _deletePhotoDrafts(_attachments);
     _attachments.clear();
     if (_sessionId != null) _load(_sessionId!);
   }
@@ -115,6 +126,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   @override
   void dispose() {
+    _deletePhotoDrafts(_attachments);
     _controllerHold?.close();
     unawaited(_speech.stopAll());
     _inputFocus.removeListener(_handleInputFocus);
@@ -169,6 +181,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       return;
     }
     if (!mounted) return;
+    _deletePhotoDrafts(_attachments);
     _input.clear();
     setState(() {
       _attachments.clear();
@@ -218,6 +231,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   Future<void> _takePhoto() async {
     final l10n = AppLocalizations.of(context)!;
+    setState(() => _pickerActive = true);
     try {
       final file = await _picker.pickImage(source: ImageSource.camera);
       if (file == null || !mounted) return;
@@ -225,6 +239,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     } on Object catch (error) {
       debugLog('camera pick failed', error);
       if (mounted) _showToast(l10n.uploadFileStatusFailed);
+    } finally {
+      if (mounted) setState(() => _pickerActive = false);
     }
   }
 
@@ -235,6 +251,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
       return;
     }
+    setState(() => _pickerActive = true);
     try {
       final files = await _picker.pickMultiImage(limit: remaining);
       if (files.isEmpty || !mounted) return;
@@ -242,6 +259,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     } on Object catch (error) {
       debugLog('photo picker failed', error);
       if (mounted) _showToast(l10n.uploadFileStatusFailed);
+    } finally {
+      if (mounted) setState(() => _pickerActive = false);
     }
   }
 
@@ -279,20 +298,68 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       return;
     }
 
-    setState(() => _attachments.addAll(drafts));
-    for (final item in drafts) {
-      _startUpload(item);
+    _addDrafts(drafts);
+  }
+
+  /// 横条缩略图切换选中：选中即转码、追加到草稿末尾并上传；再点即取消
+  /// （`attachments.md` §9.2）。
+  Future<void> _togglePhotoAsset(PhotoAsset asset) async {
+    final l10n = AppLocalizations.of(context)!;
+    for (final item in _attachments) {
+      if (item.sourceAssetId == asset.id) {
+        _removeAttachment(item.id);
+        return;
+      }
+    }
+    if (_attachments.length >= maxAttachmentCount) {
+      _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+      return;
+    }
+    final token = _pendingPhotoImports.toggle(asset.id);
+    if (token == null) return;
+    try {
+      final result = await draftFromPhotoAsset(
+        asset,
+        preferOriginalFile: defaultTargetPlatform == TargetPlatform.iOS,
+        outputDir: await getTemporaryDirectory(),
+      );
+      if (!mounted) return;
+      // 转码期间再次点击已取消：迟到结果直接丢弃。
+      if (!_pendingPhotoImports.isCurrent(asset.id, token)) return;
+      final failure = result.failure;
+      if (failure != null) {
+        _showToast(
+          failure == PhotoImportFailure.tooLarge
+              ? l10n.uploadMaxMBSize(maxPhotoSizeMb)
+              : l10n.photoUnreadable,
+        );
+        return;
+      }
+      final draft = result.draft!;
+      if (_attachments.length >= maxAttachmentCount) {
+        _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+        return;
+      }
+      _addDrafts([draft]);
+    } on Object catch (error) {
+      debugLog('photo strip import failed', error);
+      if (mounted) _showToast(l10n.photoUnreadable);
+    } finally {
+      _pendingPhotoImports.finish(asset.id, token);
     }
   }
 
   Future<void> _pickFiles() async {
     final l10n = AppLocalizations.of(context)!;
     final List<PlatformFile> files;
+    setState(() => _pickerActive = true);
     try {
       files = await FilePicker.pickFiles(type: FileType.any);
     } on Object {
       if (mounted) _showToast(l10n.uploadFileStatusFailed);
       return;
+    } finally {
+      if (mounted) setState(() => _pickerActive = false);
     }
     if (files.isEmpty || !mounted) return;
 
@@ -326,8 +393,33 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       return;
     }
 
-    setState(() => _attachments.addAll(picked));
-    for (final item in picked) {
+    _addDrafts(picked);
+  }
+
+  /// 横条转码产生的临时文件在移除、发送或销毁时删除；其余草稿原件留给系统清理。
+  void _deletePhotoDrafts(Iterable<DraftAttachment> drafts) {
+    final paths = [
+      for (final item in drafts)
+        if (item.sourceAssetId != null) item.path,
+    ];
+    if (paths.isEmpty) return;
+    unawaited(_deleteFiles(paths));
+  }
+
+  Future<void> _deleteFiles(List<String> paths) async {
+    for (final path in paths) {
+      try {
+        await File(path).delete();
+      } on FileSystemException catch (error) {
+        debugLog('draft photo cleanup failed', error);
+      }
+    }
+  }
+
+  /// 追加到草稿行末尾并开始上传。
+  void _addDrafts(List<DraftAttachment> drafts) {
+    setState(() => _attachments.addAll(drafts));
+    for (final item in drafts) {
       _startUpload(item);
     }
   }
@@ -347,6 +439,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 
   void _removeAttachment(String id) {
+    for (final item in _attachments) {
+      if (item.id == id) {
+        _deletePhotoDrafts([item]);
+        break;
+      }
+    }
     ref.read(uploadTasksProvider.notifier).remove(id);
     setState(() => _attachments.removeWhere((item) => item.id == id));
   }
@@ -488,6 +586,20 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       panelOpen: _panelOpen,
       attachmentPanel: AttachmentPanel(
         attachmentCount: _attachments.length,
+        photoStrip: photoStripEnabledFor(defaultTargetPlatform)
+            ? PhotoStrip(
+                library: ref.watch(photoLibraryProvider),
+                selectedAssetIds: {
+                  for (final item in _attachments)
+                    if (item.sourceAssetId != null) item.sourceAssetId!,
+                },
+                full: _attachments.length >= maxAttachmentCount,
+                reloadOnResume: !_pickerActive,
+                onToggle: _togglePhotoAsset,
+                onLimitReached: () =>
+                    _showToast(strings.uploadMaxFiles(maxAttachmentCount)),
+              )
+            : null,
         onTakePhoto: _takePhoto,
         onPickPhotos: _pickPhotos,
         onPickFiles: _pickFiles,
@@ -646,4 +758,3 @@ class _ErrorBanner extends StatelessWidget {
     );
   }
 }
-

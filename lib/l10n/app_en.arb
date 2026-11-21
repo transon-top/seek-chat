@@ -280,6 +280,27 @@
   "closeAttachmentPanel": "Close attachment panel",
   "takePhoto": "Take photo",
   "photoUnreadable": "Couldn't read this photo",
+  "photoPermissionDenied": "Can't access photos",
+  "photoLimitedManage": "Manage",
+  "photoLimitedManageSemantics": "Manage accessible photos",
+  "photoStripEmpty": "No recent photos",
+  "photoStripLoadFailed": "Couldn't load photos",
+  "photoTileSelected": "Photo {index}, selected",
+  "@photoTileSelected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "photoTileUnselected": "Photo {index}, not selected",
+  "@photoTileUnselected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "send": "Send",
   "smartSearch": "Search",
   "settingsData": "Data",

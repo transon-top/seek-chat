@@ -45,4 +45,37 @@ void main() {
     await tester.tap(find.byKey(const Key('panel-files')));
     expect(events, ['limit', 'limit', 'files']);
   });
+
+  testWidgets(
+    'photo strip slot stacks above the grid and shrinks when absent',
+    (tester) async {
+      Widget host({Widget? photoStrip}) => ShadApp(
+        theme: buildShadTheme(brightness: Brightness.light, chinese: true),
+        locale: const Locale('zh'),
+        localizationsDelegates: appLocalizationDelegates,
+        supportedLocales: AppLocalizations.supportedLocales,
+        home: Scaffold(
+          body: AttachmentPanel(
+            attachmentCount: 0,
+            photoStrip: photoStrip,
+            onTakePhoto: () {},
+            onPickPhotos: () {},
+            onPickFiles: () {},
+            onLimitReached: () {},
+          ),
+        ),
+      );
+
+      await tester.pumpWidget(host());
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(AttachmentPanel)).height, 96);
+
+      await tester.pumpWidget(
+        host(photoStrip: const SizedBox(height: 96, width: 400)),
+      );
+      await tester.pumpAndSettle();
+      expect(tester.getSize(find.byType(AttachmentPanel)).height, 192);
+      expect(find.byKey(const Key('panel-take-photo')), findsOneWidget);
+    },
+  );
 }

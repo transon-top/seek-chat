@@ -483,6 +483,31 @@ class AppLocalizationsZh extends AppLocalizations {
   String get photoUnreadable => '无法读取这张照片';
 
   @override
+  String get photoPermissionDenied => '无法访问照片';
+
+  @override
+  String get photoLimitedManage => '管理';
+
+  @override
+  String get photoLimitedManageSemantics => '管理可访问照片';
+
+  @override
+  String get photoStripEmpty => '没有最近照片';
+
+  @override
+  String get photoStripLoadFailed => '无法读取照片';
+
+  @override
+  String photoTileSelected(int index) {
+    return '照片，第 $index 张，已选';
+  }
+
+  @override
+  String photoTileUnselected(int index) {
+    return '照片，第 $index 张，未选';
+  }
+
+  @override
   String get send => '发送';
 
   @override

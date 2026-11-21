@@ -963,6 +963,48 @@ abstract class AppLocalizations {
   /// **'Couldn\'t read this photo'**
   String get photoUnreadable;
 
+  /// No description provided for @photoPermissionDenied.
+  ///
+  /// In en, this message translates to:
+  /// **'Can\'t access photos'**
+  String get photoPermissionDenied;
+
+  /// No description provided for @photoLimitedManage.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage'**
+  String get photoLimitedManage;
+
+  /// No description provided for @photoLimitedManageSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage accessible photos'**
+  String get photoLimitedManageSemantics;
+
+  /// No description provided for @photoStripEmpty.
+  ///
+  /// In en, this message translates to:
+  /// **'No recent photos'**
+  String get photoStripEmpty;
+
+  /// No description provided for @photoStripLoadFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t load photos'**
+  String get photoStripLoadFailed;
+
+  /// No description provided for @photoTileSelected.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo {index}, selected'**
+  String photoTileSelected(int index);
+
+  /// No description provided for @photoTileUnselected.
+  ///
+  /// In en, this message translates to:
+  /// **'Photo {index}, not selected'**
+  String photoTileUnselected(int index);
+
   /// No description provided for @send.
   ///
   /// In en, this message translates to:

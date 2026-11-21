@@ -252,6 +252,30 @@ void main() {
     expect(task.retryable, isFalse);
   });
 
+  test('removing an in-flight upload discards the late success', () async {
+    final gate = Completer<http.StreamedResponse>();
+    final container = containerWith(
+      DeepSeekApiClient(
+        origin: Uri.parse(origin),
+        httpClient: MockClient.streaming((request, body) => gate.future),
+      ),
+    );
+    final tasks = tasksOf(container);
+    final pending = tasks.upload(
+      id: 'att-1',
+      path: sample.path,
+      name: 'a.txt',
+      isImage: false,
+    );
+
+    tasks.remove('att-1');
+    expect(await pending, isNull);
+    gate.complete(jsonResponse({'id': 'file-1'}));
+    await pumpEventQueue();
+
+    expect(container.read(uploadTasksProvider), isEmpty);
+  });
+
   test('missing key fails without calling the API', () async {
     var requests = 0;
     final container = containerWith(

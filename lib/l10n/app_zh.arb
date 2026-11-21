@@ -224,6 +224,27 @@
   "closeAttachmentPanel": "收起附件面板",
   "takePhoto": "拍照",
   "photoUnreadable": "无法读取这张照片",
+  "photoPermissionDenied": "无法访问照片",
+  "photoLimitedManage": "管理",
+  "photoLimitedManageSemantics": "管理可访问照片",
+  "photoStripEmpty": "没有最近照片",
+  "photoStripLoadFailed": "无法读取照片",
+  "photoTileSelected": "照片，第 {index} 张，已选",
+  "@photoTileSelected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "photoTileUnselected": "照片，第 {index} 张，未选",
+  "@photoTileUnselected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
   "send": "发送",
   "smartSearch": "智能搜索",
   "settingsData": "数据管理",
