@@ -12,12 +12,14 @@
 
 | 主题 | 决策 |
 | --- | --- |
-| 语音输入 | 一次性录音：点击开始，再次点击结束并整段转写；不做实时流式识别 |
+| 语音输入 | **按住说话**：按下即录，松手转写并尝试自动发送；上滑 80dp 取消；不做实时流式识别 |
+| 手势 | `Listener` 处理 pointer down / move / up / cancel，只跟踪首个 pointer；不用长按手势 |
 | 录音规格 | `record` 7.2.0，16-bit PCM WAV、16 kHz、单声道，临时文件，用后删除 |
 | 时长上限 | 120 秒自动结束并转写；客户端保证文件 ≤ 8 MiB（120 秒约 3.84 MB） |
 | 转写端点 | `POST /v1/tools/asr`，`Authorization: Bearer`，multipart 字段 `file` |
-| 转写结果 | 去首尾空白后插入光标处，替换选区，光标落在插入内容之后；不自动发送 |
+| 转写结果 | 去首尾空白后先插入输入框（替换选区、光标落其后），再按发送闸门尝试自动发送；结果永不丢失 |
 | 转写失败 | 除权限 / 无设备 / 空结果 / 超时上限外，**全部折叠为一条**「语音识别失败」；不自动重试 |
+| 浮层 | 录音、识别、取消共用同一蓝色动态浮层（自绘 `CustomPainter`，不引依赖） |
 | 朗读 | 仅 assistant 消息操作条入口；同一时间只朗读一条，首帧流式播放 |
 | 朗读端点 | `POST /v1/tools/tts`，`format: pcm`、`filter_markdown: true`、`voice_id` 取设置 |
 | 播放 | `flutter_soloud` 5.3.0，裸 PCM（s16le、24 kHz、单声道），首帧前缓冲 100 ms |
@@ -25,25 +27,24 @@
 | 音色 | `stella`（默认，女声）/ `tide`（男声），存 `tts.voice`，开始朗读时读取 |
 | 互斥 | 录音与朗读不能同时进行；新意图优先，朗读中开始录音会先停朗读 |
 | 前后台 | v1 仅前台；进入非 `resumed` 状态即取消录音并停止朗读 |
-| 波形 | v1 只用 `onAmplitudeChanged` 驱动 5 根电平条；真实波形 / 频谱不进 v1 |
+| 波形 | 浮层内 32 根波形条，复用 `SpeechState.level` 做约 30fps 插值缓动；真实频谱不进 v1 |
 | 持久化 | 语音与音频不写数据库、不进历史归档、不做 TTS 缓存 |
-| 依赖 | 新增 `record`、`flutter_soloud`、`permission_handler`；不引入 `audio_session` |
+| 依赖 | 新增 `record`、`flutter_soloud`、`permission_handler`；不引入 `audio_session`、动效库 |
 
 ## 2. 入口与可见状态
 
 ### 2.1 语音输入
 
-- 入口在输入区操作行，位于发送 / 停止按钮左侧；不做长按手势。
-- 按钮有三种可见态：
-  - `idle`：麦克风图标，tooltip「语音输入」。
-  - `recording`：录音样式（红色状态点 / 内层实心），旁显「录音中 N 秒」，
-    输入区上方显示电平行；tooltip「结束录音并转写」。
-  - `transcribing`：加载指示器；tooltip「正在转写，点击取消」。
-  - 失败进入瞬态 `error`，只用于展示 SnackBar；按钮外观保持 `idle`，
-    提示结束即回 `idle`。
-- 录音 / 转写期间：发送与添加附件禁用；文本编辑与深度思考 / 智能搜索开关保持可用。
-  发送条件增加 `voice == idle`，与 chat-demo 的 `canSend` 一致。
-- 无 API Key 时点击：不录音，显示现有 `errorNoApiKey` 文案。
+- 入口在输入区操作行，`+` 与发送 / 停止之间；按住说话，不做点击开始 / 再点结束。
+- 按钮可见态只有两种：
+  - `idle`：麦克风图标；有文本时隐藏，生成中隐藏，朗读中禁用。
+  - 录音 / 转写中：浮层覆盖输入卡，按钮不可见。
+- 浮层三态共用一套视觉：录音「松手发送，上滑取消」、取消「松开取消」、
+  识别「识别中」；识别中不提供取消入口，等 ASR 返回或失败。
+- 录音期间：浮层覆盖输入卡与草稿行，输入框不可编辑；发送、附件、开关均不可见。
+  识别期间浮层仍在，输入框同样被覆盖。
+- 发送条件增加 `voice == idle`，与 chat-demo 的 `canSend` 一致。
+- 无 API Key 时按下：不录音，显示现有 `errorNoApiKey` 文案。
 
 ### 2.2 朗读
 
@@ -66,47 +67,70 @@
 
 ## 3. 语音输入状态机
 
-```
-idle ──点击 / 权限通过──▶ recording ──再次点击 / 120 秒──▶ transcribing
-  ▲                          │                                │
-  │                          │                                ├─ 成功插入 / 空结果 / 取消 ─▶ idle
-  │                          │                                └─ 失败 ─▶ error ─提示后─▶ idle
-  │                          └─ 中断 / 切页 / 进后台 ──────────────────────────────────▶ idle
-  └───────────────────────────────────────────────────────────────────────────────────┘
-```
+运行时状态为 `idle`、`starting`、`recording`、`cancelling`、`transcribing`，
+外加瞬态 `error`。`error` 只在失败提示展示期间存在，提示结束即回 `idle`。
 
-运行时状态为 `idle`、`recording`、`transcribing`，外加瞬态 `error`。
-`error` 只在失败提示展示期间存在：不改变按钮外观，提示结束即回 `idle`；
-它不是可停留的独立状态。
+```
+idle ──pointer down──▶ starting ──start() 成功且 pointer 有效──▶ recording
+  ▲                        │                                       │
+  │                        ├─ Key / 权限 / 设备 / 启动失败 ──▶ idle  │
+  │                        ├─ 已松手 / pointer cancel ──▶ idle      │
+  │                        └─ 首次授权 pointer cancel ──▶ idle      │
+  │                                                                ▼
+  │                                        cancelling ◀──上滑 ≥80dp── recording
+  │                                            │ 回拉 <80dp → recording
+  │                                            └─ pointer up → 丢弃 → idle
+  │                                                                ▼
+  └────────── 成功插入 / 空结果 / 失败 / 后台或切会话取消 ─── transcribing
+```
 
 ### 3.1 转移表
 
-| 当前 | 事件 | 结果 | 提示 |
-| --- | --- | --- | --- |
-| `idle` | 点击 | 无 Key：保持 `idle` | `errorNoApiKey` |
-| `idle` | 点击，权限已允许 | 停当前朗读 → 开始录音 → `recording` | 无 |
-| `idle` | 点击，未请求 / 被拒绝 | 请求权限；拒绝则保持 `idle` | `voiceInputPermissionDenied` + 「打开系统设置」 |
-| `idle` | 点击，无麦克风 / 启动失败 | `error` → `idle` | `voiceInputNoDevice` 或 `voiceInputFailed` |
-| `recording` | 点击 | 停止录音、释放麦克风、删除临时文件 → 有样本则 `transcribing`；无样本回 `idle` | 无 / `voiceInputEmpty` |
-| `recording` | 录满 120 秒 | 自动停止并进入 `transcribing` | `voiceInputLimitReached` |
-| `recording` | 来电、路由变化、切会话、离开页面、进后台 | 取消录音、删除文件、回 `idle`，不上传 | `voiceInputInterrupted`（仅留在当前页时） |
-| `transcribing` | 点击 | 中止 HTTP、回 `idle` | 无 |
-| `transcribing` | 返回非空文本 | 插入光标处、回 `idle` | 无 |
-| `transcribing` | 返回空文本 | 回 `idle` | `voiceInputEmpty` |
-| `transcribing` | 请求失败 | `error` → `idle` | 见 §6.1 |
+| 当前 | 事件 | 动作 | 下一状态 | 可见 |
+| --- | --- | --- | --- | --- |
+| `idle` | 麦克风 pointer down | 失焦、收键盘、收面板、显示浮层骨架、单飞启动 | `starting` | 浮层骨架 |
+| `starting` | `start()` 成功且 pointer 仍有效 | 建录音 session、启动电平 / 计时 / cap | `recording` | 浮层波形 |
+| `starting` | 已松手或已取消 | `session.cancel()`，不转写 | `idle` | 浮层消失 |
+| `starting` | Key / 权限 / 设备 / 启动失败 | 收起浮层 + 对应 Toast | `idle` | Toast |
+| `starting` | 首次授权导致 pointer cancel | 不开录；授权成功提示再按住 | `idle` | Toast「已授权…」 |
+| `starting` | 其他 pointer cancel | 置取消标记，`start()` 返回后 cancel | `idle` | 浮层消失 |
+| `recording` | 上滑 ≥ 80dp | 进入取消态（medium 触感） | `cancelling` | 文案「松开取消」 |
+| `cancelling` | 回拉 < 80dp | 恢复发送态（light 触感） | `recording` | 「松手发送，上滑取消」 |
+| `recording` | pointer up | stop → 转写 | `transcribing` | 浮层保留，文案「识别中」 |
+| `cancelling` | pointer up | 丢弃录音，静默 | `idle` | 浮层消失 |
+| `recording` / `cancelling` | pointer cancel、来电、路由中断 | 丢弃；中断加 interrupted Toast | `idle` | 依分支 |
+| `recording` / `cancelling` | 系统返回（页面未销毁） | 取消录音，停留页面 | `idle` | 浮层消失 |
+| `recording` | 120 秒 cap | 自动 stop → 转写 → 尝试发送 | `transcribing` | `limitReached` Toast |
+| `transcribing` | ASR 成功非空 | 插入输入框 → 可发送则 `_send()` | `idle` | 失败时 Toast |
+| `transcribing` | ASR 空 / 失败 | 不插入，empty / failed Toast | `idle` | Toast |
+| `transcribing` | 后台、切会话、页面销毁 | 取消转写、丢弃 | `idle` | — |
+| `transcribing` | cap 后松手 | no-op | `transcribing` | — |
+| 任意 | 页面销毁 | `stopAll` 静默清理 | — | — |
 
-### 3.2 录音
+### 3.2 按住、启动与手势
 
-- 使用 `record`：`AudioEncoder.wav`、`sampleRate: 16000`、`numChannels: 1`、
-  `echoCancel: true`、`noiseSuppress: true`、`autoGain: false`；
-  写入 `path_provider` 临时目录下的独立文件，停止 / 取消后立即删除。
-- 启动失败、无输入设备或权限在启动时被撤销：释放已占资源，经瞬态 `error`
-  回 `idle`。
-- 录音中按墙钟计时，界面每 500 ms 刷新整秒；到达 120 秒只触发一次停止。
-  不以样本数或电平回调计时。
+- `onPointerDown` 同步执行：输入框失焦、收起键盘、收起附件面板、显示浮层骨架；
+  随后单飞执行读 Key → `isGranted()` → `request()` → `recorder.start()`。
+  `_starting` 标记防止连按双开。
+- 用 `Listener` 直接处理 pointer down / move / up / cancel，只用 `List` 跟踪
+  第一个 pointer id；不用 `GestureDetector` 长按（500 ms 延迟，且长按被接受后
+  系统 cancel 不回调结束事件，状态会悬挂）。
+- 取消阈值以按下瞬间的全局坐标为基准：`pressStartGlobalY - currentY >= 80dp`，
+  实时判定，可回拉；横向位移不取消；手指滑出按钮范围不影响录音，只有抬起或
+  `PointerCancel` 结束。
+- 首次授权：系统弹窗会让 Flutter 收到 `PointerCancelEvent`，之后不会有
+  `PointerUp`。授权成功后不自动开录，收起浮层并提示「已授权麦克风，请再按住说话」。
+- 松手早于 `start()` 返回：置取消标记，`start()` 返回后立即 `cancel()`，
+  不转写、不提示。`start()` 成功但录音极短：正常 stop → 转写，空结果走
+  `voiceInputEmpty`；不设最短时长门槛。
+- 触感：进入取消态 `HapticFeedback.mediumImpact`，回拉恢复 `lightImpact`；
+  松手取消静默，无 Toast。
+- 启动失败、无输入设备或权限在启动时被撤销：释放已占资源，回 `idle`。
+- 录音中按墙钟计时；到达 120 秒只触发一次停止。不以样本数或电平回调计时。
 - 录音被系统中断（来电、其他应用占用音频、蓝牙路由断开）：
-  `record.onStateChanged()` 出现非用户触发的 `pause` / `stop` 即视为中断，
-  取消本次录音并丢弃，不尝试恢复。配置上选择路由变化时停止，不做自动切换。
+  `record.onStateChanged()` / `onStopped()` 出现非用户触发的原因即视为中断，
+  取消本次录音并丢弃，不尝试恢复。配置选择路由变化时停止，不做自动切换。
+- 录音中系统返回：第一次只取消录音并留在页面，不弹侧栏、不退出。
 - 启动时清理语音临时目录中的残留文件。
 
 ### 3.3 转写请求
@@ -119,16 +143,24 @@ idle ──点击 / 权限通过──▶ recording ──再次点击 / 120 秒
   `duration_ms`。非 JSON、缺字段或类型错误按协议失败处理。
 - 请求可取消：复用 `http.AbortableRequest` 的 `abortTrigger`；
   multipart 请求体先 finalize 为字节再发送。取消后丢弃响应，不插入任何文本。
-- 不设客户端超时；用户可随时点击取消。ASR 官方要求上传在 10 分钟内完成，
-  v1 不额外计时，依赖用户取消。
+- 识别中浮层不提供取消入口；取消只来自后台、切会话、离开页面与页面销毁。
+- 不设客户端超时；ASR 官方要求上传在 10 分钟内完成，v1 不额外计时。
 
-### 3.4 插入规则
+### 3.4 插入与自动发送
 
-- 取 `TextEditingController.value` 的 `selection`；无效选区（`-1`）时使用文本末尾。
-- 文本按以下方式替换选区：
-  `before + transcript.trim() + after`。
-- 插入后折叠光标到插入内容之后；不自动发送、不改变附件与开关状态。
-- 转写期间用户改了光标或文字，结果仍按**返回时**的当前选区插入。
+- 转写成功先把文本插入输入框：取 `TextEditingController.value` 的 `selection`，
+  无效选区（`-1`）用文本末尾；`before + transcript.trim() + after`，光标折叠到
+  插入内容之后；不改变附件与开关状态。
+- 随后判断发送条件（全部满足才复用现有 `_send()`）：无生成中、草稿附件全部
+  `done`、有 API Key、会话可用，且转写期间用户没有手动输入新文本。
+- 发送成功：沿用 `_send()` 清空输入。任一条件不满足：只插入、不发送，并 Toast
+  说明原因：无 Key → `errorNoApiKey`；生成中 → `voiceInsertedGenerating`；
+  附件未完成 → `voiceInsertedUploading`；其他（用户已输入、会话不可用）→
+  `voiceInsertedNotSent`。转写结果永不丢失。
+- 建会话或发送抛错：文本留在输入框，Toast `voiceSendFailedInserted`；空会话按
+  现有 `_discardEmptySession` 清理。
+- 转写失败 / 空结果：不插入，走 `voiceInputEmpty` / `voiceInputFailed`。
+- 120 秒 cap 已触发后松手：no-op。
 
 ## 4. 朗读状态机
 
@@ -216,7 +248,9 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 - 权限请求与状态统一走 `permission_handler` 13.0.2。其 `PermissionStatus`
   没有 `notDetermined`，因此另存 `speech.micRequested` 布尔值（首次请求后置
   `true`）来区分「未请求」与「已拒绝」：
-  - 首次点击语音时调 `Permission.microphone.request()`；`granted` 后才启动录音。
+  - 首次按住说话时调 `Permission.microphone.request()`；首次系统弹窗后本次手势
+    一律不开录：`granted` 时提示 `voiceMicGrantedRetry` 让用户再按住，拒绝时按
+    上一行处理。后续按住才走「检查 → 开录」。
   - `granted` = 已允许；`micRequested == false` = 未请求；其余状态
     （`denied` / `permanentlyDenied` / `restricted` 等）= 已拒绝。
   - 已拒绝时不录音，提示并给出「打开系统设置」动作（`openAppSettings()`）；
@@ -224,7 +258,7 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
   - 设置页「语音」区只读上述三态；仅「已拒绝」显示「打开系统设置」按钮。
   - 从系统设置返回（`resumed`）时重新读取权限状态。
 - 系统权限弹窗引起的短暂 `inactive` 只作用于已经开始的录音 / 朗读；
-  尚未开始的录音请求不因弹窗被取消。
+  首次授权会让本次按住收到 `PointerCancel`，按 §3.2 不开录、提示再按住。
 - iOS CocoaPods 集成需在 `Podfile` 的 `post_install` 打开
   `PERMISSION_MICROPHONE=1`；使用 SPM 时按包文档启用麦克风宏。
 
@@ -260,11 +294,14 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 | 中断（来电、路由、后台、切页） | `voiceInputInterrupted`（仅当前页可见时） |
 | ASR 400 / 401 / 402 / 408 / 413 / 429 / 503 / 504 | `voiceInputFailed` |
 | 网络失败 / 非 JSON / 缺 `text` | `voiceInputFailed` |
-| 转写被用户取消 | 无提示 |
+| 后台、切会话、页面销毁取消转写 | 无提示 |
+| 首次授权成功（本次未开录） | `voiceMicGrantedRetry` |
+| 转写已插入但自动发送被挡 | `voiceInsertedGenerating` / `voiceInsertedUploading` / `voiceInsertedNotSent` / `errorNoApiKey` |
+| 自动发送抛错 | `voiceSendFailedInserted` |
 
 - 不区分 413 / 429 / 503 / 504，与 chat-demo 的 `voiceInputFailed` 折叠一致；
   唯一可操作差异由 UI 在重试时自然体现。
-- 不自动重试；用户再次点击录音即可。
+- 不自动重试；用户再次按住麦克风即可。
 - release 构建不显示服务端原文；debug 构建只记录日志。
 
 ### 6.2 朗读
@@ -286,11 +323,16 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 
 ## 7. 波形与动画
 
-- v1 录音只显示 5 根电平条，数据源为 `record.onAmplitudeChanged(100ms)` 的
-  dBFS 值，映射到 `[-50, 0] dBFS → 0..1`，最低保留 2 dp 高度。
-- 电平条不要求真实频谱；真实波形（`audio_waveforms`）与 100–4000 Hz 频谱
-  （`fftea`）明确不进 v1。
-- 录音计时与电平刷新不驱动整页重建；仅重建状态行与电平条。
+- 录音、识别、取消共用同一蓝色动态浮层：贴底覆盖输入卡与草稿行，约 60% 屏高，
+  不盖顶部栏、不遮消息区、不加全屏遮罩、不响应点击。
+- 蓝区自绘 6 枚缓慢漂移、互相重叠的径向椭圆，形成动态不规则上缘；顶部全透明、
+  底部渐到实色；不引入渐变 / 动效库。
+- 高光锚定按下 / 移动的真实 pointer 坐标，随 `SpeechState.level` 平滑值脉动；
+  取消态不变色，仅把文案换成「松开取消」。
+- 波形 32 根（高 28、宽 2.4、间距 1.6），由 `record.onAmplitudeChanged(100ms)`
+  的 dBFS 值映射到 `[-50, 0] → 0..1` 后做约 30fps 插值缓动；录音未开始时为
+  静止低幅骨架。识别中保留低幅波形。
+- 电平与计时刷新不驱动整页重建，只重建浮层。
 - 朗读按钮的 4 根竖条为纯装饰，不读取真实音频；开启减少动画时显示静态帧。
 - 错误、权限与空态不使用动画，避免误读为进行中。
 
@@ -301,11 +343,19 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 
 | 键 | 中文 | English | 用途 |
 | --- | --- | --- | --- |
-| `voiceInput` | 语音输入 | Voice input | 空闲 tooltip / 无障碍标签 |
-| `voiceInputRecording` | 录音中 {seconds} 秒 | Recording {seconds}s | 录音计时，`seconds` 为 int |
-| `voiceInputStop` | 结束录音并转写 | Stop recording and transcribe | 录音中 tooltip |
-| `voiceInputTranscribing` | 正在转写… | Transcribing… | 转写状态行 |
-| `voiceInputCancel` | 正在转写，点击取消 | Transcribing. Tap to cancel | 转写中 tooltip |
+| `holdToTalk` | 按住说话 | Hold to talk | 麦克风空闲语义 |
+| `voiceHoldToSend` | 松手发送，上滑取消 | Release to send, slide up to cancel | 录音浮层 |
+| `voiceReleaseToCancel` | 松开取消 | Release to cancel | 取消态浮层 |
+| `voiceRecognizing` | 识别中 | Recognizing | 识别浮层 |
+| `voiceMicGrantedRetry` | 已授权麦克风，请再按住说话 | Microphone access granted. Hold to talk again. | 首次授权 Toast |
+| `voiceRecordSemantics` | 录音中，双击结束并发送 | Recording. Double-tap to finish and send. | 语义标签与播报 |
+| `voiceCancelRecording` | 取消录音 | Cancel recording | 自定义语义动作 |
+| `voiceCancelled` | 已取消 | Recording cancelled | 播报 |
+| `voiceRecognizingSemantics` | 正在识别 | Recognizing speech | 播报 |
+| `voiceSendFailedInserted` | 发送失败，已放入输入框 | Couldn't send. The text is in the message field. | 自动发送抛错 |
+| `voiceInsertedGenerating` | 生成中，转写内容已插入输入框 | Generating. Transcription inserted. | 自动发送被挡 |
+| `voiceInsertedUploading` | 附件上传中，转写内容已插入输入框 | Attachments uploading. Transcription inserted. | 自动发送被挡 |
+| `voiceInsertedNotSent` | 转写内容已插入输入框，未自动发送 | Transcription inserted. Not sent automatically. | 其他拦截原因 |
 | `voiceInputPermissionDenied` | 无法使用麦克风，请在系统设置中允许访问 | Microphone access is denied. Allow it in system settings. | 权限拒绝 |
 | `voiceInputNoDevice` | 未检测到麦克风 | No microphone detected | 无输入设备 |
 | `voiceInputFailed` | 语音识别失败，请稍后再试 | Speech recognition failed. Please try again later. | ASR 与录音失败 |
@@ -352,9 +402,15 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
   - `lib/features/chat/speech/speech_api.dart`：ASR / TTS 请求、PCM 流读取。
   - `lib/features/chat/speech/recorder.dart`：`record` 封装、120 秒计时、电平回调。
   - `lib/features/chat/speech/player.dart`：`flutter_soloud` 封装、首帧缓冲、停止释放。
-  - `lib/features/chat/speech/speech_controller.dart`：全局音频状态机、互斥与生命周期。
-  - `lib/features/chat/speech/voice_button.dart`、`recording_status.dart`、
-    `read_aloud_button.dart`；在 `chat_page.dart` 的输入区与消息操作条接入。
+  - `lib/features/chat/speech/speech_controller.dart`：全局音频状态机、互斥与生命周期；
+    新增显式 `startFromPress` / `finishFromRelease` / `cancelFromGesture` 与
+    `_starting` 单飞，不把松手接到 `toggleVoiceInput`。
+  - `lib/features/chat/speech/voice_button.dart`：`Listener` 按住手势 +
+    `Semantics` tap 切换与「取消录音」自定义动作。
+  - `lib/features/chat/speech/voice_overlay.dart`：蓝色动态浮层与波形，
+    `CustomPainter` 自绘；取代 `recording_status.dart`。
+  - `lib/features/chat/speech/read_aloud_button.dart`；在 `chat_page.dart` 的
+    输入区与消息操作条接入。
   - 发送、停止生成、继续、重新生成、切换会话、切换分支、页面销毁时调用
     `SpeechController.stopReadAloud()`；`dispose` 调用 `stopAll()`。
 - 设置页：
@@ -377,11 +433,16 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 ### 11.1 自动化
 
 - 状态机单测（注入 fake recorder / player / API）：
-  - `idle → recording → transcribing → idle`；录音取消、转写取消。
-  - 120 秒自动停止并只触发一次；无样本与空文本。
-  - 选区替换、无效选区回退末尾、插入后光标位置。
+  - `idle → starting → recording → transcribing → idle`；松手取消、上滑取消。
+  - 松手早于 `start()` 返回：返回后 cancel，不转写、不提示；连按只开一次录音。
+  - 首次授权 pointer cancel：不开录，提示再按住。
+  - 上滑阈值纯函数：按下坐标基准、≥80dp 进入取消、回拉恢复、横向不取消。
+  - 120 秒自动停止并只触发一次；cap 后松手 no-op；无样本与空文本。
+  - 插入规则：选区替换、无效选区回退末尾、光标位置。
+  - 自动发送闸门：无生成中 / 附件全 done / 有 Key / 会话可用 / 未手动改文本；
+    被挡时只插入并给对应 Toast；发送抛错保留文本。
   - 朗读同条停止、切换条先停后播、发送 / 停止生成 / 切会话 / 切分支 / 切页停止。
-  - 互斥：朗读中开始录音先停朗读；录音 / 转写中朗读入口不可用。
+  - 互斥：朗读中开始录音先停朗读；录音 / 识别中朗读入口不可用。
   - 生命周期非 `resumed` 取消录音并停朗读。
 - 请求契约单测：ASR multipart 字段、文件名、Bearer 头；TTS JSON 字段、
   `filter_markdown: true`、音色快照；取消会中止请求。
@@ -394,23 +455,24 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 
 ### 11.2 手动验收
 
-1. 首次点击语音 → 系统授权；授权后录音，再点结束；转写文本插入光标处，
-   替换选区，光标在文本后，不自动发送。
-2. 拒绝权限 → 提示与「打开系统设置」；设置页状态为「已拒绝」；跳设置授权后
-   返回，状态变「已允许」，可录音。
-3. 录满 120 秒 → 提示上限并自动转写；文件不超过 8 MiB。
-4. 转写中点击取消 → 不插入文本，按钮回空闲。
-5. 静音 / 空结果 → 「未识别到语音内容」。
-6. 断网、无效 Key、429 / 503 等 ASR 失败 → 统一「语音识别失败」。
-7. 录音中切会话 / 进后台 / 来电 → 不插入文本，临时文件已删除。
-8. 点击可朗读回复 → `loading` → 首帧即播；再次点击停止；点另一条切换；
+1. 按住麦克风 → 浮层出现；松手 → 识别 → 文本插入并自动发送；有文本时麦克风隐藏。
+2. 首次按住 → 系统授权；授权后不开录，提示「已授权麦克风，请再按住说话」；
+   再次按住才录音。拒绝权限 → 提示与「打开系统设置」。
+3. 上滑 80dp → 「松开取消」+ 触感；回拉恢复；松手取消无 Toast、无插入。
+4. 录满 120 秒 → 提示上限并自动转写发送；文件不超过 8 MiB。
+5. 识别中无取消入口；切会话 / 进后台 / 来电 → 取消转写或丢弃录音，不插入文本，
+   临时文件已删除。
+6. 静音 / 空结果 → 「未识别到语音内容」。
+7. 断网、无效 Key、429 / 503 等 ASR 失败 → 统一「语音识别失败」。
+8. 生成中 / 附件上传中松手 → 只插入并提示对应原因；发送抛错文本留在输入框。
+9. 点击可朗读回复 → `loading` → 首帧即播；再次点击停止；点另一条切换；
    全程只有一条在读。
-9. 朗读中发送 / 停止生成 / 重新生成 / 切会话 / 进后台 → 立即停止。
-10. TTS 400 → 「这条回答暂时无法朗读」；401 / 402 / 429 / 503 文案符合 §6.2。
-11. 开启减少动画：朗读竖条静态、录音电平条不闪烁；无障碍标签随状态变化。
-12. 中英双语、浅深主题下状态行、SnackBar、设置区文案正确。
+10. 朗读中发送 / 停止生成 / 重新生成 / 切会话 / 进后台 → 立即停止。
+11. TTS 400 → 「这条回答暂时无法朗读」；401 / 402 / 429 / 503 文案符合 §6.2。
+12. 开启减少动画：朗读竖条静态、浮层蓝区与波形冻结；无障碍标签随状态变化。
+13. 中英双语、浅深主题下浮层、Toast、设置区文案正确。
 
-v1 截图第 6 项「朗读回答与语音输入」对应本节的 1–10；票 19 的验收对照表
+v1 截图第 6 项「朗读回答与语音输入」对应本节的 1–13；票 19 的验收对照表
 应逐条引用这里的用例。
 
 ## 12. 风险与未决
@@ -436,3 +498,10 @@ v1 截图第 6 项「朗读回答与语音输入」对应本节的 1–10；票 
    Google Play Data Safety 中披露。
 10. **`record` 7.x 要求 Flutter 3.44 / Dart 3.12**：当前工具链满足；若回退
     Flutter，需锁定 `record` 6.2.x 并复测。
+11. **`Listener` 不参与 gesture arena**：输入区当前不在可滚动父级内，按住不会
+    触发滚动；若将来把输入卡放进滚动容器，需改用 `RawGestureDetector`。
+12. **首次授权会让本次按住收到 `PointerCancel` 且无 `PointerUp`**：基于 Flutter
+    手势事实设计为「授权后不自动开录」；仍需 iOS / Android 真机各验证一次
+    系统弹窗行为，若与事实不符再调整。
+13. **上滑取消在无障碍下无等价手势**：读屏用户只能走语义 tap 切换与
+    「取消录音」自定义动作，与按住手势不是同一路径，验收需分别覆盖。

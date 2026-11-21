@@ -34,7 +34,7 @@
 | 来源 | 回复底部「站点图标叠加 + N 个网页」胶囊；点击打开底部来源抽屉 |
 | 操作条 | v1 只保留复制、重新生成、朗读；点赞 / 点踩 / 分享不渲染 |
 | 顶部栏 | 菜单、左对齐的会话标题、新建对话；分享不渲染 |
-| 输入区 | 大圆角容器、无阴影；附件、麦克风、发送 / 停止；朗读入口只在消息操作条 |
+| 输入区 | 大圆角容器、无阴影；`+` 内联附件面板、按住说话麦克风、发送 / 停止；朗读入口只在消息操作条 |
 | 超长消息 | 不做 8 行折叠；完整渲染 Markdown，单块超过 200000 字符按纯文本降级 |
 | 模型切换 | 不保留；v1 固定 `deepseek-flash` |
 | 断点 | 单列；`<600` 紧凑，`>=600` 宽屏；聊天内容最大 760，设置最大 640 |
@@ -64,7 +64,7 @@
 | 系统设置 | 抽屉底部设置行 | 底部 Sheet，高 92% | 关闭按钮、返回、遮罩 | 两段导航：通用 / 数据管理 |
 | 数据管理 | 设置导航「数据管理」 | 设置 Sheet 内视图 | 关闭按钮、遮罩 | API Key、导入 / 导出 / 删除全部对话 |
 | 来源抽屉 | 「N 个网页」胶囊、搜索行、查看全部 | 底部 Sheet，最高 85% | 下拉、遮罩、关闭按钮 | 全局去重来源列表 |
-| 附件来源 | 回形针按钮 | 底部 Sheet | 遮罩、返回 | 从相册选择 / 选择文件 |
+| 附件面板 | 输入区 `+` 按钮 | 输入卡下方的内联面板（非 Sheet） | `×`、点输入框、系统返回 | 设备照片横条 + 拍照 / 相册 / 文件 |
 | 语言选择 | 设置「语言」行 | 锚定弹层 | 选中、遮罩 | 跟随系统 / 简体中文 / English |
 | 所在地选择 | 设置「位置信息」胶囊 | 锚定弹层 | 选中、遮罩 | 中文系统省市；其他系统国家 / 地区 |
 | 音色选择 | 设置「朗读音色」行 | 锚定弹层 | 选中、遮罩 | Stella / Tide |
@@ -88,11 +88,21 @@
 2. **消息区**：`ListView`，水平内边距 16，顶部 4，底部 8；消息间距 16；
    宽屏内容最大 760 并居中。
 3. **输入区**：左右外边距 16；容器圆角 28、1px 描边、无阴影；内部
-   左 16 / 上 12 / 右 12 / 下 10。
-4. **免责声明**：10.5sp、`mutedForeground`、底部 8；文案「内容由 AI 生成，请仔细甄别」。
+   左 16 / 上 12 / 右 12 / 下 10。容器内自上而下：
+   1. **草稿附件行**（有附件时）：单行横滑，高 76；图片 64、文件卡 210×64，
+      永不换行。
+   2. **输入框**：`minLines: 2`，最多 5 行后内部滚动；占位规则见 §5.2。
+   3. **操作行**：深度思考 / 智能搜索开关在左；右侧依次 `+`、麦克风、
+      发送 / 停止，三者顺序固定。
+4. **附件面板**：只在展开时存在，挂在输入卡下方、与输入卡同列，不覆盖消息区；
+   内容为设备照片横条与拍照 / 相册 / 文件三宫格，见 §5.7。
+5. **免责声明**：10.5sp、`mutedForeground`、底部 8；文案「内容由 AI 生成，请仔细甄别」。
 
-空态：消息区垂直居中显示「今天有什么可以帮到你？」（20sp / w500），
-不显示 logo、建议卡或快捷问题。加载态：顶部不确定进度条 + 3 条骨架 +
+空态：问候语「嗨! 今天想聊些什么?」在「顶部栏底部到输入卡顶部」的剩余区域内
+垂直居中（20sp / w500）；不显示 logo、建议卡或快捷问题。键盘弹出时在缩小后的
+剩余区域内继续居中；剩余高度小于 96 时隐藏。首条消息发出后 150ms 淡出。
+输入卡在空态与有消息状态使用同一实例、同一底部位置，不重建；切换只改变消息区
+内容，焦点、草稿附件与开关状态保持。加载态：顶部不确定进度条 + 3 条骨架 +
 「正在加载会话…」。错误态：错误提示 + 重试按钮。
 
 自动滚动：用户在底部附近时，新内容到达后保持贴底；用户主动上滑后停止自动滚动；
@@ -273,12 +283,14 @@ Markdown / Mermaid 内容使用 `materialThemeBuilder` 提供的 Material 主题
 | `MessageActions` | 自绘 + `ShadIconButton` | `features/chat/` | 复制 / 重新生成 / 朗读 |
 | `ContinueButton` | `ShadButton.outline` | `features/chat/` | 停止 / 超长后的继续生成 |
 | `ReplyError` | 自绘红字行（同 chat-demo `notice`） | `features/chat/` | 请求错误 + 重试 |
-| `AttachmentStrip` | 自绘 | `features/chat/` | 草稿附件条 |
-| `AttachmentChip` | 自绘 | `features/chat/` | 图片缩略图 / 文档卡 |
+| `AttachmentStrip` | 自绘 | `features/chat/` | 草稿附件行（单行横滑） |
+| `AttachmentChip` | 自绘 | `features/chat/` | 图片缩略图 / 文件卡；右上移除徽标在卡片内 |
+| `AttachmentPanel` | 自绘 | `features/chat/` | `+`/`×` 内联面板：照片横条 + 三宫格 |
+| `PhotoStrip` | 自绘 + `photo_manager` | `features/chat/` | 最近照片、勾选、权限降级 |
 | `MessageAttachments` | 自绘 | `features/chat/` | 消息内附件 |
 | `ImagePreview` | 自绘 + `InteractiveViewer` | `features/chat/` | 全屏图片 |
-| `RecordingStatus` | 自绘 | `features/chat/speech/` | 录音计时 + 5 根电平条 |
-| `VoiceButton` | 自绘 / `ShadIconButton` | `features/chat/speech/` | idle / recording / transcribing |
+| `VoiceOverlay` | 自绘 `CustomPainter` | `features/chat/speech/` | 按住说话 / 识别中浮层；取代旧录音状态行 |
+| `VoiceButton` | 自绘 / `ShadIconButton` | `features/chat/speech/` | 按住说话；语义 tap 切换 |
 | `ReadAloudButton` | 自绘 | `features/chat/speech/` | idle / loading / playing |
 | `ApiKeyField` | 自绘 + `ShadInput` | `features/settings/` | 数据管理内联 Key 输入 |
 | `ConfirmDialog` | `ShadDialog` | `features/settings/` | 删除 / 清除 / 导入覆盖 |
@@ -412,8 +424,14 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 固定尺寸：
 
 - 顶部栏 46；设置标题 20；设置 Sheet 标题区 56。
-- 输入区开关高 34；发送按钮 34；图标按钮视觉 28–36，点击区 ≥44。
-- 附件条高 76；图片缩略图 64；消息图片纯图 120、混排 64；文档卡最大宽 210。
+- 输入区容器圆角 28；开关高 34；发送按钮 34；图标按钮视觉 28–36，点击区 ≥44。
+- 草稿附件行高 76；图片 64×64；文件卡 210×64；移除徽标 20 白色圆；
+  文件扩展名色块 36×36；文件卡内文件名 12 单行省略。
+- 附件面板：照片格 80×80（圆角 12、间距 8）；横条区高 96；三宫格高 88
+  （圆角 16、间距 8）；面板与输入卡间距 8；面板最大高 45% 屏高，超出内部滚动。
+- 消息图片：纯图 120、混排 64。
+- 录音 / 识别浮层：高约 60% 屏高，贴底覆盖输入卡，不盖顶部栏；文案 15 / w500
+  白色，底部留白 44；波形条 32 根（宽 2.4、间距 1.6、高 28）。
 - 来源胶囊高 36；站点图标 20，叠加偏移 -6；操作条图标 18，视觉 36，点击区 ≥44。
 - 思考图标 14；工具行图标 16；引用角标字号 10。
 - Dialog 最大宽 420；Toast 最大宽 480；设置内容最大宽 640；聊天内容最大宽 760。
@@ -425,7 +443,10 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 用途 | 字号 / 行高 | 字重 |
 | --- | --- | --- |
 | 设置标题「系统设置」 | 20 / 28 | w600 |
-| 空态标题 | 20 / 28 | w500 |
+| 空态问候语 | 20 / 28 | w500 |
+| 录音浮层文案 | 15 / 20 | w500（白色） |
+| 照片横条提示 / 管理格 | 13 / 18 | w500 |
+| 三宫格标签 | 12.5 / 16 | w500 |
 | 设置分组标签 | 15 / 22 | w500 |
 | 设置行标签 | 15 / 22 | w400 |
 | 设置行值 / 下拉胶囊 | 13 / 20 | w400 |
@@ -492,16 +513,22 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | --- | --- |
 | 开关、按钮颜色 | 150 ms / easeOut |
 | 思考块展开 / 收起 | 180 ms / easeOut；箭头旋转 180 ms |
+| `+` ↔ `×` | 180 ms 交叉淡入 + 90° 旋转 |
+| 附件面板展开 / 收起 | 展开 220 ms / easeOutCubic；收起 180 ms |
+| 输入卡高度（草稿行出现 / 消失、行数变化） | `AnimatedSize` 200 ms |
+| 空态问候语淡出 | 150 ms |
+| 录音浮层进退 | 150 ms 淡入 + 上移 8 dp；取消态切换 120 ms |
+| 浮层动态蓝区 | 6 枚径向椭圆缓慢漂移（约 4–6 s 周期）；高光随输入电平脉动 |
 | Sheet / Dialog 进退 | 220–250 ms / easeOutCubic |
 | 流式光标 | 650 ms 往返，透明度 0→1→0 |
 | 朗读竖条 | 900 ms 循环；4 根相位错开 |
-| 录音电平 | 100 ms 采样；只重建电平条 |
+| 录音电平 | 100 ms 采样；只重建浮层波形 |
 | 长消息展开 | 不做（v1 不折叠） |
 | 分支切换 | 不淡入淡出，直接替换内容 |
 
-`MediaQuery.disableAnimations` 为 true 时：流式光标静态显示、思考箭头不旋转、
-朗读竖条静态、录音电平条静态或低频更新、Sheet / Dialog 使用无动画切换。
-不以动画承载必要信息。
+`MediaQuery.disableAnimations` 为 true 时：所有尺寸与透明度过渡为 0、无旋转、
+浮层蓝区与波形冻结为静态帧；流式光标静态显示、思考箭头不旋转、朗读竖条静态、
+Sheet / Dialog 使用无动画切换。不以动画承载必要信息。
 
 ## 4. 响应式
 
@@ -537,8 +564,8 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 已停止 | 已有正文 | 正常 | 标题不变 | 继续生成（满足条件时） |
 | 错误 | 已收正文（如有）+ 错误块 | 正常 | 标题不变 | 重试（仅上传错误）/ 重新生成 |
 | 拒答 | 拒答正文 | 正常 | 标题不变 | 无续写 / 无重新生成 / 无来源 |
-| 录音中 | 不变 | 语音按钮录音态；发送与附件禁用 | 标题不变 | 点击语音结束并转写 |
-| 转写中 | 不变 | 语音按钮加载态；发送与附件禁用 | 标题不变 | 点击取消 |
+| 录音中 | 不变 | 录音浮层覆盖输入卡与草稿行 | 标题不变 | 松手发送，上滑 80dp 取消 |
+| 转写中 | 不变 | 蓝色浮层「识别中」覆盖输入卡 | 标题不变 | 等待识别完成，不提供取消 |
 | 朗读中 | 操作条朗读态 | 录音入口禁用 | 标题不变 | 再点同条停止 |
 
 ### 5.2 输入区按钮态
@@ -550,22 +577,33 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 3. 语音状态为 `idle`；
 4. 会话不在生成中。
 
-| 条件 | 发送按钮 | 附件 | 语音 | 开关 | 输入框 |
-| --- | --- | --- | --- | --- | --- |
-| 无内容 | 禁用（主色 35%） | 可用 | 可用 | 可用 | 可用 |
-| 有文本 / 有附件 | 可用（主色） | 可用 | 可用 | 可用 | 可用 |
-| 附件上传中 | 禁用 | 可用（继续添加） | 可用 | 可用 | 可用 |
-| 生成中 | 变为停止（主色圆形 + 实心方块图标，同发送底） | 禁用 | 禁用 | 可用 | 可用 |
-| 录音中 | 禁用 | 禁用 | 录音态（可点击结束） | 可用 | 可用 |
-| 转写中 | 禁用 | 禁用 | 加载态（点击取消） | 可用 | 可用 |
-| 朗读中 | 可用（发送会先停朗读） | 可用 | 禁用 | 可用 | 可用 |
-| 无 API Key | 可点击；提示 `errorNoApiKey` | 可用 | 点击提示 `errorNoApiKey` | 可用 | 可用 |
+右侧顺序固定为 `+`、麦克风、发送 / 停止。有文本时麦克风隐藏、发送占其位置；
+无文本有附件时三者共存。面板展开时 `+` 显示为 `×`。
 
-- 占位文案：`给 Fleepseek 发送消息` / `Message Fleepseek`。
-- 多行输入最多 5 行，之后内部滚动；`minLines: 1`。
+| 状态 | `+` / `×` | 麦克风 | 发送槽 | 开关 |
+| --- | --- | --- | --- | --- |
+| 无文本无附件 | 可用 | 显示，可用 | 禁用（主色 35%） | 可用 |
+| 有文本（附件为空或全部 `done`） | 可用 | 隐藏 | 可用 | 可用 |
+| 有文本 + 附件上传中 / 失败 | 可用 | 隐藏 | 禁用 | 可用 |
+| 无文本有附件（上传中 / 失败） | 可用 | 显示，可用 | 显示，禁用 | 可用 |
+| 无文本有附件（全部 `done`） | 可用 | 显示，可用 | 可用 | 可用 |
+| 生成中 | 禁用 | 隐藏 | 停止（主色圆形 + 实心方块） | 可用 |
+| 录音中 | 浮层覆盖输入卡：`+`、麦克风、发送与开关均不可见、不可操作 | — | — | 同左 |
+| 转写中（识别中） | 浮层覆盖输入卡：`+`、麦克风、发送与开关均不可见；不提供取消 | — | — | 同左 |
+| 朗读中 | 可用 | 显示，禁用 | 可用；发送前先停朗读 | 可用 |
+| 无 API Key | 可用 | 可点，提示 `errorNoApiKey` | 可点，提示 `errorNoApiKey` | 可用 |
+
+- 占位文案只由两个条件决定：附件为空且文本为空 →「发消息或按住说话」；
+  附件非空且文本为空 →「发消息」；文本非空时不显示。面板开合、焦点、录音、
+  转写、无 Key 都不改变占位。
+- 点 `+` 只让输入框失焦并收起键盘；点输入框时面板收起、键盘弹出。
+- 面板展开时点麦克风：先收起面板，再开始按住说话。点发送：发送后收起面板；
+  无文本时面板保持展开供继续选照片。
+- 多行输入最多 5 行，之后内部滚动；`minLines: 2`。
 - 激活开关：浅蓝底 + 蓝描边 + 蓝图标文字；未激活：透明底 + 灰描边 +
-  `mutedForeground`。开关只影响之后创建的回复，不打断当前生成。
-- 录音 / 转写时文本编辑与两个开关保持可用（`speech.md` §2.1）。
+  `mutedForeground`。开关只影响之后创建的回复，不打断当前生成；除被面板开合
+  或录音 / 识别浮层覆盖外，所有状态保持可用（含生成中、朗读中）。
+- 上传中允许开始录音；转写结果按 `speech.md` §3.4 先插入、再尝试发送。
 
 ### 5.3 回复状态与可见元素
 
@@ -653,31 +691,85 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 不可重试失败 | 红描边 + 原因；只能移除 | 不适用 | 关闭 |
 | 原件缺失 | 不适用 | 图片占位图标；文档「原件已丢失」 | 不进入请求 |
 
-- 草稿附件条在输入框上方，高 76，水平滚动，间距 8；每项右上移除按钮。
-- 文档卡：文件图标 16、文件名 12 单行省略、`扩展名 + 大小` 第二行；
-  最大宽 210。
+- 草稿附件条在输入框上方，高 76，单行横滑、永不换行，间距 8；50 个附件也不改变高度。
+  - 图片：64×64、圆角 12；移除徽标为卡片内右上角 20 白色圆（半透明底 + `×`）。
+  - 文件卡：210×64；左侧 36×36 扩展名配色色块图标；文件名 12 单行省略，
+    第二行 `扩展名 + 大小`；移除徽标同上。
+  - 上传中：卡片蒙层 + 中心 18 加载圈；可重试失败：红描边 + 白色重试图标；
+    不可重试失败：红描边 + 原因。失败只在草稿卡表达，面板内不加横幅。
+  - 移除即从草稿移除；上传中则取消排队 / 在途任务，迟到的成功结果丢弃。
 - 消息图片：纯图片 120×120；与文档混排 64×64；点击全屏。
 - 上限：单次草稿 50 个；超限 Toast「上传文件最多支持 50 个」。
 - 配额 / 大小 / 格式错误使用既有 ARB 文案；配额 Toast 带「删除文件」外链动作。
 
+**附件面板（`+` / `×`）**
+
+- 面板挂在输入卡下方、与输入卡同列，不覆盖消息区；展开时 `+` 变 `×`
+  （180ms 交叉淡入 + 90° 旋转），输入框失焦、键盘收起；展开动画不等键盘收起完成。
+- 高度只由内容决定：照片横条区约 96、三宫格约 88、间距 8；不随附件数量变化。
+  横屏或屏高不足时面板最大 45% 屏高，内部纵向滚动。
+- 照片横条：最近 30 张、`createDate` 倒序、只含图片；照片格 80×80、圆角 12、
+  间距 8，按 200×200 解码（`isOriginal: false`）。每次展开重新查询；面板保持
+  展开期间不刷新。首次加载显示 6 个与照片格等高的静态灰块骨架。
+- 勾选：主色圆底白勾 + 图片压暗；选中即转码为 JPEG、追加到草稿行末尾并上传。
+  再点缩略图或点草稿卡移除徽标即取消；选中态由草稿的 `sourceAssetId` 派生，
+  同一资产不可重复加入。草稿已满 50 时未选照片格 50% 不透明度，点击弹
+  `uploadMaxFiles`；已选中的仍可取消。
+- 三宫格：拍照 / 从相册选择 / 选择文件，高 88、圆角 16、间距 8；拍照与系统相册
+  走系统界面，返回后直接加入草稿并上传，不回写横条勾选；返回后页面保持展开、
+  键盘收起、焦点不移动、横条不刷新。
+- 权限：每次展开检查；仅「未决定」时请求，未决定与已拒绝均立即展开面板，
+  横条区先显示骨架。已拒绝：横条原位「无法访问照片」+「去设置」，三宫格仍可用。
+  iOS 受限（含 Android 14 部分访问）：只显示可访问资产，最左端插入等高「管理」格，
+  点击拉起系统选择器，返回后重载；可访问资产为 0 时只显示「管理」格。
+  已授权但图库为空：「没有最近照片」。读取失败：「无法读取照片」+「重试」。
+  从后台 / 系统设置 /「管理」选择器返回时重新检查并重载，草稿行与勾选不受影响。
+- HEIC：横条资产一律转 JPEG（iOS 优先 `.file`，非 JPEG 则
+  `thumbnailDataWithSize`；Android 直接 `thumbnailDataWithSize`），质量 90、
+  长边 ≤2560；草稿文件名 `.jpg`、mime `image/jpeg`。转码失败或仍非 JPEG：
+  Toast「无法读取这张照片」，不入草稿、勾选保持未选。`heic` / `heif` 不加入白名单。
+  转码后超过 64 MB 按 `uploadMaxMBSize` 处理。
+- Android 构建开关：`--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 只关闭 Android
+  照片横条及其权限申请，面板只剩三宫格并随内容收缩；iOS 不受影响。
+
 ### 5.8 语音
 
-- 输入区顺序：附件（回形针）→ 语音（麦克风）→ 发送 / 停止。
-- 语音按钮：
-  - `idle`：麦克风 18，`mutedForeground`；点击开始录音；
-  - `recording`：红色图标 / 状态点，旁显「录音中 N 秒」；
-  - `transcribing`：小型加载指示器，tooltip「正在转写，点击取消」。
-- 录音状态行：输入区上方胶囊，高 36，`muted` 底；红色 8×8 状态点 +
-  「录音中 N 秒」+ 5 根电平条；不显示真实波形。
-- 权限拒绝：Toast「无法使用麦克风，请在系统设置中允许访问」+「打开系统设置」；
-  已拒绝时朗读仍可用，语音入口不可用。
+输入区顺序：`+` → 语音（麦克风）→ 发送 / 停止；不再使用回形针。语音入口为
+**按住说话**，不做点击开始 / 再点结束。
+
+- 麦克风按钮：`idle` 时麦克风 18、`mutedForeground`；按下即进入录音流程。
+  有文本时隐藏；生成中隐藏；朗读中显示但禁用；无 Key 可点并提示 `errorNoApiKey`。
+- 手势：`Listener` 直接处理 pointer down / move / up / cancel，只跟踪首个 pointer；
+  取消阈值以按下瞬间全局坐标为基准 `pressStartGlobalY - currentY >= 80dp`，
+  实时判定、可回拉；横向位移不取消；手指滑出按钮范围不结束录音。
+  进入取消态 `mediumImpact`，恢复 `lightImpact`。
+- 浮层：按下立即显示骨架；覆盖输入卡与草稿行并向上延伸（约 60% 屏高），
+  不盖顶部栏、不遮消息区、不加全屏遮罩、不响应点击；录音期间输入卡不可编辑。
+  蓝区为自绘的 6 枚漂移重叠径向椭圆（动态不规则上缘，顶部全透明），
+  高光锚定按下 / 移动的真实 pointer 坐标并随电平脉动；底部渐到实色。
+  文案：录音「松手发送，上滑取消」、取消「松开取消」、识别「识别中」；
+  取消态不再变红，仅换文案。波形 32 根、高 28、宽 2.4、间距 1.6，
+  数据取 `SpeechState.level` 平滑值；录音未开始时为静止低幅骨架。
+- 启动：按下后单飞执行读 Key → 权限检查 → `recorder.start()`；按钮无独立加载态。
+  首次授权时系统弹窗导致 pointer cancel 且之后无松手事件：授权成功后不自动开录，
+  收起浮层并 Toast「已授权麦克风，请再按住说话」。松手早于 `start()` 返回：
+  置取消标记，返回后立即 `cancel()`，不转写、不提示。
+  Key 缺失 / 权限拒绝 / 无设备 / 启动失败：收起浮层，弹既有
+  `noApiKey` / `permissionDenied` / `noDevice` / `failed` Toast。
+- 松手：停止录音 → 转写；成功先插入输入框，再在满足条件时自动发送，见
+  `speech.md` §3.4。识别中保留同一蓝色浮层（低幅波形），不提供取消入口。
+- 中断：来电 / 路由变化丢弃录音并提示 interrupted；切会话、离开页面、进后台、
+  页面销毁静默丢弃；120 秒自动停止并转写发送，保留 `limitReached` Toast；
+  cap 后松手 no-op。录音中系统返回第一次只取消录音并留在页面。
 - 朗读按钮只在 assistant 操作条：
   - `idle`：`volume2` 18；
   - `loading`：4 根竖条扫光；
   - `playing`：4 根竖条起伏；
   - 点击同条停止；同一时间只有一条；录音 / 转写中置灰。
 - 朗读中发送、停止生成、继续、重新生成、切会话、切分支、进后台均停止。
-- 语音相关文案全部复用 `speech.md` §8 的 ARB 键。
+- 无障碍：麦克风语义按钮用 tap 切换开始 / 结束（不需按住），录音中提供
+  「取消录音」自定义动作；浮层文案为 liveRegion，只播报开始、取消、识别、
+  发送失败等状态变化。语音相关文案全部复用 `speech.md` §8 的 ARB 键。
 
 ### 5.9 系统设置交互
 
@@ -768,10 +860,16 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 设置导航 | Tab / 按钮，选中状态 |
 | 主题卡片 | 单选按钮，选中状态 |
 | 下拉胶囊 | 按钮，「语言：跟随系统」等当前值 |
-| 输入框 | 文本域，hint「给 Fleepseek 发送消息」 |
+| 输入框 | 文本域，hint「发消息或按住说话」/「发消息」 |
 | 深度思考 / 智能搜索 | 开关，选中状态 |
 | 发送 / 停止 | 按钮，「发送」/「停止生成」 |
-| 语音 | 按钮，随状态「语音输入」/「结束录音并转写」/「正在转写，点击取消」 |
+| 添加附件 | 按钮，「添加附件」 |
+| 收起附件面板 | 按钮，「收起附件面板」 |
+| 照片格 | 按钮，「照片，第 N 张，已选 / 未选」+ `selected` 状态 |
+| 管理可访问照片 | 按钮，「管理可访问照片」 |
+| 三宫格 | 按钮，「拍照」「从相册选择」「选择文件」 |
+| 语音 | 按钮，「按住说话」；随状态「录音中，双击结束并发送」/「正在识别」 |
+| 录音浮层 | liveRegion；只播报开始、取消、识别、发送失败，不逐秒播报 |
 | 用户消息 | 「你的消息」+ 文本；附件逐项标签 |
 | 助手回复 | 「助手回复」；流式开始时播报一次，结束再播报一次 |
 | 思考标题 | 按钮，展开状态 + 标题文本 |
@@ -783,7 +881,6 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 操作条 | 「复制」「重新生成」「朗读」/「停止朗读」 |
 | 附件移除 | 「移除附件」 |
 | 图片 | 「查看图片」+ 文件名 |
-| 录音状态 | 实时区域，只播报开始 / 转写 / 结束，不逐秒播报 |
 | 朗读按钮 | 「朗读」/「停止朗读」 |
 
 ### 6.3 动态字体与对比度
@@ -797,7 +894,8 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 
 ### 6.4 减少动画与读屏
 
-- `disableAnimations`：光标静态、箭头不转、朗读竖条静态、录音电平静态或低频、
+- `disableAnimations`：光标静态、箭头不转、朗读竖条静态、录音波形与浮层蓝区
+  冻结为静态帧、面板与输入卡无尺寸 / 透明度过渡、`+`↔`×` 直接切换、
   Sheet / Dialog 无动画。
 - 流式回复不逐 token 播报；只在开始、停止、完成、出错时更新 live region
   （读屏实时区域）。
@@ -830,7 +928,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | `sessionGroupEarlier` | 更早 | Earlier | 会话分组 |
 | `sessionLoading` | 正在加载会话… | Loading chats… | 加载态 |
 | `sessionsLoadFailed` | 无法加载会话 | Could not load chats | 加载失败 |
-| `chatEmptyTitle` | 今天有什么可以帮到你？ | What can I help you with? | 空态标题 |
+| `chatEmptyTitle` | 嗨! 今天想聊些什么? | Hi! What would you like to talk about? | 空态问候语（改值） |
 | `copy` | 复制 | Copy | 操作条 / 语义 |
 | `edit` | 编辑 | Edit | 用户消息编辑 |
 | `stopGeneration` | 停止生成 | Stop generating | 输入区停止按钮 |
@@ -872,11 +970,40 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | `settingsDeleting` | 正在删除… | Deleting… | 进度 |
 | `settingsDeleted` | 已删除全部对话 | All chats deleted | 成功 Toast |
 | `replyFailedTitle` | 生成失败 | Generation failed | 错误块标题 |
+| `composerHint` | 发消息或按住说话 | Message or hold to talk | 输入框占位（改值） |
+| `composerHintWithAttachments` | 发消息 | Message | 有附件时占位 |
+| `addAttachment` | 添加附件 | Add attachment | `+` 语义 |
+| `closeAttachmentPanel` | 收起附件面板 | Close attachment panel | `×` 语义 |
+| `holdToTalk` | 按住说话 | Hold to talk | 麦克风语义 |
+| `takePhoto` | 拍照 | Take photo | 三宫格 |
+| `photoPermissionDenied` | 无法访问照片 | Can't access photos | 横条权限拒绝 |
+| `photoLimitedManage` | 管理 | Manage | 受限「管理」格 |
+| `photoLimitedManageSemantics` | 管理可访问照片 | Manage accessible photos | 管理格语义 |
+| `photoStripEmpty` | 没有最近照片 | No recent photos | 图库为空 |
+| `photoStripLoadFailed` | 无法读取照片 | Couldn't load photos | 横条读取失败 |
+| `photoUnreadable` | 无法读取这张照片 | Couldn't read this photo | 转码失败 Toast |
+| `photoTileSelected` | 照片，第 {index} 张，已选 | Photo {index}, selected | 照片格语义 |
+| `photoTileUnselected` | 照片，第 {index} 张，未选 | Photo {index}, not selected | 照片格语义 |
+| `voiceHoldToSend` | 松手发送，上滑取消 | Release to send, slide up to cancel | 录音浮层 |
+| `voiceReleaseToCancel` | 松开取消 | Release to cancel | 取消态浮层 |
+| `voiceRecognizing` | 识别中 | Recognizing | 识别浮层 |
+| `voiceMicGrantedRetry` | 已授权麦克风，请再按住说话 | Microphone access granted. Hold to talk again. | 首次授权 Toast |
+| `voiceRecordSemantics` | 录音中，双击结束并发送 | Recording. Double-tap to finish and send. | 语义标签与播报 |
+| `voiceCancelRecording` | 取消录音 | Cancel recording | 自定义语义动作 |
+| `voiceCancelled` | 已取消 | Recording cancelled | 播报 |
+| `voiceRecognizingSemantics` | 正在识别 | Recognizing speech | 播报 |
+| `voiceSendFailedInserted` | 发送失败，已放入输入框 | Couldn't send. The text is in the message field. | 发送抛错 |
+| `voiceInsertedGenerating` | 生成中，转写内容已插入输入框 | Generating. Transcription inserted. | 自动发送被挡 |
+| `voiceInsertedUploading` | 附件上传中，转写内容已插入输入框 | Attachments uploading. Transcription inserted. | 自动发送被挡 |
+| `voiceInsertedNotSent` | 转写内容已插入输入框，未自动发送 | Transcription inserted. Not sent automatically. | 其他拦截原因 |
 
 新增键同时补 `app_en.arb` 与 `app_zh.arb`；占位符在模板的 `@key.placeholders`
 声明。新增组 `session*`、`webPages`、`chatEmptyTitle` 归入会话 / 搜索文案；
 `settingsLocationNone`（不指定，选择器选项）与 `settingsLocationUnset`（未设置，行尾）
 含义不同，不复用。
+`photoTile*` 的 `{index}` 从 1 起。随输入区改版删除不再使用的键：
+`voiceInputRecording`、`voiceInputStop`、`voiceInputTranscribing`、
+`voiceInputCancel`、`voiceInput`。
 
 ### 7.3 复用已有键
 
@@ -887,7 +1014,7 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 搜索 / 来源 | `searching`、`searchingQuery`、`searchingDots`、`searchStopped`、`searchUnavailable`、`noSuitableResults`、`noRelevantResults`、`searchedPages`、`readPages`、`browsingPages`、`browseFailed`、`browsePageFailed`、`findFailed`、`findKeywords`、`noMatchingContent`、`viewAll`、`searchResults`、`imageSearching`、`reading`、`browsingWeb` |
 | 输入区 | `composerHint`、`send`、`stop`、`deepThinking`、`smartSearch` |
 | 附件 | `uploadFile`、`uploadFromPhotos`、`uploadFromFiles`、`uploadUnsupportedFormat`、`uploadMaxMBSize`、`uploadMaxFiles`、`uploadFileStatusUploading`、`uploadFileStatusFailed`、`uploadRetry`、`uploadServerBusy`、`uploadParseFailed`、`uploadFileCountLimit`、`uploadStorageLimit`、`uploadDeleteFiles`、`removeAttachment`、`previewImage`、`missingAttachment` |
-| 语音 | `voiceInput*`、`tts*`、`settingsTtsVoice*`、`settingsSpeech*`、`settingsMic*`、`settingsOpenSystemSettings` |
+| 语音 | `voiceInputPermissionDenied`、`voiceInputNoDevice`、`voiceInputFailed`、`voiceInputEmpty`、`voiceInputLimitReached`、`voiceInputInterrupted`、`tts*`、`settingsTtsVoice*`、`settingsSpeech*`、`settingsMic*`、`settingsOpenSystemSettings` |
 | 设置 | `settingsData`、`settingsTheme*`、`settingsLanguage*`、`settingsLocation*`、`settingsSaveKey`、`settingsClearKey` |
 | 历史 | `historyImport*`、`historyExport*`、`historyError*` |
 | 错误 | `errorNoApiKey`、`apiError*`、`replyFailed`、`replyRefused`、`replyImageBlocked` |
@@ -896,7 +1023,8 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 
 | 场景 | 中文 | English |
 | --- | --- | --- |
-| 聊天空态 | 今天有什么可以帮到你？ | What can I help you with? |
+| 聊天空态 | 嗨! 今天想聊些什么? | Hi! What would you like to talk about? |
+| 输入区占位 | 发消息或按住说话（有附件时「发消息」） | Message or hold to talk（"Message" with attachments） |
 | 空会话标题 | 新对话 | New chat |
 | 会话列表空态 | 还没有会话 | No chats yet |
 | 会话加载失败 | 无法加载会话 + 重试 | Could not load chats + Retry |
@@ -951,27 +1079,41 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | Key 成功 | Key 校验通过 | API key verified | — |
 | 语音空结果 | 未识别到语音内容 | No speech detected | — |
 | 录音上限 | 已达到单次录音时长上限 | Maximum recording length reached | — |
+| 首次麦克风授权 | 已授权麦克风，请再按住说话 | Microphone access granted. Hold to talk again. | — |
+| 照片转码失败 | 无法读取这张照片 | Couldn't read this photo | — |
+| 转写未自动发送 | 按原因取 `voiceInsertedGenerating` / `voiceInsertedUploading` / `voiceInsertedNotSent`；无 Key 用 `errorNoApiKey` | See keys | — |
+| 语音发送失败 | 发送失败，已放入输入框 | Couldn't send. The text is in the message field. | — |
 | 朗读不可用 | 这条回答暂时无法朗读 | This answer cannot be read aloud right now | — |
 
 ## 8. 附件、语音、引用来源的呈现
 
 ### 8.1 附件
 
-- **草稿条**：输入框上方，水平滚动；图片 64×64 圆角 12；文档卡最大宽 210，
-  高约 40；上传中蒙层 / 状态行；失败红描边；右上移除。
+- **草稿行**：在输入卡内、输入框上方，单行横滑；图片 64×64 圆角 12；
+  文件卡 210×64；移除徽标为卡片内右上角 20 白色圆；文件图标为 36×36
+  扩展名配色色块；上传中蒙层 + 18 加载圈；可重试失败红描边 + 白色重试图标；
+  不可重试失败红描边 + 原因。上传中 / 失败只在草稿行表达。
+- **附件面板**：输入卡下方同列；照片横条区高 96、照片格 80×80 圆角 12 间距 8；
+  勾选为主色圆底白勾 + 图片压暗；三宫格高 88、圆角 16、间距 8；面板与输入卡
+  间距 8。权限拒绝 / 空图库 / 读取失败在横条区原位提示；受限时最左端「管理」格。
 - **消息内**：用户消息气泡上方右对齐；纯图片 120×120；与文档混排 64×64；
   文档卡只显示文件名、扩展名、大小；图片可全屏。
 - **原件缺失**：图片显示 `image` 占位图标；文档显示「原件已丢失」；
   不进入请求，不提供补传。
-- 具体选择、上传、补传与失败语义以 `attachments.md` §5–§7 为准；本节只定呈现。
-- **禁用**：生成中、录音中、转写中禁用回形针。
+- 具体选择、上传、补传与失败语义以 `attachments.md` 为准；本节只定呈现。
+- **禁用**：生成中、录音中、转写中禁用 `+`；录音 / 识别浮层覆盖输入卡时
+  草稿行与输入框均不可操作。
 
 ### 8.2 语音
 
-- 录音状态行在输入区上方，不占据消息区。
-- 5 根电平条高 12，宽 3，间距 2，圆角 999；最低 2 dp；颜色 `destructive`。
-- 录音计时每 500 ms 刷新整秒；120 秒自动结束。
-- 转写中不显示电平条，显示加载指示器与「正在转写…」。
+- 录音、识别、取消共用同一蓝色动态浮层：贴底覆盖输入卡与草稿行并向上延伸，
+  高约 60% 屏高；不盖顶部栏、不遮消息区、不加全屏遮罩。
+- 蓝区自绘：6 枚漂移重叠的径向椭圆形成动态不规则上缘，顶部全透明、底部实色；
+  高光锚定按下 / 移动的 pointer 坐标并随电平脉动；取消态不变色，只换文案。
+- 文案 15 / w500 白色，底部留白 44；波形 32 根、高 28、宽 2.4、间距 1.6，
+  数据取 `SpeechState.level` 平滑值；未开始录音时静止低幅。
+- 识别中保留浮层与低幅波形，文案「识别中」，不提供取消。
+- 进入 / 退出 150ms 淡入 + 上移 8dp；取消态切换 120ms；减少动画时冻结。
 - 朗读入口只在 assistant 操作条，与复制 / 重新生成并列。
 - 朗读竖条 4 根，高 12–16，宽 2，间距 3；`loading` 扫光，`playing` 起伏。
 
@@ -1005,6 +1147,10 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 | 主题 / 语言 / 音色为下拉框 | 主题卡片 + 胶囊下拉 + 锚定弹层 |
 | 无会话分组 | 今天 / 昨天 / 7 天内 / 更早 |
 | 输入区开关为灰底选中 | 蓝色激活态 |
+| 附件入口为回形针 + 底部 Sheet | `+` / `×` 内联面板：照片横条 + 三宫格 |
+| 语音为点击开始 / 再点结束 + 状态行 | 按住说话 + 蓝色动态浮层 + 先插入再尝试发送 |
+| 草稿附件移除按钮在卡片外 | 卡片内右上角白色圆形徽标 + 扩展名色块图标 |
+| 空态问候语为「今天有什么可以帮到你？」 | 「嗨! 今天想聊些什么?」，剩余高度 <96 隐藏 |
 | 来源为样例行 / 横向卡片 | 站点图标叠加胶囊 + 底部抽屉 |
 | 朗读入口在输入区原型 | 仅 assistant 操作条（已按 `speech.md` 实现） |
 
@@ -1041,7 +1187,9 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 - 主题：浅深两套由同一种子生成；中文行高 1.6（含聊天正文）；状态栏亮度。
 - 聊天壳：空态、加载、流式、停止、错误、拒答、长内容；发送 / 停止按钮态。
 - 抽屉：分组、当前会话高亮、新建、重命名、删除、空态、加载失败。
-- 输入区：蓝色激活开关、附件上传 / 失败 / 移除、录音 / 转写态、无 Key。
+- 输入区：蓝色激活开关、附件上传 / 失败 / 移除、按钮矩阵逐行、占位两态、
+  面板开合 / 返回键优先收面板、照片勾选与权限三态、按住 / 滑出 / 松手手势、
+  浮层三文案、无 Key。
 - 消息：思考折叠、工具行状态、来源胶囊、来源抽屉、角标点击、分支切换、
   操作条启用 / 禁用。
 - 设置：两段导航、主题卡片、语言 / 音色 / 所在地锚定弹层、Key 校验成功 / 失败、
@@ -1061,6 +1209,11 @@ ShadThemeData buildShadTheme({required Brightness brightness}) {
 8. Key 校验、清除、所在地选择、权限状态与跳系统设置正确。
 9. 导入 / 导出 / 删除全部的状态行、确认与不可关闭进度正确。
 10. VoiceOver / TalkBack 朗读顺序与标签正确；动态字体 2.0、减少动画、深色对比度通过。
+11. 空态问候语在剩余区域居中且 <96 隐藏；输入卡空态 / 有消息不重建。
+12. `+` 展开面板（`×`、失焦、收键盘、220ms），点输入框 / `×` / 返回键收起；
+    照片勾选与草稿行双向同步；权限拒绝、受限「管理」、空图库、读取失败原位提示。
+13. 按住说话：按下浮层骨架、松手发送、上滑 80dp 取消（可回拉、触感变化）、
+    首次授权后不自动开录、来电 / 后台丢弃、120 秒自动转写发送。
 
 ## 11. 交接与未决
 

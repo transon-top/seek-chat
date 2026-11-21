@@ -30,6 +30,8 @@
 - 规格回写范围：`ui.md` §1.3/§5.2/§5.8、`speech.md` §2/§3/§7、`attachments.md` §1/§7、`GLOSSARY.md` 的 Voice Input。
 - 视觉验收以截图对图为准；深/浅色都要过；iOS 与 Android 真机都看。
 - 每个会话先读 `GLOSSARY.md` 与 `docs/agents/domain.md`；按需调用 grilling、domain-modeling、prototype、research。
+- 执行入口：本目录 `spec.md`（决策完成后的实现规格）；回写后的权威段落见
+  `ui.md` §1.3/§5.2/§5.7/§5.8、`speech.md` §3、`attachments.md` §1/§9。
 
 ## Decisions so far
 
@@ -41,10 +43,12 @@
 - [照片横条数据、选择与权限降级](issues/04-grilling-photo-strip.md): 固定 30 张、每次展开刷新；勾选以草稿 `sourceAssetId` 为真相，主色圆底白勾 + 图片压暗；选中即转码上传，取消即移除并丢弃在途结果；展开时检查权限，limited 放「管理」格、denied 原位给「去设置」；横条照片统一转 JPEG、长边 2560、质量 90；拍照/相册走系统界面且不回写勾选；Android 默认保留横条，Play 被拒时用 `OPEN_CHAT_PHOTO_STRIP=false` 构建关闭。
 - [按住说话状态机与浮层行为](issues/05-grilling-hold-to-talk.md): 按下即显示浮层骨架并单飞启动；首次授权不自动开录、提示再按住，短按静默取消；松手 → 转写 → 先插入输入框再尝试自动发送，不满足条件就留文本加 Toast；上滑 80dp 以按下全局坐标为基准、可回拉、仅纵向；浮层贴底蓝渐变、盖输入卡不盖顶部栏，录音中收键盘且输入卡不可编辑（覆盖票 03 同句的录音一半）；录音中返回键先取消录音；无障碍改为语义 tap 切换 + 「取消录音」自定义动作。票 06 后识别中保留浮层（「识别中」），取消态复用同一蓝色动态效果；识别中不提供取消。
 - [输入区视觉对图原型](issues/06-prototype-visual.md): 原型通过；iPhone + Android 各 10 状态 × 深浅；输入卡保持两行高度；录音/识别/取消共用动态蓝色浮层（漂移团块 + 按住位置高光，取消不变红）；识别中显示「识别中」且不提供取消；不引依赖，自绘 `CustomPainter`。
+- [规格回写与验收清单](issues/07-task-spec-assembly.md): 8 项回写完成——`ui.md`（结构/矩阵/面板/浮层/文案/验收）、`speech.md`（按住说话状态机/自动发送/浮层/测试）、`attachments.md`（推翻旧选型，补面板/photo_manager/image_picker/HEIC/权限）、`GLOSSARY.md`（Voice Input 改义 + 6 个新术语）；26 个新 ARB 键 + 2 个改值 + 5 个删除；测试与真机验收清单、回滚点写入 [spec.md](spec.md)。
 
 ## Not yet specified
 
-- Android 预测性返回下，面板与输入法的收起顺序（实现期验证）。
+- 无。原「Android 预测性返回下，面板与输入法的收起顺序」已转为 `spec.md`
+  §7 / §9 的实现期验收项，不再是待决策问题。
 
 ## Out of scope
 
