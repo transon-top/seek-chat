@@ -33,6 +33,9 @@
 - [02: 输入卡、空态与内联附件面板](issues/02-composer-empty-state-and-panel.md):
   输入卡单实例贴底、问候语居中并在首条消息后 150ms 淡出；`+` / `×` 与
   220/180ms 面板、三宫格、JPEG 嗅探与 50 上限；analyze、426 测试、双端 debug 构建通过。
+- [03: 照片横条与权限降级](issues/03-photo-strip-and-permissions.md):
+  横条 30 张 / 骨架 / 勾选派生 / 50 上限 / 权限四态与「管理」格；
+  照片统一转 JPEG（iOS 优先原件），Android 构建开关关闭横条；analyze、447 测试通过。
 
 ## Not yet specified
 

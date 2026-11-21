@@ -4,9 +4,9 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'attachment_rules.dart';
 
-/// 输入卡下方的内联附件面板：拍照 / 相册 / 文件三宫格（ui.md §5.7）。
+/// 输入卡下方的内联附件面板：照片横条 + 拍照 / 相册 / 文件三宫格（ui.md §5.7）。
 ///
-/// 照片横条在票 03 加入；当前只渲染三宫格。
+/// [photoStrip] 为空时只渲染三宫格并按内容收缩（Android 构建关闭横条）。
 class AttachmentPanel extends StatelessWidget {
   const AttachmentPanel({
     super.key,
@@ -15,6 +15,7 @@ class AttachmentPanel extends StatelessWidget {
     required this.onPickPhotos,
     required this.onPickFiles,
     required this.onLimitReached,
+    this.photoStrip,
   });
 
   /// 当前草稿附件数；已满 50 时拍照与相册入口只提示，不打开系统界面。
@@ -23,6 +24,7 @@ class AttachmentPanel extends StatelessWidget {
   final VoidCallback onPickPhotos;
   final VoidCallback onPickFiles;
   final VoidCallback onLimitReached;
+  final Widget? photoStrip;
 
   @override
   Widget build(BuildContext context) {
@@ -36,41 +38,47 @@ class AttachmentPanel extends StatelessWidget {
       }
     }
 
-    return Padding(
-      padding: const EdgeInsets.only(top: 8),
-      child: SizedBox(
-        height: 88,
-        child: Row(
-          children: [
-            Expanded(
-              child: _ActionTile(
-                key: const Key('panel-take-photo'),
-                icon: LucideIcons.camera,
-                label: l10n.takePhoto,
-                onTap: () => guard(onTakePhoto),
-              ),
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        ?photoStrip,
+        Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: SizedBox(
+            height: 88,
+            child: Row(
+              children: [
+                Expanded(
+                  child: _ActionTile(
+                    key: const Key('panel-take-photo'),
+                    icon: LucideIcons.camera,
+                    label: l10n.takePhoto,
+                    onTap: () => guard(onTakePhoto),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionTile(
+                    key: const Key('panel-photos'),
+                    icon: LucideIcons.image,
+                    label: l10n.uploadFromPhotos,
+                    onTap: () => guard(onPickPhotos),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: _ActionTile(
+                    key: const Key('panel-files'),
+                    icon: LucideIcons.paperclip,
+                    label: l10n.uploadFromFiles,
+                    onTap: onPickFiles,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActionTile(
-                key: const Key('panel-photos'),
-                icon: LucideIcons.image,
-                label: l10n.uploadFromPhotos,
-                onTap: () => guard(onPickPhotos),
-              ),
-            ),
-            const SizedBox(width: 8),
-            Expanded(
-              child: _ActionTile(
-                key: const Key('panel-files'),
-                icon: LucideIcons.paperclip,
-                label: l10n.uploadFromFiles,
-                onTap: onPickFiles,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+      ],
     );
   }
 }

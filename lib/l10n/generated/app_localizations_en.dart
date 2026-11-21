@@ -512,6 +512,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get photoUnreadable => 'Couldn\'t read this photo';
 
   @override
+  String get photoPermissionDenied => 'Can\'t access photos';
+
+  @override
+  String get photoLimitedManage => 'Manage';
+
+  @override
+  String get photoLimitedManageSemantics => 'Manage accessible photos';
+
+  @override
+  String get photoStripEmpty => 'No recent photos';
+
+  @override
+  String get photoStripLoadFailed => 'Couldn\'t load photos';
+
+  @override
+  String photoTileSelected(int index) {
+    return 'Photo $index, selected';
+  }
+
+  @override
+  String photoTileUnselected(int index) {
+    return 'Photo $index, not selected';
+  }
+
+  @override
   String get send => 'Send';
 
   @override
