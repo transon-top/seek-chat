@@ -17,6 +17,7 @@ class Sessions extends Table {
   IntColumn get createdAt => integer()();
   IntColumn get updatedAt => integer()();
   TextColumn get rootMessageId => text().nullable()();
+  BoolColumn get pinned => boolean().withDefault(const Constant(false))();
 
   @override
   Set<Column> get primaryKey => {id};
@@ -106,14 +107,19 @@ class AppDatabase extends _$AppDatabase {
       );
 
   @override
-  int get schemaVersion => 1;
+  int get schemaVersion => 2;
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
-        // v1 只有建表；后续版本必须提供显式 from → to 的 stepByStep 迁移，
-        // 不启用破坏性回退，也不调用 deleteEverything。
+        // 每个版本都必须提供显式 from → to 的迁移，不启用破坏性回退，
+        // 也不调用 deleteEverything。
         onCreate: (m) async {
           await m.createAll();
+        },
+        onUpgrade: (m, from, to) async {
+          if (from < 2) {
+            await m.addColumn(sessions, sessions.pinned);
+          }
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

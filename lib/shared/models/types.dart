@@ -318,12 +318,14 @@ final class SessionSummary {
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    this.pinned = false,
   });
 
   final String id;
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool pinned;
 }
 
 /// 同一父节点下的兄弟消息 id（按模型顺序）与当前消息的下标。
@@ -355,6 +357,7 @@ final class Session {
     required this.createdAt,
     required this.updatedAt,
     this.rootMessageId,
+    this.pinned = false,
   });
 
   final String id;
@@ -364,6 +367,16 @@ final class Session {
 
   /// 选中分支的第一条消息；空会话为 null。
   final String? rootMessageId;
+
+  final bool pinned;
+}
+
+/// 会话搜索的一条命中：会话摘要与命中消息片段。
+final class SessionSearchHit {
+  const SessionSearchHit({required this.session, required this.snippet});
+
+  final SessionSummary session;
+  final String snippet;
 }
 
 sealed class Message {

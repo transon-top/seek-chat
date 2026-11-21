@@ -286,7 +286,6 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
           drawer: SessionDrawer(
             currentSessionId: current,
             onOpen: _open,
-            onNewChat: _newChat,
             onOpenSettings: () => unawaited(_openSettings()),
             cancelSession: _cancelSession,
             onDeleted: _deleted,

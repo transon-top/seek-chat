@@ -245,6 +245,46 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionGroupEarlier => '更早';
 
   @override
+  String get sessionGroupPinned => '置顶';
+
+  @override
+  String get searchChatsPlaceholder => '搜索对话内容…';
+
+  @override
+  String get searchBack => '返回会话列表';
+
+  @override
+  String get clearSearch => '清空搜索';
+
+  @override
+  String get searchNoResults => '暂无相关结果';
+
+  @override
+  String get selectChats => '多选';
+
+  @override
+  String get selectionTitle => '选择对话';
+
+  @override
+  String selectionCount(int count) {
+    return '已选择 $count 个对话';
+  }
+
+  @override
+  String get exitSelection => '退出多选';
+
+  @override
+  String get pinSession => '置顶';
+
+  @override
+  String get unpinSession => '取消置顶';
+
+  @override
+  String deleteSessionsTitle(int count) {
+    return '删除 $count 个对话';
+  }
+
+  @override
   String get sessionLoading => '正在加载会话…';
 
   @override

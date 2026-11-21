@@ -128,6 +128,32 @@
   "sessionGroupYesterday": "Yesterday",
   "sessionGroupLast7Days": "Last 7 days",
   "sessionGroupEarlier": "Earlier",
+  "sessionGroupPinned": "Pinned",
+  "searchChatsPlaceholder": "Search chats…",
+  "searchBack": "Back to chats",
+  "clearSearch": "Clear search",
+  "searchNoResults": "No results",
+  "selectChats": "Select",
+  "selectionTitle": "Select chats",
+  "selectionCount": "{count} selected",
+  "@selectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exitSelection": "Exit selection",
+  "pinSession": "Pin",
+  "unpinSession": "Unpin",
+  "deleteSessionsTitle": "Delete {count} chats",
+  "@deleteSessionsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
   "sessionLoading": "Loading chats…",
   "sessionsLoadFailed": "Could not load chats",
   "chatEmptyTitle": "How can I help you?",

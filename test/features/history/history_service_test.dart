@@ -130,6 +130,18 @@ void main() {
     expect(restored.single.title, 'Empty');
   });
 
+  test('round-trips the pinned flag', () async {
+    final (session, _) = await seedConversation();
+    await repository.setSessionsPinned([session.id], true);
+
+    final exported = await service.exportArchive(notice: (_) => null);
+    final decoded = decodeHistoryZip(exported.bytes, newId: () => 'unused');
+    expect(decoded.sessions.single.session.pinned, isTrue);
+
+    await service.importArchive(exported.bytes, stopGeneration: () {});
+    expect((await repository.getSession(session.id))!.pinned, isTrue);
+  });
+
   test('import replaces other sessions and keeps the restored image file',
       () async {
     final (seeded, _) = await seedConversation();

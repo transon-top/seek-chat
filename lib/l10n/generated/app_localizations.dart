@@ -531,6 +531,78 @@ abstract class AppLocalizations {
   /// **'Earlier'**
   String get sessionGroupEarlier;
 
+  /// No description provided for @sessionGroupPinned.
+  ///
+  /// In en, this message translates to:
+  /// **'Pinned'**
+  String get sessionGroupPinned;
+
+  /// No description provided for @searchChatsPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search chats…'**
+  String get searchChatsPlaceholder;
+
+  /// No description provided for @searchBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to chats'**
+  String get searchBack;
+
+  /// No description provided for @clearSearch.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear search'**
+  String get clearSearch;
+
+  /// No description provided for @searchNoResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results'**
+  String get searchNoResults;
+
+  /// No description provided for @selectChats.
+  ///
+  /// In en, this message translates to:
+  /// **'Select'**
+  String get selectChats;
+
+  /// No description provided for @selectionTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Select chats'**
+  String get selectionTitle;
+
+  /// No description provided for @selectionCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} selected'**
+  String selectionCount(int count);
+
+  /// No description provided for @exitSelection.
+  ///
+  /// In en, this message translates to:
+  /// **'Exit selection'**
+  String get exitSelection;
+
+  /// No description provided for @pinSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Pin'**
+  String get pinSession;
+
+  /// No description provided for @unpinSession.
+  ///
+  /// In en, this message translates to:
+  /// **'Unpin'**
+  String get unpinSession;
+
+  /// No description provided for @deleteSessionsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete {count} chats'**
+  String deleteSessionsTitle(int count);
+
   /// No description provided for @sessionLoading.
   ///
   /// In en, this message translates to:
