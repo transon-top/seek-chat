@@ -598,7 +598,8 @@ class _FontScaleSliderState extends State<_FontScaleSlider> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = ShadTheme.of(context).colorScheme;
+    final theme = ShadTheme.of(context);
+    final colors = theme.colorScheme;
     final last = FontScaleLevels.values.length - 1;
     return Semantics(
       slider: true,
@@ -659,7 +660,10 @@ class _FontScaleSliderState extends State<_FontScaleSlider> {
                           height: _thumbSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
-                            color: colors.foreground,
+                            // 亮色白滑块靠阴影浮起；深色沿用高对比前景色。
+                            color: theme.brightness == Brightness.light
+                                ? const Color(0xFFFFFFFF)
+                                : colors.foreground,
                             boxShadow: const [
                               BoxShadow(
                                 color: Color(0x33000000),
