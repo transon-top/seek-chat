@@ -36,6 +36,9 @@
 - [03: 照片横条与权限降级](issues/03-photo-strip-and-permissions.md):
   横条 30 张 / 骨架 / 勾选派生 / 50 上限 / 权限四态与「管理」格；
   照片统一转 JPEG（iOS 优先原件），Android 构建开关关闭横条；analyze、447 测试通过。
+- [04: 草稿附件行样式](issues/04-draft-attachment-row.md):
+  图片 64 圆角 12、文件卡 210×64 带 36 扩展名色块、卡内 20 移除徽标、
+  上传 / 失败覆盖层与 tooltip 修正；analyze、453 测试通过。
 
 ## Not yet specified
 
