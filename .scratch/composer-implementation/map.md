@@ -42,6 +42,9 @@
 - [05: 按住说话状态机与手势](issues/05-hold-to-talk.md):
   五相状态机 + 显式开始 / 松手 / 取消、80dp 上滑取消、首次授权提示、
   先插入再按闸门自动发送、基础浮层与语义动作；analyze、471 测试通过。
+- [06: 蓝色动态浮层视觉](issues/06-voice-overlay-visual.md):
+  `CustomPainter` 漂移团块 + pointer 高光 + 32 根电平波形；三文案共用同一
+  蓝色、减少动画冻结、颜色由主题 token 派生；analyze、477 测试通过。
 
 ## Not yet specified
 

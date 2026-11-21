@@ -2,11 +2,13 @@ import 'dart:async';
 
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
+import 'voice_hotspot.dart';
 
 /// 取消阈值：以按下瞬间的全局 Y 为基准，上滑 ≥80dp 进入取消态
 /// （`speech.md` §3.2）。纯函数，便于单测。
@@ -20,7 +22,7 @@ bool shouldCancelVoice({
 /// （`speech.md` §2.1、§3.2；ui.md §5.8）。
 ///
 /// 录音与识别期间按钮被浮层覆盖，但保留在语义树里，读屏用户可结束或取消。
-class VoiceButton extends StatefulWidget {
+class VoiceButton extends ConsumerStatefulWidget {
   const VoiceButton({
     super.key,
     required this.phase,
@@ -41,10 +43,11 @@ class VoiceButton extends StatefulWidget {
   final VoidCallback onCancelRecording;
 
   @override
-  State<VoiceButton> createState() => _VoiceButtonState();
+  ConsumerState<VoiceButton> createState() => _VoiceButtonState();
 }
 
-class _VoiceButtonState extends State<VoiceButton> {
+class _VoiceButtonState extends ConsumerState<VoiceButton> {
+  late final VoiceHotspot _hotspot = ref.read(voiceHotspotProvider.notifier);
   int? _pointer;
   double _startY = 0;
   bool _armed = false;
@@ -78,11 +81,13 @@ class _VoiceButtonState extends State<VoiceButton> {
     _pointer = event.pointer;
     _startY = event.position.dy;
     _armed = false;
+    _hotspot.set(event.position);
     widget.onStart();
   }
 
   void _handleMove(PointerMoveEvent event) {
     if (event.pointer != _pointer) return;
+    _hotspot.set(event.position);
     final armed = shouldCancelVoice(
       startY: _startY,
       currentY: event.position.dy,
@@ -95,10 +100,13 @@ class _VoiceButtonState extends State<VoiceButton> {
     widget.onCancelArmedChanged(armed);
   }
 
+  void _releaseHotspot() => _hotspot.set(null);
+
   void _handleUp(PointerUpEvent event) {
     if (event.pointer != _pointer) return;
     _pointer = null;
     _armed = false;
+    _releaseHotspot();
     widget.onEnd();
   }
 
@@ -106,7 +114,14 @@ class _VoiceButtonState extends State<VoiceButton> {
     if (event.pointer != _pointer) return;
     _pointer = null;
     _armed = false;
+    _releaseHotspot();
     widget.onGestureCancel();
+  }
+
+  @override
+  void dispose() {
+    if (_pointer != null) _releaseHotspot();
+    super.dispose();
   }
 
   @override
