@@ -5,7 +5,8 @@
 减少动画时冻结为静态帧。
 
 **Blocked by:** 05
-**Status:** ready-for-agent
+**Status:** open
+**Type:** task
 
 - [ ] 浮层贴底覆盖输入卡与草稿行，约 60% 屏高，不盖顶部栏、不遮消息区、不加
       全屏遮罩、不响应点击。

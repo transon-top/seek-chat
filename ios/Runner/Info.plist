@@ -6,6 +6,12 @@
 	<true/>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Voice input uses the microphone to transcribe your speech.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Attach photos from your library to messages.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>Take photos to attach to messages.</string>
+	<key>PHPhotoLibraryPreventAutomaticLimitedAccessAlert</key>
+	<true/>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>

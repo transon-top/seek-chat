@@ -5,7 +5,8 @@
 授权、无 Key、无设备与中断都有明确提示。浮层最终视觉由下一票完成。
 
 **Blocked by:** 02
-**Status:** ready-for-agent
+**Status:** open
+**Type:** task
 
 - [ ] 状态机为 `idle → starting → recording → transcribing → idle`，另有
       `cancelling`；提供显式开始 / 松手结束 / 手势取消入口，`_starting` 单飞防连按。

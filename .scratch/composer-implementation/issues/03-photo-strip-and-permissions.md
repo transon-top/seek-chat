@@ -5,7 +5,8 @@
 可用。Android 可用构建开关关闭横条。
 
 **Blocked by:** 01, 02
-**Status:** ready-for-agent
+**Status:** open
+**Type:** task
 
 - [ ] 每次展开面板重新查询最近 30 张图片，`createDate` 倒序、排除视频，按 200×200
       解码；面板展开期间不自动刷新；首次加载显示 6 个等高铁灰骨架。

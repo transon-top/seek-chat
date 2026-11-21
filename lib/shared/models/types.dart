@@ -496,6 +496,7 @@ final class DraftAttachment {
     required this.size,
     required this.isImage,
     required this.mimeType,
+    this.sourceAssetId,
   });
 
   final String id;
@@ -504,6 +505,9 @@ final class DraftAttachment {
   final int size;
   final bool isImage;
   final String mimeType;
+
+  /// 照片横条来源资产；仅存活于当前页面内存，不落库、不进导出。
+  final String? sourceAssetId;
 }
 
 final class LocalMessage {
