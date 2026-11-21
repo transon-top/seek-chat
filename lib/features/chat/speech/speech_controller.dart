@@ -16,21 +16,68 @@ import 'recorder.dart';
 import 'speech_api.dart';
 
 /// 全局音频状态机的可见阶段（`speech.md` §3、§4）。
-enum SpeechPhase { idle, recording, transcribing, loading, playing }
+enum SpeechPhase {
+  idle,
+  starting,
+  recording,
+  cancelling,
+  transcribing,
+  loading,
+  playing,
+}
 
 extension SpeechPhaseFlags on SpeechPhase {
+  /// 浮层覆盖输入卡的全部阶段；发送、附件与开关都不可用。
   bool get voiceBusy =>
-      this == SpeechPhase.recording || this == SpeechPhase.transcribing;
+      this == SpeechPhase.starting ||
+      this == SpeechPhase.recording ||
+      this == SpeechPhase.cancelling ||
+      this == SpeechPhase.transcribing;
+
+  /// 系统返回第一次只取消录音、不离开页面。
+  bool get voiceCancelable =>
+      this == SpeechPhase.starting ||
+      this == SpeechPhase.recording ||
+      this == SpeechPhase.cancelling;
 
   bool get reading =>
       this == SpeechPhase.loading || this == SpeechPhase.playing;
+}
+
+/// 转写插入后的自动发送结果；控制器据此只插入并提示原因（`speech.md` §3.4）。
+enum VoiceAutoSendOutcome {
+  sent,
+  noApiKey,
+  generating,
+  uploading,
+  notSent,
+  failed,
+}
+
+typedef VoiceTranscriptHandler = Future<VoiceAutoSendOutcome> Function(
+  String text,
+);
+
+/// 自动发送闸门；返回非 null 表示只插入并按该原因提示（`speech.md` §3.4）。
+VoiceAutoSendOutcome? voiceAutoSendBlocker({
+  required String? apiKey,
+  required bool generating,
+  required bool uploadsDone,
+  required bool typedDuring,
+}) {
+  if (apiKey == null || apiKey.trim().isEmpty) {
+    return VoiceAutoSendOutcome.noApiKey;
+  }
+  if (generating) return VoiceAutoSendOutcome.generating;
+  if (!uploadsDone) return VoiceAutoSendOutcome.uploading;
+  if (typedDuring) return VoiceAutoSendOutcome.notSent;
+  return null;
 }
 
 /// 语音与朗读的共享状态；失败字段只用于提示，不改变按钮外观。
 class SpeechState {
   const SpeechState({
     this.phase = SpeechPhase.idle,
-    this.recordingSeconds = 0,
     this.level = 0,
     this.readingMessageId,
     this.voiceFailure,
@@ -41,9 +88,6 @@ class SpeechState {
   static const Object _keep = Object();
 
   final SpeechPhase phase;
-
-  /// 录音整秒数，界面每 500 ms 刷新。
-  final int recordingSeconds;
 
   /// 最近一次电平 0..1。
   final double level;
@@ -63,7 +107,6 @@ class SpeechState {
 
   SpeechState copyWith({
     SpeechPhase? phase,
-    int? recordingSeconds,
     double? level,
     Object? readingMessageId = _keep,
     Object? voiceFailure = _keep,
@@ -71,7 +114,6 @@ class SpeechState {
     int? noticeId,
   }) => SpeechState(
     phase: phase ?? this.phase,
-    recordingSeconds: recordingSeconds ?? this.recordingSeconds,
     level: level ?? this.level,
     readingMessageId: identical(readingMessageId, _keep)
         ? this.readingMessageId
@@ -123,6 +165,10 @@ final speechControllerProvider =
     NotifierProvider<SpeechController, SpeechState>(SpeechController.new);
 
 /// 录音与朗读共用一个音频通道：任一时刻只有一个分支在活动（§4.3）。
+///
+/// 语音输入是按住说话：`startFromPress` 只负责启动，松手与取消由按钮的
+/// `Listener` 显式调用 `finishFromRelease` / `cancelFromGesture`，不再复用
+/// 点击切换入口（`speech.md` §3.2）。
 class SpeechController extends Notifier<SpeechState> {
   late SpeechRecorder _recorder;
   late SpeechPlayer _player;
@@ -132,14 +178,29 @@ class SpeechController extends Notifier<SpeechState> {
   late ApiKeyStore _keys;
   late Duration _maxRecording;
 
+  /// 启动单飞：从按下到 `recorder.start()` 返回之间只允许一次启动。
+  bool _starting = false;
+
+  /// 麦克风权限请求进行中；期间的手势结束属于首次授权，不开录。
+  bool _granting = false;
+  bool _cancelWhileGranting = false;
+
+  /// 启动完成前松手 / 收到 pointer cancel / 后台：启动返回后丢弃，不转写。
+  bool _releasePending = false;
+  bool _cancelPending = false;
+
+  /// 启动期间已滑过取消阈值；录音真正开始时直接进入取消态。
+  bool _armedPending = false;
+
+  /// 启动前正在朗读时记下相位；若朗读未被停止就回退，恢复原相位（§4.3）。
+  SpeechPhase? _resumeReadingPhase;
+
   int _token = 0;
   RecordingSession? _recording;
   StreamSubscription<double>? _levelSub;
   StreamSubscription<void>? _interruptionSub;
-  Timer? _secondsTimer;
   Timer? _capTimer;
-  DateTime? _recordStartedAt;
-  void Function(String text)? _onTranscript;
+  VoiceTranscriptHandler? _onTranscript;
 
   Completer<void>? _asrAbort;
 
@@ -172,24 +233,177 @@ class SpeechController extends Notifier<SpeechState> {
     return const SpeechState();
   }
 
-  /// 语音按钮的唯一入口：空闲开始、录音结束并转写、转写中取消。
-  Future<void> toggleVoiceInput({
-    required void Function(String text) onTranscript,
+  // ------------------------------------------------------------------ 语音
+
+  /// 按下麦克风：同步进入 `starting` 显示浮层骨架，随后单飞读 Key、查权限、
+  /// 启动录音（`speech.md` §3.1、§3.2）。
+  Future<void> startFromPress({
+    required VoiceTranscriptHandler onTranscript,
   }) async {
-    if (_disposed) return;
-    if (state.phase == SpeechPhase.recording) {
-      _onTranscript = onTranscript;
-      await _stopRecordingAndTranscribe();
-      return;
+    if (_disposed || _starting || state.voiceBusy) return;
+    _starting = true;
+    _releasePending = false;
+    _cancelPending = false;
+    _cancelWhileGranting = false;
+    _armedPending = false;
+    _onTranscript = onTranscript;
+    final wasReading = state.reading;
+    _resumeReadingPhase = wasReading ? state.phase : null;
+    state = state.copyWith(
+      phase: SpeechPhase.starting,
+      level: 0,
+      voiceFailure: null,
+      ttsFailure: null,
+    );
+    try {
+      final key = await _readKey();
+      if (_disposed) return;
+      if (key == null) {
+        _abortStart(VoiceInputFailure.noApiKey);
+        return;
+      }
+
+      var granted = await _permissions.isGranted();
+      if (_disposed) return;
+      if (!granted) {
+        _granting = true;
+        try {
+          granted = await _permissions.request();
+        } finally {
+          _granting = false;
+        }
+        if (_disposed) return;
+        if (!granted) {
+          _abortStart(VoiceInputFailure.permissionDenied);
+          return;
+        }
+        if (_cancelWhileGranting) {
+          _abortStart(VoiceInputFailure.micGrantedRetry);
+          return;
+        }
+      }
+      if (_cancelPending || _releasePending) {
+        _abortStart(null);
+        return;
+      }
+      // 确认可录音后才停播放；权限被拒绝时保持原朗读（§4.3）。
+      if (wasReading) {
+        _resumeReadingPhase = null;
+        await stopReadAloud();
+      }
+      if (_disposed) return;
+      if (_cancelPending || _releasePending) {
+        _abortStart(null);
+        return;
+      }
+
+      final RecordingSession session;
+      try {
+        session = await _recorder.start();
+      } on NoInputDeviceException {
+        _abortStart(VoiceInputFailure.noDevice);
+        return;
+      } on Object {
+        _abortStart(VoiceInputFailure.failed);
+        return;
+      }
+      if (_disposed || _cancelPending || _releasePending) {
+        if (!_disposed) _resetToIdle();
+        await session.cancel();
+        return;
+      }
+      _beginRecording(session);
+    } on Object catch (error) {
+      // 权限通道或录音引擎抛出未分类错误时也要收起浮层、释放资源。
+      if (!_disposed) {
+        debugLog('voice start failed', error);
+        _abortStart(VoiceInputFailure.failed);
+      }
+    } finally {
+      _starting = false;
     }
-    if (state.phase == SpeechPhase.transcribing) {
-      _cancelTranscription();
-      return;
-    }
-    await _startRecording(onTranscript);
   }
 
-  /// 朗读按钮的唯一入口：同一条再次点击停止，切换条先停后播。
+  /// 松手：录音停止并转写；取消态丢弃；启动中或识别中 no-op。
+  void finishFromRelease() {
+    if (_disposed) return;
+    if (_starting) {
+      _endActiveStart();
+      return;
+    }
+    switch (state.phase) {
+      case SpeechPhase.recording:
+        unawaited(_stopRecordingAndTranscribe());
+      case SpeechPhase.cancelling:
+        unawaited(_discardRecording());
+      case SpeechPhase.idle:
+      case SpeechPhase.starting:
+      case SpeechPhase.transcribing:
+      case SpeechPhase.loading:
+      case SpeechPhase.playing:
+        break;
+    }
+  }
+
+  /// 首个 pointer 被系统取消（如来电、权限弹窗）：录音态丢弃，启动中延后取消。
+  void cancelFromGesture() {
+    if (_disposed) return;
+    if (_starting) {
+      _endActiveStart();
+      return;
+    }
+    if (state.phase == SpeechPhase.recording ||
+        state.phase == SpeechPhase.cancelling) {
+      unawaited(_discardRecording());
+    }
+  }
+
+  /// 上滑阈值：录音 ↔ 取消态；启动中先记住，开录后直接进入取消态。
+  void setCancelArmed(bool armed) {
+    if (_disposed) return;
+    switch (state.phase) {
+      case SpeechPhase.starting:
+        _armedPending = armed;
+      case SpeechPhase.recording:
+        if (armed) state = state.copyWith(phase: SpeechPhase.cancelling);
+      case SpeechPhase.cancelling:
+        if (!armed) state = state.copyWith(phase: SpeechPhase.recording);
+      case SpeechPhase.idle:
+      case SpeechPhase.transcribing:
+      case SpeechPhase.loading:
+      case SpeechPhase.playing:
+        break;
+    }
+  }
+
+  /// 读屏「取消录音」动作：丢弃录音，不提示（播报由界面负责）。
+  void cancelFromSemantics() {
+    if (_disposed) return;
+    if (state.phase == SpeechPhase.recording ||
+        state.phase == SpeechPhase.cancelling) {
+      unawaited(_discardRecording());
+      return;
+    }
+    if (_starting) cancelFromGesture();
+  }
+
+  /// 录音中系统返回：只取消录音并留在页面，返回 true 表示已消费本次返回。
+  bool cancelFromBack() {
+    if (_disposed) return false;
+    if (_starting) {
+      _cancelPending = true;
+      _resetToIdle();
+      return true;
+    }
+    if (state.phase == SpeechPhase.recording ||
+        state.phase == SpeechPhase.cancelling) {
+      unawaited(_discardRecording());
+      return true;
+    }
+    return false;
+  }
+
+  /// 语音按钮的唯一朗读入口：同一条再次点击停止，切换条先停后播。
   Future<void> toggleReadAloud({
     required String messageId,
     required String text,
@@ -207,8 +421,12 @@ class SpeechController extends Notifier<SpeechState> {
   }
 
   /// 发送、停止生成、继续、重新生成与页面销毁时调用（§10）。
+  ///
+  /// 按下麦克风时相位已切到 `starting`，所以不能只看 `state.reading`；
+  /// 有播放或未完成的 TTS 请求就停止，但不覆盖当前语音输入相位。
   Future<void> stopReadAloud() async {
-    if (!state.reading) return;
+    final readingPhase = state.reading;
+    if (!readingPhase && _playback == null && _ttsAbort == null) return;
     _token++;
     _ttsAbort?.complete();
     _ttsAbort = null;
@@ -217,7 +435,10 @@ class SpeechController extends Notifier<SpeechState> {
     await _releasePlayback();
     if (done != null && !done.isCompleted) done.complete();
     if (!_disposed) {
-      state = state.copyWith(phase: SpeechPhase.idle, readingMessageId: null);
+      state = state.copyWith(
+        phase: readingPhase ? SpeechPhase.idle : state.phase,
+        readingMessageId: null,
+      );
     }
   }
 
@@ -225,7 +446,14 @@ class SpeechController extends Notifier<SpeechState> {
   Future<void> handleLifecycle() async {
     if (_disposed) return;
     switch (state.phase) {
+      case SpeechPhase.starting:
+        _cancelPending = true;
+        _onTranscript = null;
+        _resumeReadingPhase = null;
+        state = state.copyWith(phase: SpeechPhase.idle, level: 0);
+        await stopReadAloud();
       case SpeechPhase.recording:
+      case SpeechPhase.cancelling:
         await _discardRecording();
       case SpeechPhase.transcribing:
         _cancelTranscription();
@@ -239,75 +467,38 @@ class SpeechController extends Notifier<SpeechState> {
 
   Future<void> stopAll() => handleLifecycle();
 
-  // ------------------------------------------------------------------ 录音
-
-  Future<void> _startRecording(void Function(String text) onTranscript) async {
-    final key = await _readKey();
-    if (key == null) {
-      _noticeVoice(VoiceInputFailure.noApiKey);
-      return;
-    }
-    var granted = await _permissions.isGranted();
-    if (!granted) granted = await _permissions.request();
-    if (!granted) {
-      _noticeVoice(VoiceInputFailure.permissionDenied);
-      return;
-    }
-    // 权限被拒绝时保持原朗读；确认可录音后才停播放（§4.3）。
-    if (state.reading) await stopReadAloud();
-    if (_disposed) return;
-
-    final RecordingSession session;
-    try {
-      session = await _recorder.start();
-    } on NoInputDeviceException {
-      _noticeVoice(VoiceInputFailure.noDevice);
-      return;
-    } on Object {
-      _noticeVoice(VoiceInputFailure.failed);
-      return;
-    }
-    if (_disposed) {
-      unawaited(session.cancel());
-      return;
-    }
-
+  void _beginRecording(RecordingSession session) {
     _recording = session;
-    _onTranscript = onTranscript;
+    _resumeReadingPhase = null;
     final token = ++_token;
-    _recordStartedAt = DateTime.now();
     state = state.copyWith(
-      phase: SpeechPhase.recording,
-      recordingSeconds: 0,
+      phase: _armedPending ? SpeechPhase.cancelling : SpeechPhase.recording,
       level: 0,
-      readingMessageId: null,
-      voiceFailure: null,
-      ttsFailure: null,
     );
-
+    _armedPending = false;
     _levelSub = session.levels.listen((level) {
-      if (token != _token || state.phase != SpeechPhase.recording) return;
+      if (token != _token || !_recordingPhase) return;
       state = state.copyWith(level: level);
     });
     _interruptionSub = session.interruptions.listen((_) {
-      if (token != _token || state.phase != SpeechPhase.recording) return;
+      if (token != _token || !_recordingPhase) return;
       unawaited(_discardRecording(notice: VoiceInputFailure.interrupted));
     });
-    _secondsTimer = Timer.periodic(const Duration(milliseconds: 500), (_) {
-      if (token != _token || state.phase != SpeechPhase.recording) return;
-      final started = _recordStartedAt;
-      if (started == null) return;
-      final seconds = DateTime.now().difference(started).inSeconds;
-      if (seconds != state.recordingSeconds) {
-        state = state.copyWith(recordingSeconds: seconds);
-      }
-    });
     _capTimer = Timer(_maxRecording, () {
-      if (token != _token || state.phase != SpeechPhase.recording) return;
+      if (token != _token || !_recordingPhase) return;
+      // 已在取消态：上限只结束并丢弃，不违背松开取消的意图。
+      if (state.phase == SpeechPhase.cancelling) {
+        unawaited(_discardRecording());
+        return;
+      }
       _noticeVoice(VoiceInputFailure.limitReached);
       unawaited(_stopRecordingAndTranscribe());
     });
   }
+
+  bool get _recordingPhase =>
+      state.phase == SpeechPhase.recording ||
+      state.phase == SpeechPhase.cancelling;
 
   Future<void> _stopRecordingAndTranscribe() async {
     final session = _recording;
@@ -363,8 +554,10 @@ class SpeechController extends Notifier<SpeechState> {
         _noticeVoice(VoiceInputFailure.empty);
         return;
       }
-      callback?.call(trimmed);
+      final failure = await _insertAndMaybeSend(callback, trimmed);
+      if (abort.isCompleted || _disposed || token != _token) return;
       state = state.copyWith(phase: SpeechPhase.idle);
+      if (failure != null) _noticeVoice(failure);
     } on EmptyRecordingException {
       if (abort.isCompleted || _disposed || token != _token) return;
       state = state.copyWith(phase: SpeechPhase.idle);
@@ -376,6 +569,28 @@ class SpeechController extends Notifier<SpeechState> {
       _noticeVoice(VoiceInputFailure.failed);
     } finally {
       if (identical(_asrAbort, abort)) _asrAbort = null;
+    }
+  }
+
+  /// 先插入，再按闸门尝试发送；返回需要提示的失败类别（`speech.md` §3.4）。
+  Future<VoiceInputFailure?> _insertAndMaybeSend(
+    VoiceTranscriptHandler? callback,
+    String text,
+  ) async {
+    if (callback == null) return null;
+    try {
+      final outcome = await callback(text);
+      return switch (outcome) {
+        VoiceAutoSendOutcome.sent => null,
+        VoiceAutoSendOutcome.noApiKey => VoiceInputFailure.noApiKey,
+        VoiceAutoSendOutcome.generating => VoiceInputFailure.insertedGenerating,
+        VoiceAutoSendOutcome.uploading => VoiceInputFailure.insertedUploading,
+        VoiceAutoSendOutcome.notSent => VoiceInputFailure.insertedNotSent,
+        VoiceAutoSendOutcome.failed => VoiceInputFailure.sendFailedInserted,
+      };
+    } on Object catch (error) {
+      debugLog('voice auto send failed', error);
+      return VoiceInputFailure.sendFailedInserted;
     }
   }
 
@@ -404,16 +619,44 @@ class SpeechController extends Notifier<SpeechState> {
     await session.cancel();
   }
 
+  /// 启动期间手势结束：授权弹窗内只记录（授权后提示再按住），否则静默取消。
+  void _endActiveStart() {
+    if (_granting) {
+      _cancelWhileGranting = true;
+      return;
+    }
+    _releasePending = true;
+    _resetToIdle();
+  }
+
+  /// 启动被中止：`failure` 为 null 时静默取消（松手早于启动完成）。
+  void _abortStart(VoiceInputFailure? failure) {
+    if (_disposed) return;
+    _resetToIdle();
+    if (failure != null) _noticeVoice(failure);
+  }
+
+  void _resetToIdle() {
+    _onTranscript = null;
+    _settleAfterAbort();
+  }
+
+  /// 未停止的朗读在启动失败 / 取消后恢复原相位；否则回空闲。
+  void _settleAfterAbort() {
+    if (_disposed) return;
+    final restore = _resumeReadingPhase;
+    _resumeReadingPhase = null;
+    _armedPending = false;
+    state = state.copyWith(phase: restore ?? SpeechPhase.idle, level: 0);
+  }
+
   void _cancelRecordingResources() {
     _levelSub?.cancel();
     _levelSub = null;
     _interruptionSub?.cancel();
     _interruptionSub = null;
-    _secondsTimer?.cancel();
-    _secondsTimer = null;
     _capTimer?.cancel();
     _capTimer = null;
-    _recordStartedAt = null;
   }
 
   // ------------------------------------------------------------------ 朗读

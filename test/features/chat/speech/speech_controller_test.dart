@@ -56,20 +56,29 @@ void main() {
     }
   }
 
-  test('records, transcribes and inserts the trimmed transcript', () async {
+  VoiceTranscriptHandler insertOnly(List<String> inserted) => (text) async {
+    inserted.add(text);
+    return VoiceAutoSendOutcome.sent;
+  };
+
+  test('runs idle → starting → recording → transcribing → idle', () async {
     final container = makeContainer();
     addTearDown(container.dispose);
     final notifier = container.read(speechControllerProvider.notifier);
     final inserted = <String>[];
 
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly(inserted)));
+    expect(
+      container.read(speechControllerProvider).phase,
+      SpeechPhase.starting,
+    );
     await pump();
     expect(
       container.read(speechControllerProvider).phase,
       SpeechPhase.recording,
     );
 
-    unawaitedRead(notifier.toggleVoiceInput(onTranscript: inserted.add));
+    notifier.finishFromRelease();
     await pump();
     expect(
       container.read(speechControllerProvider).phase,
@@ -82,6 +91,246 @@ void main() {
     await pump();
     expect(inserted, ['hello']);
     expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+  });
+
+  test('repeated presses during startup open only one recording', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    recorder.startGate = Completer<void>();
+
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    await pump();
+    expect(recorder.starts, 1);
+
+    recorder.startGate!.complete();
+    await pump();
+    expect(
+      container.read(speechControllerProvider).phase,
+      SpeechPhase.recording,
+    );
+  });
+
+  test('releasing before startup completes cancels silently', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    recorder.startGate = Completer<void>();
+
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    await pump();
+    notifier.finishFromRelease();
+    await pump();
+    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+
+    recorder.startGate!.complete();
+    await pump();
+    expect(recorder.session!.cancelled, isTrue);
+    expect(api.asrCount, 0);
+    final state = container.read(speechControllerProvider);
+    expect(state.phase, SpeechPhase.idle);
+    expect(state.voiceFailure, isNull);
+  });
+
+  test(
+    'a pointer cancel from the first permission prompt asks to retry',
+    () async {
+      permissions
+        ..granted = false
+        ..requestGate = Completer<bool>();
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(speechControllerProvider.notifier);
+
+      unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+      await pump();
+      expect(permissions.requests, 1);
+      notifier.cancelFromGesture();
+      permissions.requestGate!.complete(true);
+      await pump();
+
+      expect(recorder.starts, 0);
+      final state = container.read(speechControllerProvider);
+      expect(state.phase, SpeechPhase.idle);
+      expect(state.voiceFailure, VoiceInputFailure.micGrantedRetry);
+    },
+  );
+
+  test(
+    'sliding up arms cancel, sliding back resumes, release discards',
+    () async {
+      final container = makeContainer();
+      addTearDown(container.dispose);
+      final notifier = container.read(speechControllerProvider.notifier);
+
+      await notifier.startFromPress(onTranscript: insertOnly([]));
+      await pump();
+      notifier.setCancelArmed(true);
+      expect(
+        container.read(speechControllerProvider).phase,
+        SpeechPhase.cancelling,
+      );
+      notifier.setCancelArmed(false);
+      expect(
+        container.read(speechControllerProvider).phase,
+        SpeechPhase.recording,
+      );
+      notifier.setCancelArmed(true);
+      notifier.finishFromRelease();
+      await pump();
+
+      expect(recorder.session!.cancelled, isTrue);
+      expect(api.asrCount, 0);
+      final state = container.read(speechControllerProvider);
+      expect(state.phase, SpeechPhase.idle);
+      expect(state.voiceFailure, isNull);
+    },
+  );
+
+  test('an armed slide during startup opens in the cancel state', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    recorder.startGate = Completer<void>();
+
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    await pump();
+    notifier.setCancelArmed(true);
+    expect(
+      container.read(speechControllerProvider).phase,
+      SpeechPhase.starting,
+    );
+
+    recorder.startGate!.complete();
+    await pump();
+    expect(
+      container.read(speechControllerProvider).phase,
+      SpeechPhase.cancelling,
+    );
+
+    notifier.finishFromRelease();
+    await pump();
+    expect(recorder.session!.cancelled, isTrue);
+    expect(api.asrCount, 0);
+    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+  });
+
+  test('the cap discards instead of transcribing while cancelling', () async {
+    final container = makeContainer(
+      maxRecording: const Duration(milliseconds: 80),
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+
+    await notifier.startFromPress(onTranscript: insertOnly([]));
+    await pump();
+    notifier.setCancelArmed(true);
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    await pump();
+
+    expect(recorder.session!.cancelled, isTrue);
+    expect(api.asrCount, 0);
+    final state = container.read(speechControllerProvider);
+    expect(state.phase, SpeechPhase.idle);
+    expect(state.voiceFailure, isNull);
+  });
+
+  test('the auto-send gate reports the first blocking reason', () {
+    VoiceAutoSendOutcome? gate({
+      String? apiKey = 'sk-test',
+      bool generating = false,
+      bool uploadsDone = true,
+      bool typedDuring = false,
+    }) => voiceAutoSendBlocker(
+      apiKey: apiKey,
+      generating: generating,
+      uploadsDone: uploadsDone,
+      typedDuring: typedDuring,
+    );
+
+    expect(gate(), isNull);
+    expect(gate(apiKey: null), VoiceAutoSendOutcome.noApiKey);
+    expect(gate(apiKey: '  '), VoiceAutoSendOutcome.noApiKey);
+    expect(gate(generating: true), VoiceAutoSendOutcome.generating);
+    expect(gate(uploadsDone: false), VoiceAutoSendOutcome.uploading);
+    expect(gate(typedDuring: true), VoiceAutoSendOutcome.notSent);
+    expect(
+      gate(apiKey: null, generating: true, uploadsDone: false),
+      VoiceAutoSendOutcome.noApiKey,
+    );
+  });
+
+  test('auto-stops once at the cap and a late release is a no-op', () async {
+    final container = makeContainer(
+      maxRecording: const Duration(milliseconds: 80),
+    );
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    final inserted = <String>[];
+
+    await notifier.startFromPress(onTranscript: insertOnly(inserted));
+    await pump();
+    expect(recorder.session!.stopped, isFalse);
+
+    await Future<void>.delayed(const Duration(milliseconds: 150));
+    await pump();
+    final state = container.read(speechControllerProvider);
+    expect(state.voiceFailure, VoiceInputFailure.limitReached);
+    expect(recorder.session!.stopped, isTrue);
+    expect(state.phase, SpeechPhase.transcribing);
+    expect(api.asrCount, 1);
+
+    notifier.finishFromRelease();
+    await pump();
+    expect(api.asrCount, 1);
+
+    api.completeAsr('done');
+    await pump();
+    expect(inserted, ['done']);
+  });
+
+  test('auto-send gates map to their own notices', () async {
+    final expected = {
+      VoiceAutoSendOutcome.noApiKey: VoiceInputFailure.noApiKey,
+      VoiceAutoSendOutcome.generating: VoiceInputFailure.insertedGenerating,
+      VoiceAutoSendOutcome.uploading: VoiceInputFailure.insertedUploading,
+      VoiceAutoSendOutcome.notSent: VoiceInputFailure.insertedNotSent,
+      VoiceAutoSendOutcome.failed: VoiceInputFailure.sendFailedInserted,
+    };
+    for (final entry in expected.entries) {
+      final container = makeContainer();
+      final notifier = container.read(speechControllerProvider.notifier);
+
+      await notifier.startFromPress(onTranscript: (_) async => entry.key);
+      await pump();
+      notifier.finishFromRelease();
+      await pump();
+      api.completeAsr('hello');
+      await pump();
+
+      final state = container.read(speechControllerProvider);
+      expect(state.phase, SpeechPhase.idle, reason: '${entry.key}');
+      expect(state.voiceFailure, entry.value, reason: '${entry.key}');
+      container.dispose();
+    }
+  });
+
+  test('a sent transcript never shows a notice', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    final inserted = <String>[];
+
+    await notifier.startFromPress(onTranscript: insertOnly(inserted));
+    await pump();
+    notifier.finishFromRelease();
+    await pump();
+    api.completeAsr('hi');
+    await pump();
+
+    expect(inserted, ['hi']);
+    expect(container.read(speechControllerProvider).voiceFailure, isNull);
   });
 
   test('insertTranscript replaces the selection and moves the caret', () {
@@ -100,82 +349,6 @@ void main() {
     expect(appended.selection, const TextSelection.collapsed(offset: 10));
   });
 
-  test('cancelling transcription inserts nothing', () async {
-    final container = makeContainer();
-    addTearDown(container.dispose);
-    final notifier = container.read(speechControllerProvider.notifier);
-    final inserted = <String>[];
-
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
-    await pump();
-    unawaitedRead(notifier.toggleVoiceInput(onTranscript: inserted.add));
-    await pump();
-    expect(api.asrCount, 1);
-
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
-    await pump();
-    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
-    expect(api.asrAbort?.isCompleted, isTrue);
-
-    expect(inserted, isEmpty);
-    expect(container.read(speechControllerProvider).voiceFailure, isNull);
-  });
-
-  test('cancelling while the recorder stops still uploads nothing', () async {
-    final container = makeContainer();
-    addTearDown(container.dispose);
-    final notifier = container.read(speechControllerProvider.notifier);
-    final inserted = <String>[];
-
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
-    await pump();
-    recorder.session!.stopGate = Completer<void>();
-    unawaitedRead(notifier.toggleVoiceInput(onTranscript: inserted.add));
-    await pump();
-    expect(
-      container.read(speechControllerProvider).phase,
-      SpeechPhase.transcribing,
-    );
-
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
-    await pump();
-    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
-
-    recorder.session!.stopGate!.complete();
-    await pump();
-    expect(api.asrCount, 0);
-    expect(inserted, isEmpty);
-    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
-  });
-
-  test('auto-stops once at the recording cap and transcribes', () async {
-    final container = makeContainer(
-      maxRecording: const Duration(milliseconds: 80),
-    );
-    addTearDown(container.dispose);
-    final notifier = container.read(speechControllerProvider.notifier);
-    final inserted = <String>[];
-
-    await notifier.toggleVoiceInput(onTranscript: inserted.add);
-    await pump();
-    expect(recorder.session!.stopped, isFalse);
-
-    await Future<void>.delayed(const Duration(milliseconds: 150));
-    await pump();
-    final state = container.read(speechControllerProvider);
-    expect(state.voiceFailure, VoiceInputFailure.limitReached);
-    expect(recorder.session!.stopped, isTrue);
-    expect(api.asrCount, 1);
-
-    await Future<void>.delayed(const Duration(milliseconds: 120));
-    await pump();
-    expect(api.asrCount, 1);
-
-    api.completeAsr('done');
-    await pump();
-    expect(inserted, ['done']);
-  });
-
   test('permission denial blocks recording', () async {
     permissions
       ..granted = false
@@ -184,7 +357,7 @@ void main() {
     addTearDown(container.dispose);
     final notifier = container.read(speechControllerProvider.notifier);
 
-    await notifier.toggleVoiceInput(onTranscript: (_) {});
+    await notifier.startFromPress(onTranscript: insertOnly([]));
     await pump();
 
     expect(permissions.requests, 1);
@@ -201,7 +374,7 @@ void main() {
     addTearDown(container.dispose);
     final notifier = container.read(speechControllerProvider.notifier);
 
-    await notifier.toggleVoiceInput(onTranscript: (_) {});
+    await notifier.startFromPress(onTranscript: insertOnly([]));
     await pump();
     expect(recorder.starts, 0);
     expect(
@@ -232,7 +405,7 @@ void main() {
     await pump();
     expect(container.read(speechControllerProvider).phase, SpeechPhase.playing);
 
-    await notifier.toggleVoiceInput(onTranscript: (_) {});
+    await notifier.startFromPress(onTranscript: insertOnly([]));
     await pump();
 
     expect(recorder.starts, 0);
@@ -251,7 +424,7 @@ void main() {
 
     await container
         .read(speechControllerProvider.notifier)
-        .toggleVoiceInput(onTranscript: (_) {});
+        .startFromPress(onTranscript: insertOnly([]));
     await pump();
 
     expect(
@@ -267,7 +440,7 @@ void main() {
       addTearDown(container.dispose);
       final notifier = container.read(speechControllerProvider.notifier);
 
-      await notifier.toggleVoiceInput(onTranscript: (_) {});
+      await notifier.startFromPress(onTranscript: insertOnly([]));
       await pump();
       recorder.session!.interrupt();
       await pump();
@@ -279,6 +452,64 @@ void main() {
       expect(state.voiceFailure, VoiceInputFailure.interrupted);
     },
   );
+
+  test('back during recording cancels it and stays on the page', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+
+    await notifier.startFromPress(onTranscript: insertOnly([]));
+    await pump();
+    expect(notifier.cancelFromBack(), isTrue);
+    await pump();
+
+    expect(recorder.session!.cancelled, isTrue);
+    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+    expect(container.read(speechControllerProvider).voiceFailure, isNull);
+
+    await notifier.startFromPress(onTranscript: insertOnly([]));
+    await pump();
+    notifier.finishFromRelease();
+    await pump();
+    expect(
+      container.read(speechControllerProvider).phase,
+      SpeechPhase.transcribing,
+    );
+    expect(notifier.cancelFromBack(), isFalse);
+  });
+
+  test('switching conversation drops an active recording silently', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+
+    await notifier.startFromPress(onTranscript: insertOnly([]));
+    await pump();
+    await notifier.stopAll();
+    await pump();
+
+    expect(recorder.session!.cancelled, isTrue);
+    final state = container.read(speechControllerProvider);
+    expect(state.phase, SpeechPhase.idle);
+    expect(state.voiceFailure, isNull);
+  });
+
+  test('the semantics cancel action drops the recording silently', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+
+    await notifier.startFromPress(onTranscript: insertOnly([]));
+    await pump();
+    notifier.cancelFromSemantics();
+    await pump();
+
+    expect(recorder.session!.cancelled, isTrue);
+    expect(api.asrCount, 0);
+    final state = container.read(speechControllerProvider);
+    expect(state.phase, SpeechPhase.idle);
+    expect(state.voiceFailure, isNull);
+  });
 
   test('reads aloud from the first chunk to playback completion', () async {
     final container = makeContainer();
@@ -380,8 +611,8 @@ void main() {
     await pump();
     expect(player.sessions.single.stopped, isFalse);
 
-    unawaitedRead(notifier.toggleVoiceInput(onTranscript: (_) {}));
-    await pump();
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    await pump(30);
     expect(player.sessions.single.stopped, isTrue);
     expect(
       container.read(speechControllerProvider).phase,
@@ -396,7 +627,7 @@ void main() {
       addTearDown(container.dispose);
       final notifier = container.read(speechControllerProvider.notifier);
 
-      await notifier.toggleVoiceInput(onTranscript: (_) {});
+      await notifier.startFromPress(onTranscript: insertOnly([]));
       await pump();
       await notifier.handleLifecycle();
       await pump();
@@ -414,6 +645,24 @@ void main() {
       expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
     },
   );
+
+  test('backgrounding during startup prevents the recording', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    recorder.startGate = Completer<void>();
+
+    unawaitedRead(notifier.startFromPress(onTranscript: insertOnly([])));
+    await pump();
+    await notifier.handleLifecycle();
+    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+
+    recorder.startGate!.complete();
+    await pump();
+    expect(recorder.session!.cancelled, isTrue);
+    expect(api.asrCount, 0);
+    expect(container.read(speechControllerProvider).phase, SpeechPhase.idle);
+  });
 }
 
 void unawaitedRead(Future<void> future) {

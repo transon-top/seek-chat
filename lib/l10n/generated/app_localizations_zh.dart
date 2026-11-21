@@ -615,23 +615,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get historyErrorExportTooLarge => '文件过大，无法导出';
 
   @override
-  String get voiceInput => '语音输入';
-
-  @override
-  String voiceInputRecording(int seconds) {
-    return '录音中 $seconds 秒';
-  }
-
-  @override
-  String get voiceInputStop => '结束录音并转写';
-
-  @override
-  String get voiceInputTranscribing => '正在转写…';
-
-  @override
-  String get voiceInputCancel => '正在转写，点击取消';
-
-  @override
   String get voiceInputPermissionDenied => '无法使用麦克风，请在系统设置中允许访问';
 
   @override
@@ -648,6 +631,45 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get voiceInputInterrupted => '录音已中断';
+
+  @override
+  String get holdToTalk => '按住说话';
+
+  @override
+  String get voiceHoldToSend => '松手发送，上滑取消';
+
+  @override
+  String get voiceReleaseToCancel => '松开取消';
+
+  @override
+  String get voiceRecognizing => '识别中';
+
+  @override
+  String get voiceMicGrantedRetry => '已授权麦克风，请再按住说话';
+
+  @override
+  String get voiceRecordSemantics => '录音中，双击结束并发送';
+
+  @override
+  String get voiceCancelRecording => '取消录音';
+
+  @override
+  String get voiceCancelled => '已取消';
+
+  @override
+  String get voiceRecognizingSemantics => '正在识别';
+
+  @override
+  String get voiceSendFailedInserted => '发送失败，已放入输入框';
+
+  @override
+  String get voiceInsertedGenerating => '生成中，转写内容已插入输入框';
+
+  @override
+  String get voiceInsertedUploading => '附件上传中，转写内容已插入输入框';
+
+  @override
+  String get voiceInsertedNotSent => '转写内容已插入输入框，未自动发送';
 
   @override
   String get ttsPlay => '朗读';

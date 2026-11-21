@@ -14,6 +14,7 @@ import 'package:open_chat/features/chat/chat_page.dart';
 import 'package:open_chat/features/chat/composer.dart';
 import 'package:open_chat/features/chat/speech/player.dart';
 import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
+import 'package:open_chat/features/chat/speech/recorder.dart';
 import 'package:open_chat/features/chat/speech/speech_api.dart';
 import 'package:open_chat/features/chat/speech/speech_controller.dart';
 import 'package:open_chat/features/sessions/session_drawer.dart';
@@ -27,6 +28,7 @@ import 'package:open_chat/shared/prefs/chat_options_store.dart';
 import 'package:open_chat/shared/prefs/font_scale_store.dart';
 import 'package:open_chat/shared/prefs/preferences_provider.dart';
 import 'package:open_chat/shared/providers.dart';
+import 'package:open_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../features/chat/speech/speech_fakes.dart';
@@ -317,6 +319,8 @@ void main() {
     DeepSeekApiClient? client,
     SpeechApi? speechApi,
     SpeechPlayer? speechPlayer,
+    SpeechRecorder? speechRecorder,
+    MicrophonePermissions? microphonePermissions,
     ChatRepository? chatRepository,
   }) => ProviderScope(
     overrides: [
@@ -338,6 +342,10 @@ void main() {
       if (speechApi != null) speechApiProvider.overrideWithValue(speechApi),
       if (speechPlayer != null)
         speechPlayerProvider.overrideWithValue(speechPlayer),
+      if (speechRecorder != null)
+        speechRecorderProvider.overrideWithValue(speechRecorder),
+      if (microphonePermissions != null)
+        microphonePermissionsProvider.overrideWithValue(microphonePermissions),
     ],
     child: const OpenChatApp(),
   );
@@ -366,6 +374,104 @@ void main() {
       ),
       findsOneWidget,
     );
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('holding the microphone inserts and sends the transcript', (
+    tester,
+  ) async {
+    final recorder = FakeRecorder();
+    final api = FakeSpeechApi();
+    await tester.pumpWidget(
+      appWith(
+        apiKey: 'sk-good',
+        speechApi: api,
+        speechRecorder: recorder,
+        microphonePermissions: FakeMicrophonePermissions(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const Key('voice-button'))),
+    );
+    await tester.pump();
+    expect(find.text('松手发送，上滑取消'), findsOneWidget);
+
+    await gesture.up();
+    await tester.pump();
+    expect(find.text('识别中'), findsOneWidget);
+    expect(api.asrCount, 1);
+
+    api.completeAsr('  你好  ');
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('recording-overlay')), findsNothing);
+    expect(find.text('你好'), findsOneWidget);
+    expect(find.text('发消息或按住说话'), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('back while recording cancels it and stays on the page', (
+    tester,
+  ) async {
+    final recorder = FakeRecorder();
+    final api = FakeSpeechApi();
+    await tester.pumpWidget(
+      appWith(
+        apiKey: 'sk-good',
+        speechApi: api,
+        speechRecorder: recorder,
+        microphonePermissions: FakeMicrophonePermissions(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const Key('voice-button'))),
+    );
+    await tester.pump();
+    expect(find.byKey(const Key('recording-overlay')), findsOneWidget);
+
+    await tester.binding.handlePopRoute();
+    await tester.pump();
+    expect(find.byKey(const Key('recording-overlay')), findsNothing);
+    expect(find.byKey(const Key('composer-input')), findsOneWidget);
+    expect(recorder.session!.cancelled, isTrue);
+
+    await gesture.up();
+    await tester.pump();
+    expect(api.asrCount, 0);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('holding the microphone without a key shows the key hint', (
+    tester,
+  ) async {
+    final recorder = FakeRecorder();
+    await tester.pumpWidget(
+      appWith(
+        apiKey: null,
+        speechApi: FakeSpeechApi(),
+        speechRecorder: recorder,
+        microphonePermissions: FakeMicrophonePermissions(),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    final gesture = await tester.startGesture(
+      tester.getCenter(find.byKey(const Key('voice-button'))),
+    );
+    await tester.pump();
+    await gesture.up();
+    await tester.pump();
+
+    expect(find.text('未设置 API Key，请先在设置中填写。'), findsOneWidget);
+    expect(recorder.starts, 0);
+    expect(find.byKey(const Key('recording-overlay')), findsNothing);
 
     await unmountApp(tester);
   });
@@ -1215,9 +1321,7 @@ void main() {
     await openDrawer(tester);
     await tester.longPress(find.byKey(ValueKey('session-row-${first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(ValueKey('session-menu-rename-${first.id}')),
-    );
+    await tester.tap(find.byKey(ValueKey('session-menu-rename-${first.id}')));
     // 行内输入框自动聚焦后光标定时闪烁，pumpAndSettle 永不结束。
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -1238,9 +1342,7 @@ void main() {
 
     await tester.longPress(find.byKey(ValueKey('session-row-${first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(
-      find.byKey(ValueKey('session-menu-delete-${first.id}')),
-    );
+    await tester.tap(find.byKey(ValueKey('session-menu-delete-${first.id}')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('删除').last);
     await tester.pumpAndSettle();

@@ -342,24 +342,25 @@
     }
   },
   "historyErrorExportTooLarge": "The file is too large to export.",
-  "voiceInput": "Voice input",
-  "voiceInputRecording": "Recording {seconds}s",
-  "@voiceInputRecording": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "voiceInputStop": "Stop recording and transcribe",
-  "voiceInputTranscribing": "Transcribing…",
-  "voiceInputCancel": "Transcribing. Tap to cancel",
   "voiceInputPermissionDenied": "Microphone access is denied. Allow it in system settings.",
   "voiceInputNoDevice": "No microphone detected",
   "voiceInputFailed": "Speech recognition failed. Please try again later.",
   "voiceInputEmpty": "No speech detected",
   "voiceInputLimitReached": "Maximum recording length reached",
   "voiceInputInterrupted": "Recording interrupted",
+  "holdToTalk": "Hold to talk",
+  "voiceHoldToSend": "Release to send, slide up to cancel",
+  "voiceReleaseToCancel": "Release to cancel",
+  "voiceRecognizing": "Recognizing",
+  "voiceMicGrantedRetry": "Microphone access granted. Hold to talk again.",
+  "voiceRecordSemantics": "Recording. Double-tap to finish and send.",
+  "voiceCancelRecording": "Cancel recording",
+  "voiceCancelled": "Recording cancelled",
+  "voiceRecognizingSemantics": "Recognizing speech",
+  "voiceSendFailedInserted": "Couldn't send. The text is in the message field.",
+  "voiceInsertedGenerating": "Generating. Transcription inserted.",
+  "voiceInsertedUploading": "Attachments uploading. Transcription inserted.",
+  "voiceInsertedNotSent": "Transcription inserted. Not sent automatically.",
   "ttsPlay": "Read aloud",
   "ttsStop": "Stop reading",
   "ttsUnavailable": "This answer cannot be read aloud right now",

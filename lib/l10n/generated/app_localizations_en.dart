@@ -652,23 +652,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get historyErrorExportTooLarge => 'The file is too large to export.';
 
   @override
-  String get voiceInput => 'Voice input';
-
-  @override
-  String voiceInputRecording(int seconds) {
-    return 'Recording ${seconds}s';
-  }
-
-  @override
-  String get voiceInputStop => 'Stop recording and transcribe';
-
-  @override
-  String get voiceInputTranscribing => 'Transcribing…';
-
-  @override
-  String get voiceInputCancel => 'Transcribing. Tap to cancel';
-
-  @override
   String get voiceInputPermissionDenied =>
       'Microphone access is denied. Allow it in system settings.';
 
@@ -687,6 +670,50 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get voiceInputInterrupted => 'Recording interrupted';
+
+  @override
+  String get holdToTalk => 'Hold to talk';
+
+  @override
+  String get voiceHoldToSend => 'Release to send, slide up to cancel';
+
+  @override
+  String get voiceReleaseToCancel => 'Release to cancel';
+
+  @override
+  String get voiceRecognizing => 'Recognizing';
+
+  @override
+  String get voiceMicGrantedRetry =>
+      'Microphone access granted. Hold to talk again.';
+
+  @override
+  String get voiceRecordSemantics =>
+      'Recording. Double-tap to finish and send.';
+
+  @override
+  String get voiceCancelRecording => 'Cancel recording';
+
+  @override
+  String get voiceCancelled => 'Recording cancelled';
+
+  @override
+  String get voiceRecognizingSemantics => 'Recognizing speech';
+
+  @override
+  String get voiceSendFailedInserted =>
+      'Couldn\'t send. The text is in the message field.';
+
+  @override
+  String get voiceInsertedGenerating => 'Generating. Transcription inserted.';
+
+  @override
+  String get voiceInsertedUploading =>
+      'Attachments uploading. Transcription inserted.';
+
+  @override
+  String get voiceInsertedNotSent =>
+      'Transcription inserted. Not sent automatically.';
 
   @override
   String get ttsPlay => 'Read aloud';

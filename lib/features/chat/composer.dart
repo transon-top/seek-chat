@@ -1,4 +1,3 @@
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
@@ -6,7 +5,6 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/models/types.dart';
 import '../../shared/widgets/horizontal_fade_scroll.dart';
 import 'attachments_view.dart';
-import 'speech/recording_status.dart';
 import 'speech/speech_controller.dart';
 import 'speech/voice_button.dart';
 import 'upload_tasks.dart';
@@ -34,7 +32,11 @@ class Composer extends StatelessWidget {
     required this.onRemoveAttachment,
     required this.onSend,
     required this.onStop,
-    required this.onVoice,
+    required this.onVoiceStart,
+    required this.onVoiceEnd,
+    required this.onVoicePointerCancel,
+    required this.onVoiceCancelArmed,
+    required this.onVoiceCancel,
   });
 
   final TextEditingController input;
@@ -54,7 +56,11 @@ class Composer extends StatelessWidget {
   final ValueChanged<String> onRemoveAttachment;
   final VoidCallback onSend;
   final VoidCallback onStop;
-  final VoidCallback onVoice;
+  final VoidCallback onVoiceStart;
+  final VoidCallback onVoiceEnd;
+  final VoidCallback onVoicePointerCancel;
+  final ValueChanged<bool> onVoiceCancelArmed;
+  final VoidCallback onVoiceCancel;
 
   @override
   Widget build(BuildContext context) {
@@ -71,7 +77,6 @@ class Composer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const _SpeechStatus(),
             Container(
               padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
               decoration: BoxDecoration(
@@ -82,33 +87,40 @@ class Composer extends StatelessWidget {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  DraftAttachmentStrip(
-                    attachments: attachments,
-                    tasks: tasks,
-                    onRetry: onRetryAttachment,
-                    onRemove: onRemoveAttachment,
-                  ),
-                  ShadInput(
-                    key: const Key('composer-input'),
-                    controller: input,
-                    focusNode: inputFocus,
-                    minLines: 2,
-                    maxLines: 5,
-                    padding: EdgeInsets.zero,
-                    decoration: ShadDecoration.none,
-                    style: TextStyle(
-                      fontSize: 16,
-                      height: 1.6,
-                      color: colors.foreground,
+                  IgnorePointer(
+                    ignoring: voiceBusy,
+                    child: DraftAttachmentStrip(
+                      attachments: attachments,
+                      tasks: tasks,
+                      onRetry: onRetryAttachment,
+                      onRemove: onRemoveAttachment,
                     ),
-                    placeholder: Text(
-                      attachments.isEmpty
-                          ? l10n.composerHint
-                          : l10n.composerHintWithAttachments,
+                  ),
+                  IgnorePointer(
+                    ignoring: voiceBusy,
+                    child: ShadInput(
+                      key: const Key('composer-input'),
+                      controller: input,
+                      focusNode: inputFocus,
+                      readOnly: voiceBusy,
+                      minLines: 2,
+                      maxLines: 5,
+                      padding: EdgeInsets.zero,
+                      decoration: ShadDecoration.none,
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.6,
-                        color: colors.mutedForeground,
+                        color: colors.foreground,
+                      ),
+                      placeholder: Text(
+                        attachments.isEmpty
+                            ? l10n.composerHint
+                            : l10n.composerHintWithAttachments,
+                        style: TextStyle(
+                          fontSize: 16,
+                          height: 1.6,
+                          color: colors.mutedForeground,
+                        ),
                       ),
                     ),
                   ),
@@ -126,6 +138,7 @@ class Composer extends StatelessWidget {
                                 icon: LucideIcons.atom,
                                 label: l10n.deepThinking,
                                 selected: thinking,
+                                enabled: !voiceBusy,
                                 onChanged: onThinkingChanged,
                               ),
                               const SizedBox(width: 6),
@@ -134,6 +147,7 @@ class Composer extends StatelessWidget {
                                 icon: LucideIcons.globe,
                                 label: l10n.smartSearch,
                                 selected: search,
+                                enabled: !voiceBusy,
                                 onChanged: onSearchChanged,
                               ),
                             ],
@@ -157,12 +171,18 @@ class Composer extends StatelessWidget {
                               if (!hasText && !busy)
                                 VoiceButton(
                                   phase: phase,
-                                  onPressed: reading ? null : onVoice,
+                                  enabled: !reading,
+                                  onStart: onVoiceStart,
+                                  onEnd: onVoiceEnd,
+                                  onGestureCancel: onVoicePointerCancel,
+                                  onCancelArmedChanged: onVoiceCancelArmed,
+                                  onCancelRecording: onVoiceCancel,
                                 ),
                               const SizedBox(width: 2),
                               SendButton(
                                 busy: busy,
-                                enabled: !busy &&
+                                enabled:
+                                    !busy &&
                                     !voiceBusy &&
                                     ready &&
                                     (hasText || attachments.isNotEmpty),
@@ -214,12 +234,14 @@ class ComposerToggle extends StatelessWidget {
     required this.label,
     required this.selected,
     required this.onChanged,
+    this.enabled = true,
   });
 
   final IconData icon;
   final String label;
   final bool selected;
   final ValueChanged<bool> onChanged;
+  final bool enabled;
 
   @override
   Widget build(BuildContext context) {
@@ -233,9 +255,10 @@ class ComposerToggle extends StatelessWidget {
     return Semantics(
       button: true,
       selected: selected,
+      enabled: enabled,
       label: label,
       child: GestureDetector(
-        onTap: () => onChanged(!selected),
+        onTap: enabled ? () => onChanged(!selected) : null,
         behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: reduceMotion
@@ -405,29 +428,6 @@ class SendButton extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-/// 录音计时与电平只重建这一行，不触发整页重建（`speech.md` §7）。
-class _SpeechStatus extends ConsumerWidget {
-  const _SpeechStatus();
-
-  @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final status = ref.watch(
-      speechControllerProvider.select(
-        (state) => (
-          phase: state.phase,
-          seconds: state.recordingSeconds,
-          level: state.level,
-        ),
-      ),
-    );
-    return RecordingStatus(
-      phase: status.phase,
-      seconds: status.seconds,
-      level: status.level,
     );
   }
 }

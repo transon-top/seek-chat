@@ -279,24 +279,25 @@
   "historyErrorTooLarge": "文件过大，无法导入",
   "cancel": "取消",
   "historyErrorExportTooLarge": "文件过大，无法导出",
-  "voiceInput": "语音输入",
-  "voiceInputRecording": "录音中 {seconds} 秒",
-  "@voiceInputRecording": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "voiceInputStop": "结束录音并转写",
-  "voiceInputTranscribing": "正在转写…",
-  "voiceInputCancel": "正在转写，点击取消",
   "voiceInputPermissionDenied": "无法使用麦克风，请在系统设置中允许访问",
   "voiceInputNoDevice": "未检测到麦克风",
   "voiceInputFailed": "语音识别失败，请稍后再试",
   "voiceInputEmpty": "未识别到语音内容",
   "voiceInputLimitReached": "已达到单次录音时长上限",
   "voiceInputInterrupted": "录音已中断",
+  "holdToTalk": "按住说话",
+  "voiceHoldToSend": "松手发送，上滑取消",
+  "voiceReleaseToCancel": "松开取消",
+  "voiceRecognizing": "识别中",
+  "voiceMicGrantedRetry": "已授权麦克风，请再按住说话",
+  "voiceRecordSemantics": "录音中，双击结束并发送",
+  "voiceCancelRecording": "取消录音",
+  "voiceCancelled": "已取消",
+  "voiceRecognizingSemantics": "正在识别",
+  "voiceSendFailedInserted": "发送失败，已放入输入框",
+  "voiceInsertedGenerating": "生成中，转写内容已插入输入框",
+  "voiceInsertedUploading": "附件上传中，转写内容已插入输入框",
+  "voiceInsertedNotSent": "转写内容已插入输入框，未自动发送",
   "ttsPlay": "朗读",
   "ttsStop": "停止朗读",
   "ttsUnavailable": "这条回答暂时无法朗读",

@@ -1209,36 +1209,6 @@ abstract class AppLocalizations {
   /// **'The file is too large to export.'**
   String get historyErrorExportTooLarge;
 
-  /// No description provided for @voiceInput.
-  ///
-  /// In en, this message translates to:
-  /// **'Voice input'**
-  String get voiceInput;
-
-  /// No description provided for @voiceInputRecording.
-  ///
-  /// In en, this message translates to:
-  /// **'Recording {seconds}s'**
-  String voiceInputRecording(int seconds);
-
-  /// No description provided for @voiceInputStop.
-  ///
-  /// In en, this message translates to:
-  /// **'Stop recording and transcribe'**
-  String get voiceInputStop;
-
-  /// No description provided for @voiceInputTranscribing.
-  ///
-  /// In en, this message translates to:
-  /// **'Transcribing…'**
-  String get voiceInputTranscribing;
-
-  /// No description provided for @voiceInputCancel.
-  ///
-  /// In en, this message translates to:
-  /// **'Transcribing. Tap to cancel'**
-  String get voiceInputCancel;
-
   /// No description provided for @voiceInputPermissionDenied.
   ///
   /// In en, this message translates to:
@@ -1274,6 +1244,84 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Recording interrupted'**
   String get voiceInputInterrupted;
+
+  /// No description provided for @holdToTalk.
+  ///
+  /// In en, this message translates to:
+  /// **'Hold to talk'**
+  String get holdToTalk;
+
+  /// No description provided for @voiceHoldToSend.
+  ///
+  /// In en, this message translates to:
+  /// **'Release to send, slide up to cancel'**
+  String get voiceHoldToSend;
+
+  /// No description provided for @voiceReleaseToCancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Release to cancel'**
+  String get voiceReleaseToCancel;
+
+  /// No description provided for @voiceRecognizing.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing'**
+  String get voiceRecognizing;
+
+  /// No description provided for @voiceMicGrantedRetry.
+  ///
+  /// In en, this message translates to:
+  /// **'Microphone access granted. Hold to talk again.'**
+  String get voiceMicGrantedRetry;
+
+  /// No description provided for @voiceRecordSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording. Double-tap to finish and send.'**
+  String get voiceRecordSemantics;
+
+  /// No description provided for @voiceCancelRecording.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel recording'**
+  String get voiceCancelRecording;
+
+  /// No description provided for @voiceCancelled.
+  ///
+  /// In en, this message translates to:
+  /// **'Recording cancelled'**
+  String get voiceCancelled;
+
+  /// No description provided for @voiceRecognizingSemantics.
+  ///
+  /// In en, this message translates to:
+  /// **'Recognizing speech'**
+  String get voiceRecognizingSemantics;
+
+  /// No description provided for @voiceSendFailedInserted.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t send. The text is in the message field.'**
+  String get voiceSendFailedInserted;
+
+  /// No description provided for @voiceInsertedGenerating.
+  ///
+  /// In en, this message translates to:
+  /// **'Generating. Transcription inserted.'**
+  String get voiceInsertedGenerating;
+
+  /// No description provided for @voiceInsertedUploading.
+  ///
+  /// In en, this message translates to:
+  /// **'Attachments uploading. Transcription inserted.'**
+  String get voiceInsertedUploading;
+
+  /// No description provided for @voiceInsertedNotSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Transcription inserted. Not sent automatically.'**
+  String get voiceInsertedNotSent;
 
   /// No description provided for @ttsPlay.
   ///

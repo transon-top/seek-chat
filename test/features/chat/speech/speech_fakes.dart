@@ -13,12 +13,17 @@ class FakeMicrophonePermissions implements MicrophonePermissions {
   int requests = 0;
   bool openedSettings = false;
 
+  /// 非空时请求挂起，模拟系统授权弹窗。
+  Completer<bool>? requestGate;
+
   @override
   Future<bool> isGranted() async => granted;
 
   @override
   Future<bool> request() async {
     requests++;
+    final gate = requestGate;
+    if (gate != null) return gate.future;
     return requestResult;
   }
 
@@ -77,9 +82,14 @@ class FakeRecorder implements SpeechRecorder {
   Object? error;
   int starts = 0;
 
+  /// 非空时启动挂起，模拟设备启动耗时。
+  Completer<void>? startGate;
+
   @override
   Future<RecordingSession> start() async {
     starts++;
+    final gate = startGate;
+    if (gate != null) await gate.future;
     final failure = error;
     if (failure != null) throw failure;
     return session = FakeRecordingSession();
