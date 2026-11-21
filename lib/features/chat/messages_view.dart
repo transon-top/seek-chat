@@ -493,7 +493,8 @@ class _UserMessageViewState extends State<_UserMessageView> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
-                  color: colors.muted,
+                  // 气泡色不参与 shadcn 语义色表，直接取 chat-demo bubble 令牌。
+                  color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 // 识别器放在 SelectionArea 内层：Android 的文本选择会抢横向拖拽。

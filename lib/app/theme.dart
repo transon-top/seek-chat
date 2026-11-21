@@ -4,11 +4,12 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'markdown_theme.dart';
 
-/// 主题种子；浅深两套由同一个 seed 生成（票 18）。
+/// 主题种子；只补齐未被 chat-demo 令牌显式覆盖的 Material 角色。
 const appThemeSeed = Color(0xFF4D6BFE);
 
-/// 主按钮色；种子生成的主色不等于品牌色，按钮显式指定。
+/// 主按钮色；浅色取 chat-demo blue-500，深色取 blue-450。
 const appPrimaryColor = Color(0xFF3964FE);
+const appPrimaryColorDark = Color(0xFF5686FE);
 
 /// 会话抽屉配色：照搬 chat-demo 侧边栏令牌，仅供抽屉使用，不并入全局色表。
 class AppSidebarColors {
@@ -41,8 +42,7 @@ class AppSidebarColors {
   );
 
   static const dark = AppSidebarColors(
-    // OLED 纯黑：侧栏背景与分组头、边缘渐隐共用。
-    fill: Color(0xFF000000),
+    fill: Color(0xFF1B1B1C),
     border: Color(0x0FFFFFFF),
     labelPrimary: Color(0xFFF9FAFB),
     labelTertiary: Color(0xFFADB2B8),
@@ -78,23 +78,41 @@ ThemeData buildAppTheme({
 }) {
   final base = ThemeData(colorSchemeSeed: appThemeSeed, brightness: brightness);
   final text = base.textTheme;
-  // 深色参考图：中性炭灰层级，不用种子生成的蓝紫色表面。
+  // 配色照搬 chat-demo 令牌：浅色白底 + 蓝色气泡，深色 #151517 底 + 中性灰层。
   final scheme = brightness == Brightness.dark
       ? base.colorScheme.copyWith(
+          primary: appPrimaryColorDark,
+          onPrimary: const Color(0xFFFFFFFF),
+          surface: const Color(0xFF151517),
+          onSurface: const Color(0xFFF9FAFB),
+          surfaceContainerLowest: const Color(0xFF151517),
+          surfaceContainerLow: const Color(0xFF2C2C2E),
+          surfaceContainer: const Color(0xFF2C2C2E),
+          surfaceContainerHigh: const Color(0xFF353638),
+          surfaceContainerHighest: const Color(0xFF353638),
+          onSurfaceVariant: const Color(0xFFADB2B8),
+          outline: const Color(0x29FFFFFF),
+          outlineVariant: const Color(0x0FFFFFFF),
+          error: const Color(0xFFF25A5A),
+          onError: const Color(0xFFFFFFFF),
+        )
+      : base.colorScheme.copyWith(
           primary: appPrimaryColor,
           onPrimary: const Color(0xFFFFFFFF),
-          surface: const Color(0xFF1C1C1E),
-          onSurface: const Color(0xFFEDEDEF),
-          surfaceContainerLowest: const Color(0xFF171719),
-          surfaceContainerLow: const Color(0xFF2B2B2D),
-          surfaceContainer: const Color(0xFF313133),
-          surfaceContainerHigh: const Color(0xFF363638),
-          surfaceContainerHighest: const Color(0xFF3C3C3E),
-          onSurfaceVariant: const Color(0xFF9E9EA3),
-          outline: const Color(0xFF5A5A5E),
-          outlineVariant: const Color(0xFF3D3D40),
-        )
-      : base.colorScheme.copyWith(primary: appPrimaryColor);
+          surface: const Color(0xFFFFFFFF),
+          onSurface: const Color(0xFF0F1115),
+          surfaceContainerLowest: const Color(0xFFFFFFFF),
+          surfaceContainerLow: const Color(0xFFFFFFFF),
+          // 用户气泡：chat-demo blue-50。
+          surfaceContainer: const Color(0xFFEDF3FE),
+          surfaceContainerHigh: const Color(0xFFFFFFFF),
+          surfaceContainerHighest: const Color(0xFFF5F6F7),
+          onSurfaceVariant: const Color(0xFF81858C),
+          outline: const Color(0x1F000000),
+          outlineVariant: const Color(0x1A000000),
+          error: const Color(0xFFEC1313),
+          onError: const Color(0xFFFFFFFF),
+        );
   return base.copyWith(
     colorScheme: scheme,
     scaffoldBackgroundColor: scheme.surface,
@@ -130,16 +148,16 @@ ShadThemeData buildShadTheme({
       foreground: c.onSurface,
       card: c.surfaceContainerLow,
       cardForeground: c.onSurface,
-      popover: c.surfaceContainerLow,
+      popover: c.surfaceContainerHigh,
       popoverForeground: c.onSurface,
       primary: c.primary,
       primaryForeground: c.onPrimary,
-      secondary: c.secondaryContainer,
-      secondaryForeground: c.onSecondaryContainer,
+      secondary: c.surfaceContainerHighest,
+      secondaryForeground: c.onSurface,
       muted: c.surfaceContainerHighest,
       mutedForeground: c.onSurfaceVariant,
-      accent: c.secondaryContainer,
-      accentForeground: c.onSecondaryContainer,
+      accent: c.surfaceContainerHighest,
+      accentForeground: c.onSurface,
       destructive: c.error,
       destructiveForeground: c.onError,
       border: c.outlineVariant,
