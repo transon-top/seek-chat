@@ -478,7 +478,7 @@ class _UserMessageViewState extends State<_UserMessageView> {
           if (_editing)
             _EditBox(
               draft: _draft,
-              hint: strings.composerHint,
+              hint: strings.composerPlaceholder,
               enabled: widget.onEdit != null,
               hasAttachments: message.attachments.isNotEmpty,
               onCancel: () => setState(() => _editing = false),

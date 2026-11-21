@@ -491,10 +491,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get searchResults => 'Search results';
 
   @override
-  String get composerHint => 'Message';
+  String get composerHint => 'Message or hold to talk';
+
+  @override
+  String get composerHintWithAttachments => 'Message';
 
   @override
   String get composerPlaceholder => 'Enter a message';
+
+  @override
+  String get addAttachment => 'Add attachment';
+
+  @override
+  String get closeAttachmentPanel => 'Close attachment panel';
+
+  @override
+  String get takePhoto => 'Take photo';
+
+  @override
+  String get photoUnreadable => 'Couldn\'t read this photo';
 
   @override
   String get send => 'Send';

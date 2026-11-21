@@ -37,8 +37,10 @@ void main() {
     SpeechPhase phase = SpeechPhase.idle,
     bool thinking = false,
     bool search = false,
+    bool panelOpen = false,
     List<DraftAttachment> attachments = const [],
     Map<String, UploadTask> tasks = const {},
+    Widget? attachmentPanel,
     ValueChanged<bool>? onThinkingChanged,
     ValueChanged<bool>? onSearchChanged,
   }) => ProviderScope(
@@ -58,9 +60,11 @@ void main() {
           search: search,
           attachments: attachments,
           tasks: tasks,
+          panelOpen: panelOpen,
+          attachmentPanel: attachmentPanel ?? const SizedBox.shrink(),
           onThinkingChanged: onThinkingChanged ?? (_) {},
           onSearchChanged: onSearchChanged ?? (_) {},
-          onAddAttachment: () => events.add('attach'),
+          onTogglePanel: () => events.add('toggle-panel'),
           onRetryAttachment: (id) => events.add('retry:$id'),
           onRemoveAttachment: (id) => events.add('remove:$id'),
           onSend: () => events.add('send'),
@@ -160,12 +164,7 @@ void main() {
       find.byKey(const Key('attach-button')),
     );
     expect(attach.onPressed, isNull);
-    expect(
-      tester
-          .widget<ShadIconButton>(find.byKey(const Key('voice-button')))
-          .onPressed,
-      isNull,
-    );
+    expect(find.byKey(const Key('voice-button')), findsNothing);
     await tester.tap(find.byKey(const Key('stop-button')));
     expect(events, ['send', 'stop']);
   });
@@ -251,5 +250,87 @@ void main() {
       find.byKey(const Key('voice-button')),
     );
     expect(button.onPressed, isNull);
+  });
+
+  testWidgets('composer hint follows attachments and hides with text', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+    expect(find.text('发消息或按住说话'), findsOneWidget);
+
+    const attachment = DraftAttachment(
+      id: 'a',
+      path: '/tmp/a.txt',
+      name: 'a.txt',
+      size: 1,
+      isImage: false,
+      mimeType: 'text/plain',
+    );
+    await tester.pumpWidget(host(attachments: const [attachment]));
+    await tester.pumpAndSettle();
+    expect(find.text('发消息'), findsOneWidget);
+    expect(find.text('发消息或按住说话'), findsNothing);
+
+    input.text = 'Hello';
+    await tester.pumpWidget(host(attachments: const [attachment]));
+    await tester.pumpAndSettle();
+    expect(find.text('发消息'), findsNothing);
+  });
+
+  testWidgets('button matrix covers empty, text and reading states', (
+    tester,
+  ) async {
+    // 无文本无附件：+ 可用、麦克风显示、发送禁用。
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ShadIconButton>(find.byKey(const Key('attach-button')))
+          .onPressed,
+      isNotNull,
+    );
+    expect(find.byKey(const Key('voice-button')), findsOneWidget);
+    expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isFalse);
+
+    // 有文本：麦克风隐藏、发送可用。
+    input.text = 'Hello';
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('voice-button')), findsNothing);
+    expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isTrue);
+
+    // 朗读中：麦克风显示但禁用。
+    input.clear();
+    await tester.pumpWidget(host(phase: SpeechPhase.playing));
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<ShadIconButton>(find.byKey(const Key('voice-button')))
+          .onPressed,
+      isNull,
+    );
+  });
+
+  testWidgets('plus toggles to close and renders the panel', (tester) async {
+    await tester.pumpWidget(
+      host(attachmentPanel: const SizedBox(key: Key('fake-panel'))),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.plus), findsOneWidget);
+    expect(find.byKey(const Key('fake-panel')), findsNothing);
+    await tester.tap(find.byKey(const Key('attach-button')));
+    expect(events, ['toggle-panel']);
+
+    await tester.pumpWidget(
+      host(
+        panelOpen: true,
+        attachmentPanel: const SizedBox(key: Key('fake-panel')),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.byIcon(LucideIcons.x), findsOneWidget);
+    expect(find.byKey(const Key('fake-panel')), findsOneWidget);
+    expect(find.byTooltip('收起附件面板'), findsOneWidget);
   });
 }

@@ -924,14 +924,44 @@ abstract class AppLocalizations {
   /// No description provided for @composerHint.
   ///
   /// In en, this message translates to:
-  /// **'Message'**
+  /// **'Message or hold to talk'**
   String get composerHint;
+
+  /// No description provided for @composerHintWithAttachments.
+  ///
+  /// In en, this message translates to:
+  /// **'Message'**
+  String get composerHintWithAttachments;
 
   /// No description provided for @composerPlaceholder.
   ///
   /// In en, this message translates to:
   /// **'Enter a message'**
   String get composerPlaceholder;
+
+  /// No description provided for @addAttachment.
+  ///
+  /// In en, this message translates to:
+  /// **'Add attachment'**
+  String get addAttachment;
+
+  /// No description provided for @closeAttachmentPanel.
+  ///
+  /// In en, this message translates to:
+  /// **'Close attachment panel'**
+  String get closeAttachmentPanel;
+
+  /// No description provided for @takePhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Take photo'**
+  String get takePhoto;
+
+  /// No description provided for @photoUnreadable.
+  ///
+  /// In en, this message translates to:
+  /// **'Couldn\'t read this photo'**
+  String get photoUnreadable;
 
   /// No description provided for @send.
   ///

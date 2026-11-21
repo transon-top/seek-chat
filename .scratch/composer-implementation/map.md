@@ -30,6 +30,9 @@
 - [01: 预置：依赖、平台权限与内存字段](issues/01-preset-deps-and-permissions.md):
   依赖与双端权限就位（`photo_manager 3.12.0` / `image_picker 1.2.4`），
   `DraftAttachment` 增内存字段 `sourceAssetId`；analyze、420 测试、双端 debug 构建通过。
+- [02: 输入卡、空态与内联附件面板](issues/02-composer-empty-state-and-panel.md):
+  输入卡单实例贴底、问候语居中并在首条消息后 150ms 淡出；`+` / `×` 与
+  220/180ms 面板、三宫格、JPEG 嗅探与 50 上限；analyze、426 测试、双端 debug 构建通过。
 
 ## Not yet specified
 

@@ -25,9 +25,11 @@ class Composer extends StatelessWidget {
     required this.search,
     required this.attachments,
     required this.tasks,
+    required this.panelOpen,
+    required this.attachmentPanel,
     required this.onThinkingChanged,
     required this.onSearchChanged,
-    required this.onAddAttachment,
+    required this.onTogglePanel,
     required this.onRetryAttachment,
     required this.onRemoveAttachment,
     required this.onSend,
@@ -43,9 +45,11 @@ class Composer extends StatelessWidget {
   final bool search;
   final List<DraftAttachment> attachments;
   final Map<String, UploadTask> tasks;
+  final bool panelOpen;
+  final Widget attachmentPanel;
   final ValueChanged<bool> onThinkingChanged;
   final ValueChanged<bool> onSearchChanged;
-  final VoidCallback onAddAttachment;
+  final VoidCallback onTogglePanel;
   final ValueChanged<String> onRetryAttachment;
   final ValueChanged<String> onRemoveAttachment;
   final VoidCallback onSend;
@@ -59,6 +63,7 @@ class Composer extends StatelessWidget {
     final voiceBusy = phase.voiceBusy;
     final reading = phase.reading;
     final ready = allUploadsDone(attachments, tasks);
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
     return SafeArea(
       top: false,
       child: Padding(
@@ -97,7 +102,9 @@ class Composer extends StatelessWidget {
                       color: colors.foreground,
                     ),
                     placeholder: Text(
-                      l10n.composerPlaceholder,
+                      attachments.isEmpty
+                          ? l10n.composerHint
+                          : l10n.composerHintWithAttachments,
                       style: TextStyle(
                         fontSize: 16,
                         height: 1.6,
@@ -134,36 +141,35 @@ class Composer extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 6),
-                      VoiceButton(
-                        phase: phase,
-                        onPressed: busy || reading ? null : onVoice,
-                      ),
-                      Tooltip(
-                        message: l10n.uploadFile,
-                        child: ShadIconButton.ghost(
-                          key: const Key('attach-button'),
-                          onPressed: busy || voiceBusy ? null : onAddAttachment,
-                          enabled: !busy && !voiceBusy,
-                          icon: const Icon(LucideIcons.paperclip),
-                          iconSize: 18,
-                          width: 40,
-                          height: 40,
-                          padding: EdgeInsets.zero,
-                          foregroundColor: colors.mutedForeground,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
                       ValueListenableBuilder<TextEditingValue>(
                         valueListenable: input,
-                        builder: (context, value, child) {
-                          final hasContent =
-                              value.text.trim().isNotEmpty ||
-                              attachments.isNotEmpty;
-                          return SendButton(
-                            busy: busy,
-                            enabled: !busy && !voiceBusy && ready && hasContent,
-                            onSend: onSend,
-                            onStop: onStop,
+                        builder: (context, value, _) {
+                          final hasText = value.text.trim().isNotEmpty;
+                          return Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              _PlusButton(
+                                open: panelOpen,
+                                onPressed: busy || voiceBusy
+                                    ? null
+                                    : onTogglePanel,
+                              ),
+                              if (!hasText && !busy)
+                                VoiceButton(
+                                  phase: phase,
+                                  onPressed: reading ? null : onVoice,
+                                ),
+                              const SizedBox(width: 2),
+                              SendButton(
+                                busy: busy,
+                                enabled: !busy &&
+                                    !voiceBusy &&
+                                    ready &&
+                                    (hasText || attachments.isNotEmpty),
+                                onSend: onSend,
+                                onStop: onStop,
+                              ),
+                            ],
                           );
                         },
                       ),
@@ -171,6 +177,21 @@ class Composer extends StatelessWidget {
                   ),
                 ],
               ),
+            ),
+            AnimatedSize(
+              duration: reduceMotion
+                  ? Duration.zero
+                  : Duration(milliseconds: panelOpen ? 220 : 180),
+              curve: panelOpen ? Curves.easeOutCubic : Curves.easeOut,
+              alignment: Alignment.topCenter,
+              child: panelOpen
+                  ? ConstrainedBox(
+                      constraints: BoxConstraints(
+                        maxHeight: MediaQuery.sizeOf(context).height * 0.45,
+                      ),
+                      child: SingleChildScrollView(child: attachmentPanel),
+                    )
+                  : const SizedBox(width: double.infinity),
             ),
           ],
         ),
@@ -254,6 +275,51 @@ class ComposerToggle extends StatelessWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// `+` / `×`：展开与收起附件面板，180ms 交叉淡入 + 90° 旋转（ui.md §3.8）。
+class _PlusButton extends StatelessWidget {
+  const _PlusButton({required this.open, required this.onPressed});
+
+  final bool open;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = ShadTheme.of(context).colorScheme;
+    final reduceMotion = MediaQuery.of(context).disableAnimations;
+    return Tooltip(
+      message: open ? l10n.closeAttachmentPanel : l10n.addAttachment,
+      child: ShadIconButton.ghost(
+        key: const Key('attach-button'),
+        onPressed: onPressed,
+        enabled: onPressed != null,
+        icon: AnimatedSwitcher(
+          duration: reduceMotion
+              ? Duration.zero
+              : const Duration(milliseconds: 180),
+          transitionBuilder: (child, animation) => FadeTransition(
+            opacity: animation,
+            child: RotationTransition(
+              turns: Tween<double>(begin: 0, end: 0.25).animate(animation),
+              child: child,
+            ),
+          ),
+          child: Icon(
+            open ? LucideIcons.x : LucideIcons.plus,
+            key: ValueKey(open),
+            size: 18,
+          ),
+        ),
+        iconSize: 18,
+        width: 40,
+        height: 40,
+        padding: EdgeInsets.zero,
+        foregroundColor: colors.mutedForeground,
       ),
     );
   }

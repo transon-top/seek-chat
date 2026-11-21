@@ -370,6 +370,34 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('attachment panel opens, closes with input tap and back', (
+    tester,
+  ) async {
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('attach-button')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('panel-take-photo')), findsOneWidget);
+    expect(find.byKey(const Key('panel-photos')), findsOneWidget);
+    expect(find.byKey(const Key('panel-files')), findsOneWidget);
+
+    // 点输入框收起面板。
+    await tester.tap(find.byKey(const Key('composer-input')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('panel-take-photo')), findsNothing);
+
+    // 再次展开后用系统返回收起面板，页面不退出。
+    await tester.tap(find.byKey(const Key('attach-button')));
+    await tester.pumpAndSettle();
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('panel-take-photo')), findsNothing);
+    expect(find.byKey(const Key('composer-input')), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
   testWidgets('swiping right on the chat opens the session drawer', (
     tester,
   ) async {
