@@ -103,15 +103,17 @@ class PushMenuScope extends InheritedWidget {
 /// 推入式侧栏：侧栏铺在底层，内容层随进度右移、缩小并圆角裁切。
 ///
 /// 交互约定：内层横向滚动组件（表格、代码块等）在手势竞技场里优先；
-/// 打开时内容层被透明关闭层覆盖，点击或左拖都收起。
+/// 打开时内容层被透明关闭层覆盖，点击或左拖都收起；侧栏上任意位置左滑也收起。
 /// 侧栏背景铺满；侧栏内容按 [PushMenuController.menuSlide] 与进度自行滑入。
+/// 推入过程中侧栏层整体压暗，完全打开后恢复；对话层同时淡入浅色蒙版，
+/// 视觉重心留在侧栏。
 class PushMenu extends StatefulWidget {
   const PushMenu({
     super.key,
     required this.menu,
     required this.child,
     this.openFraction = 0.78,
-    this.contentScale = 0.85,
+    this.contentScale = 0.92,
     this.cornerRadius = 24,
     this.menuSlideFraction = 1,
     this.duration = const Duration(milliseconds: 300),
@@ -180,10 +182,24 @@ class _PushMenuState extends State<PushMenu>
                         offstage: progress == 0,
                         child: ExcludeFocus(
                           excluding: progress == 0,
-                          child: RepaintBoundary(child: widget.menu),
+                          // 侧栏上任意位置左滑都能收起。
+                          child: RepaintBoundary(
+                            child: PushMenuSwipeDetector(child: widget.menu),
+                          ),
                         ),
                       ),
                     ),
+                    if (progress > 0)
+                      Positioned.fill(
+                        child: IgnorePointer(
+                          child: ColoredBox(
+                            key: const Key('push-menu-scrim'),
+                            // 压暗侧栏层并随打开淡出，对话层保持原亮度。
+                            color: const Color(0xFF000000)
+                                .withValues(alpha: 0.17 * (1 - progress)),
+                          ),
+                        ),
+                      ),
                     _buildContent(progress, child!),
                   ],
                 ),
@@ -212,21 +228,15 @@ class _PushMenuState extends State<PushMenu>
         if (progress > 0)
           Positioned.fill(
             child: IgnorePointer(
-              child: DecoratedBox(
-                key: const Key('push-menu-scrim'),
-                // 蒙版随进度加深：左缘最轻，向右渐重，对话层后退。
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.centerLeft,
-                    end: Alignment.centerRight,
-                    stops: const [0.35, 1],
-                    colors: [
-                      const Color(0xFF000000)
-                          .withValues(alpha: 0.10 * progress),
-                      const Color(0xFF000000)
-                          .withValues(alpha: 0.32 * progress),
-                    ],
-                  ),
+              child: ColoredBox(
+                key: const Key('push-menu-content-veil'),
+                // 浅色蒙版随进度淡入：全开后对话层变淡，视觉重心留在侧栏。
+                color: const Color(0xFFFFFFFF).withValues(
+                  alpha:
+                      (Theme.of(context).brightness == Brightness.dark
+                          ? 0.08
+                          : 0.55) *
+                      progress,
                 ),
               ),
             ),
@@ -265,10 +275,9 @@ class _PushMenuState extends State<PushMenu>
                 ? const []
                 : [
                     BoxShadow(
-                      color: const Color(0xFF000000)
-                          .withValues(alpha: 0.10 * progress),
-                      blurRadius: 10,
-                      offset: const Offset(-3, 0),
+                      color: const Color(0xFF000000).withValues(alpha: 0.06),
+                      blurRadius: 20,
+                      offset: const Offset(-4, 0),
                     ),
                   ],
           ),
