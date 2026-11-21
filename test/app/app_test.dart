@@ -31,8 +31,8 @@ import 'package:open_chat/shared/providers.dart';
 import 'package:open_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../features/chat/speech/speech_fakes.dart';
 import '../support/fake_api_key_store.dart';
+import '../support/speech_fakes.dart';
 import '../support/sse_fixtures.dart';
 
 const origin = 'https://api.test';

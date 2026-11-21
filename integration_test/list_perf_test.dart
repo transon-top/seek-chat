@@ -32,6 +32,8 @@ import 'package:open_chat/shared/providers.dart';
 import 'package:open_chat/shared/security/api_key_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import '../test/support/pump.dart';
+
 final List<FrameTiming> _frames = <FrameTiming>[];
 bool _mockStreamDone = false;
 
@@ -82,11 +84,11 @@ void main() {
       ),
     );
     // 冷启动直接打开最近会话（长会话）：等首屏消息出现。
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () => find.byKey(const Key('chat-new')).evaluate().isNotEmpty,
     );
-    await _pumpFor(tester, const Duration(milliseconds: 300));
+    await pumpFor(tester, const Duration(milliseconds: 300));
     _report('cold_start_long_session', {
       'seed_ms': seedMs,
       'sessions': sessions.length,
@@ -96,25 +98,25 @@ void main() {
 
     // 离开长会话，保证接下来的打开是冷加载。
     await tester.tap(find.byKey(const Key('chat-new')));
-    await _pumpFor(tester, const Duration(milliseconds: 400));
+    await pumpFor(tester, const Duration(milliseconds: 400));
 
     final size = tester.view.physicalSize / tester.view.devicePixelRatio;
 
     // 对照：空对话静止 1 秒的帧成本即模拟器基线。
     var mark = _frames.length;
-    await _pumpFor(tester, const Duration(seconds: 1));
+    await pumpFor(tester, const Duration(seconds: 1));
     _report('control_idle_new_chat', _frameStats(_frames.sublist(mark)));
 
     // 抽屉打开：1000 条会话首屏 + 分组。
     mark = _frames.length;
     final drawerWatch = Stopwatch()..start();
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
-    final drawerMs = await _pumpUntil(
+    final drawerMs = await pumpUntil(
       tester,
       () => find.text(longSessionSampleTitle).evaluate().isNotEmpty,
       timeout: const Duration(seconds: 8),
     );
-    await _pumpFor(tester, const Duration(milliseconds: 400));
+    await pumpFor(tester, const Duration(milliseconds: 400));
     _report('drawer_open_1000_sessions', {
       ..._frameStats(_frames.sublist(mark)),
       'first_row_ms': drawerMs,
@@ -125,13 +127,13 @@ void main() {
     mark = _frames.length;
     await tester.tap(find.text('$stressSessionTitlePrefix 0001').first);
     final smallWatch = Stopwatch()..start();
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () => find.byKey(ValueKey(smallLastId)).evaluate().isNotEmpty,
       timeout: const Duration(seconds: 20),
     );
     final smallOpenMs = smallWatch.elapsedMilliseconds;
-    await _pumpFor(tester, const Duration(milliseconds: 500));
+    await pumpFor(tester, const Duration(milliseconds: 500));
     _report('control_open_small_session', {
       ..._frameStats(_frames.sublist(mark)),
       'first_screen_ms': smallOpenMs,
@@ -143,23 +145,23 @@ void main() {
         Offset(0, -size.height * 0.45),
         2500,
       );
-      await _pumpFor(tester, const Duration(milliseconds: 350));
+      await pumpFor(tester, const Duration(milliseconds: 350));
     }
     _report('control_scroll_small_session', _frameStats(_frames.sublist(mark)));
 
     // 从抽屉打开长会话：首屏时间。
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
-    await _pumpFor(tester, const Duration(milliseconds: 500));
+    await pumpFor(tester, const Duration(milliseconds: 500));
     mark = _frames.length;
     await tester.tap(find.text(longSessionSampleTitle).first);
     final openWatch = Stopwatch()..start();
-    await _pumpUntil(
+    await pumpUntil(
       tester,
       () => find.byKey(ValueKey(lastMessageId)).evaluate().isNotEmpty,
       timeout: const Duration(seconds: 20),
     );
     final openMs = openWatch.elapsedMilliseconds;
-    await _pumpFor(tester, const Duration(milliseconds: 800));
+    await pumpFor(tester, const Duration(milliseconds: 800));
     _report('open_long_session', {
       ..._frameStats(_frames.sublist(mark)),
       'first_screen_ms': openMs,
@@ -174,7 +176,7 @@ void main() {
         Offset(0, -size.height * 0.45),
         2500,
       );
-      await _pumpFor(tester, const Duration(milliseconds: 350));
+      await pumpFor(tester, const Duration(milliseconds: 350));
     }
     _report('chat_scroll_1000', _frameStats(_frames.sublist(mark)));
 
@@ -184,9 +186,9 @@ void main() {
       find.byKey(const Key('composer-input')),
       '压测：流式输出期间滚动',
     );
-    await _pumpFor(tester, const Duration(milliseconds: 150));
+    await pumpFor(tester, const Duration(milliseconds: 150));
     await tester.tap(find.byKey(const Key('send-button')));
-    await _pumpFor(tester, const Duration(milliseconds: 400));
+    await pumpFor(tester, const Duration(milliseconds: 400));
 
     mark = _frames.length;
     final streamWatch = Stopwatch()..start();
@@ -218,12 +220,12 @@ void main() {
       ..._frameStats(streamFrames),
       'flings': flings,
     });
-    await _pumpFor(tester, const Duration(milliseconds: 600));
+    await pumpFor(tester, const Duration(milliseconds: 600));
     _report('memory_after_streaming', {});
 
     // 会话列表滚动：1000 个会话。
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
-    await _pumpFor(tester, const Duration(milliseconds: 500));
+    await pumpFor(tester, const Duration(milliseconds: 500));
     mark = _frames.length;
     for (var i = 0; i < 10; i++) {
       await tester.flingFrom(
@@ -231,7 +233,7 @@ void main() {
         Offset(0, -size.height * 0.35),
         2200,
       );
-      await _pumpFor(tester, const Duration(milliseconds: 350));
+      await pumpFor(tester, const Duration(milliseconds: 350));
     }
     _report('drawer_scroll_1000_sessions', _frameStats(_frames.sublist(mark)));
     _report('memory_after_drawer_scroll', {});
@@ -240,25 +242,6 @@ void main() {
     expect(sessions.length, greaterThanOrEqualTo(1000));
     expect(conversation.messages.length, greaterThanOrEqualTo(1000));
   }, timeout: const Timeout(Duration(minutes: 30)));
-}
-
-Future<void> _pumpFor(WidgetTester tester, Duration duration) async {
-  final watch = Stopwatch()..start();
-  while (watch.elapsed < duration) {
-    await tester.pump(const Duration(milliseconds: 16));
-  }
-}
-
-Future<int> _pumpUntil(
-  WidgetTester tester,
-  bool Function() done, {
-  Duration timeout = const Duration(seconds: 10),
-}) async {
-  final watch = Stopwatch()..start();
-  while (!done() && watch.elapsed < timeout) {
-    await tester.pump(const Duration(milliseconds: 16));
-  }
-  return watch.elapsedMilliseconds;
 }
 
 Map<String, Object?> _frameStats(List<FrameTiming> slice) {

@@ -11,7 +11,7 @@ import 'package:open_chat/shared/prefs/preferences_provider.dart';
 import 'package:open_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import '../chat/speech/speech_fakes.dart';
+import '../../support/speech_fakes.dart';
 
 void main() {
   final binding = TestWidgetsFlutterBinding.ensureInitialized();
