@@ -38,6 +38,7 @@
 - [照片横条与相机/相册依赖调研](issues/01-research-photo-picker.md): 选 `photo_manager 3.12.0`（横条分页/缩略图/资产落地）+ `image_picker 1.2.4`（拍照/系统相册）；HEIC 一律嗅探后转 JPEG（iOS `.file` 已是 JPEG，Android 用 `thumbnailDataWithSize`）；iOS limited 用 `PhotoManager.presentLimited`；Android 13–15 用系统 Photo Picker 需显式开 `useAndroidPhotoPicker`；最大风险是 Google Play `READ_MEDIA_IMAGES` broad-access 审核，被拒则 Android 去横条。
 - [空态布局、按钮矩阵与附件面板](issues/03-grilling-panel-and-states.md): 空态与有消息复用同一底部输入卡，问候语居中、剩余高度 <96 隐藏；占位只看附件与文本；按钮矩阵逐状态落表（有文本隐藏麦克风，转写槽加载圈可取消，无 Key 可点弹提示）；`+`↔`×` 180ms、面板 `AnimatedSize` 220ms、Android 返回先收面板；面板高度固定、失败只在草稿行表达；减少动画时过渡归零。
 - [照片横条数据、选择与权限降级](issues/04-grilling-photo-strip.md): 固定 30 张、每次展开刷新；勾选以草稿 `sourceAssetId` 为真相，主色圆底白勾 + 图片压暗；选中即转码上传，取消即移除并丢弃在途结果；展开时检查权限，limited 放「管理」格、denied 原位给「去设置」；横条照片统一转 JPEG、长边 2560、质量 90；拍照/相册走系统界面且不回写勾选；Android 默认保留横条，Play 被拒时用 `OPEN_CHAT_PHOTO_STRIP=false` 构建关闭。
+- [按住说话状态机与浮层行为](issues/05-grilling-hold-to-talk.md): 按下即显示浮层骨架并单飞启动；首次授权不自动开录、提示再按住，短按静默取消；松手 → 转写 → 先插入输入框再尝试自动发送，不满足条件就留文本加 Toast；上滑 80dp 以按下全局坐标为基准、可回拉、仅纵向；浮层贴底蓝渐变、盖输入卡不盖顶部栏，录音中收键盘且输入卡不可编辑（覆盖票 03 同句的录音一半）；录音中返回键先取消录音；无障碍改为语义 tap 切换 + 「取消录音」自定义动作。
 
 ## Not yet specified
 
