@@ -34,11 +34,13 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('MENU'), findsNothing);
     expect(find.byKey(const Key('push-menu-scrim')), findsNothing);
+    expect(find.byKey(const Key('push-menu-content-veil')), findsNothing);
 
     await tester.drag(find.text('CHAT'), const Offset(400, 0));
     await tester.pumpAndSettle();
     expect(find.text('MENU'), findsOneWidget);
     expect(find.byKey(const Key('push-menu-scrim')), findsOneWidget);
+    expect(find.byKey(const Key('push-menu-content-veil')), findsOneWidget);
 
     // 打开后内容层只露出右侧一条，关闭层也覆盖在那条上。
     await tester.tapAt(const Offset(760, 300));
@@ -63,6 +65,27 @@ void main() {
     expect(find.text('MENU'), findsOneWidget);
 
     await tester.dragFrom(const Offset(760, 300), const Offset(-400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('MENU'), findsNothing);
+  });
+
+  testWidgets('drags the open menu left to close', (tester) async {
+    await tester.pumpWidget(
+      app(
+        chat(
+          child: const Scaffold(
+            body: SizedBox.expand(child: Center(child: Text('CHAT'))),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    await tester.drag(find.text('CHAT'), const Offset(400, 0));
+    await tester.pumpAndSettle();
+    expect(find.text('MENU'), findsOneWidget);
+
+    await tester.drag(find.text('MENU'), const Offset(-400, 0));
     await tester.pumpAndSettle();
     expect(find.text('MENU'), findsNothing);
   });
