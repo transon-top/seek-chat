@@ -20,6 +20,7 @@
   - 按住说话：按下即录；松手 → 停止 → 转写 → 成功后自动发送；上滑超过 80dp 取消并丢弃录音；转写失败/空结果不发送；120 秒上限自动转写并发送；权限、无设备、Key 缺失沿用现有 Toast。
   - 附件面板：`+` → `×`、收起键盘，面板在输入卡下方展开；最近照片横条约 30 张、最新优先、不含视频、横向滚动；照片点击选中即加入草稿附件行并上传，再点取消选中并移除草稿（取消排队中的上传）；面板选完保持展开；`×` 或点输入框收起。
   - 草稿附件行：单行横滑（图片 64、文件卡 210）；移除徽标移入卡片内右上角；文件图标改为带扩展名配色的色块；保留上传中/失败/重试覆盖层。
+- 2026-11-21 票 06 原型确认：录音、识别、取消共用同一套蓝色动态浮层；蓝区由漂移团块构成动态不规则边缘，高光跟随按住位置，取消态不变红；识别中文案「识别中」，不提供取消。不引入渐变库，改用自绘 `CustomPainter`。
 - 事实基线（2026-11-20 探查）：
   - 输入区 `lib/features/chat/composer.dart`；空态组合 `lib/features/chat/chat_page.dart:446-468`。
   - 草稿附件行已单行横滑：`lib/features/chat/attachments_view.dart:41-85`。
@@ -36,13 +37,13 @@
 
 - [按住说话交互与 record 能力调研](issues/02-research-hold-to-talk.md): 手势用 `Listener` + pointer id + 全局 `dy ≤ -80`，不用长按手势（500 ms 延迟 + 取消后状态悬挂）；`toggleVoiceInput` 不能承接松手（转写中会误取消），需显式 `start/finish/cancel` 与 `_starting` 单飞；首次权限弹窗会让 pointer cancel 且无 PointerUp；`stop()` 返回路径不删文件、`cancel()` 尽力删除；电平约 10 Hz dBFS，浮层复用 `level` 做缓动；无障碍只能 tap 切换，长按无语义等价。
 - [照片横条与相机/相册依赖调研](issues/01-research-photo-picker.md): 选 `photo_manager 3.12.0`（横条分页/缩略图/资产落地）+ `image_picker 1.2.4`（拍照/系统相册）；HEIC 一律嗅探后转 JPEG（iOS `.file` 已是 JPEG，Android 用 `thumbnailDataWithSize`）；iOS limited 用 `PhotoManager.presentLimited`；Android 13–15 用系统 Photo Picker 需显式开 `useAndroidPhotoPicker`；最大风险是 Google Play `READ_MEDIA_IMAGES` broad-access 审核，被拒则 Android 去横条。
-- [空态布局、按钮矩阵与附件面板](issues/03-grilling-panel-and-states.md): 空态与有消息复用同一底部输入卡，问候语居中、剩余高度 <96 隐藏；占位只看附件与文本；按钮矩阵逐状态落表（有文本隐藏麦克风，转写槽加载圈可取消，无 Key 可点弹提示）；`+`↔`×` 180ms、面板 `AnimatedSize` 220ms、Android 返回先收面板；面板高度固定、失败只在草稿行表达；减少动画时过渡归零。
+- [空态布局、按钮矩阵与附件面板](issues/03-grilling-panel-and-states.md): 空态与有消息复用同一底部输入卡，问候语居中、剩余高度 <96 隐藏；占位只看附件与文本；按钮矩阵逐状态落表（有文本隐藏麦克风，转写槽加载圈可取消，无 Key 可点弹提示）；`+`↔`×` 180ms、面板 `AnimatedSize` 220ms、Android 返回先收面板；面板高度固定、失败只在草稿行表达；减少动画时过渡归零。票 06 后转写中改为蓝色浮层，加载圈取消。
 - [照片横条数据、选择与权限降级](issues/04-grilling-photo-strip.md): 固定 30 张、每次展开刷新；勾选以草稿 `sourceAssetId` 为真相，主色圆底白勾 + 图片压暗；选中即转码上传，取消即移除并丢弃在途结果；展开时检查权限，limited 放「管理」格、denied 原位给「去设置」；横条照片统一转 JPEG、长边 2560、质量 90；拍照/相册走系统界面且不回写勾选；Android 默认保留横条，Play 被拒时用 `OPEN_CHAT_PHOTO_STRIP=false` 构建关闭。
-- [按住说话状态机与浮层行为](issues/05-grilling-hold-to-talk.md): 按下即显示浮层骨架并单飞启动；首次授权不自动开录、提示再按住，短按静默取消；松手 → 转写 → 先插入输入框再尝试自动发送，不满足条件就留文本加 Toast；上滑 80dp 以按下全局坐标为基准、可回拉、仅纵向；浮层贴底蓝渐变、盖输入卡不盖顶部栏，录音中收键盘且输入卡不可编辑（覆盖票 03 同句的录音一半）；录音中返回键先取消录音；无障碍改为语义 tap 切换 + 「取消录音」自定义动作。
+- [按住说话状态机与浮层行为](issues/05-grilling-hold-to-talk.md): 按下即显示浮层骨架并单飞启动；首次授权不自动开录、提示再按住，短按静默取消；松手 → 转写 → 先插入输入框再尝试自动发送，不满足条件就留文本加 Toast；上滑 80dp 以按下全局坐标为基准、可回拉、仅纵向；浮层贴底蓝渐变、盖输入卡不盖顶部栏，录音中收键盘且输入卡不可编辑（覆盖票 03 同句的录音一半）；录音中返回键先取消录音；无障碍改为语义 tap 切换 + 「取消录音」自定义动作。票 06 后识别中保留浮层（「识别中」），取消态复用同一蓝色动态效果；识别中不提供取消。
+- [输入区视觉对图原型](issues/06-prototype-visual.md): 原型通过；iPhone + Android 各 10 状态 × 深浅；输入卡保持两行高度；录音/识别/取消共用动态蓝色浮层（漂移团块 + 按住位置高光，取消不变红）；识别中显示「识别中」且不提供取消；不引依赖，自绘 `CustomPainter`。
 
 ## Not yet specified
 
-- 深/浅色与不同机型下浮层渐变色值、波形形态与动画节奏（待视觉原型确认）。
 - Android 预测性返回下，面板与输入法的收起顺序（实现期验证）。
 
 ## Out of scope
