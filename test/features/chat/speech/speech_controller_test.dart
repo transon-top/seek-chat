@@ -16,7 +16,7 @@ import 'package:open_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../../support/fake_api_key_store.dart';
-import 'speech_fakes.dart';
+import '../../../support/speech_fakes.dart';
 
 void main() {
   late FakeRecorder recorder;
