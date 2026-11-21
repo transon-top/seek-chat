@@ -249,6 +249,46 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionGroupEarlier => 'Earlier';
 
   @override
+  String get sessionGroupPinned => 'Pinned';
+
+  @override
+  String get searchChatsPlaceholder => 'Search chats…';
+
+  @override
+  String get searchBack => 'Back to chats';
+
+  @override
+  String get clearSearch => 'Clear search';
+
+  @override
+  String get searchNoResults => 'No results';
+
+  @override
+  String get selectChats => 'Select';
+
+  @override
+  String get selectionTitle => 'Select chats';
+
+  @override
+  String selectionCount(int count) {
+    return '$count selected';
+  }
+
+  @override
+  String get exitSelection => 'Exit selection';
+
+  @override
+  String get pinSession => 'Pin';
+
+  @override
+  String get unpinSession => 'Unpin';
+
+  @override
+  String deleteSessionsTitle(int count) {
+    return 'Delete $count chats';
+  }
+
+  @override
   String get sessionLoading => 'Loading chats…';
 
   @override

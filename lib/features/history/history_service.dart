@@ -68,6 +68,7 @@ final class HistoryService {
           createdAt: session.createdAt,
           updatedAt: session.updatedAt,
           rootMessageId: session.rootMessageId,
+          pinned: session.pinned,
         ),
         messages: messages,
       ));

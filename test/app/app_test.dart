@@ -254,6 +254,12 @@ Future<void> openDrawer(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// 抽屉打开后点右侧对话区收起；遮罩层中心被内容层推出屏幕，只能按坐标点。
+Future<void> closeDrawer(WidgetTester tester) async {
+  await tester.tapAt(const Offset(760, 300));
+  await tester.pumpAndSettle();
+}
+
 Future<void> openSettings(WidgetTester tester) async {
   await openDrawer(tester);
   await tester.tap(find.byKey(const Key('drawer-settings')));
@@ -261,8 +267,7 @@ Future<void> openSettings(WidgetTester tester) async {
 }
 
 Future<void> startNewChat(WidgetTester tester) async {
-  await openDrawer(tester);
-  await tester.tap(find.byKey(const Key('drawer-new-chat')));
+  await tester.tap(find.byKey(const Key('chat-new')));
   await tester.pumpAndSettle();
 }
 
@@ -547,7 +552,10 @@ void main() {
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
-    await tester.tap(find.byKey(const Key('drawer-new-chat')));
+    await tester.tapAt(const Offset(760, 300));
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
+    await tester.tap(find.byKey(const Key('chat-new')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
     expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
@@ -1177,9 +1185,11 @@ void main() {
     expect(find.text('First'), findsOneWidget);
 
     await openDrawer(tester);
-    await tester.tap(find.byKey(ValueKey('session-menu-${first.id}')));
+    await tester.longPress(find.byKey(ValueKey('session-row-${first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('重命名'));
+    await tester.tap(
+      find.byKey(ValueKey('session-menu-rename-${first.id}')),
+    );
     // 行内输入框自动聚焦后光标定时闪烁，pumpAndSettle 永不结束。
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
@@ -1198,17 +1208,18 @@ void main() {
       findsOneWidget,
     );
 
-    await tester.tap(find.byKey(ValueKey('session-menu-${first.id}')));
+    await tester.longPress(find.byKey(ValueKey('session-row-${first.id}')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('删除'));
+    await tester.tap(
+      find.byKey(ValueKey('session-menu-delete-${first.id}')),
+    );
     await tester.pumpAndSettle();
     await tester.tap(find.text('删除').last);
     await tester.pumpAndSettle();
     expect(find.text('Renamed'), findsNothing);
     expect(await repository.listSessions(), hasLength(1));
 
-    await tester.tap(find.byKey(const Key('drawer-close')));
-    await tester.pumpAndSettle();
+    await closeDrawer(tester);
     expect(find.text('Second'), findsOneWidget);
 
     await tester.tap(find.byKey(const Key('chat-new')));

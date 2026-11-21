@@ -115,7 +115,7 @@ Uint8List encodeHistoryZip(
     index.add({
       'id': file['id'],
       'title': file['title'],
-      'pinned': false,
+      'pinned': tree.session.pinned,
       'message_count': (file['messages'] as List).length,
       'inserted_at': file['inserted_at'],
       'updated_at': file['updated_at'],
@@ -229,7 +229,7 @@ Uint8List encodeHistoryZip(
     {
       'id': tree.session.id,
       'title': tree.session.title.isEmpty ? null : tree.session.title,
-      'pinned': false,
+      'pinned': tree.session.pinned,
       'current_message_id': current == null ? 0 : idOf(current),
       'inserted_at': _iso(tree.session.createdAt),
       'updated_at': _iso(tree.session.updatedAt),
@@ -717,6 +717,7 @@ _RawSession _parseSessionFile(
     title: json['title'] == null ? '' : _string(json['title']),
     createdAt: _time(_string(json['inserted_at'])),
     updatedAt: _time(_string(json['updated_at'])),
+    pinned: json['pinned'] == true,
     currentMessageId: _count(json['current_message_id']),
     messages: rawMessages,
   );
@@ -728,6 +729,7 @@ final class _RawSession {
     required this.title,
     required this.createdAt,
     required this.updatedAt,
+    required this.pinned,
     required this.currentMessageId,
     required this.messages,
   });
@@ -736,6 +738,7 @@ final class _RawSession {
   final String title;
   final DateTime createdAt;
   final DateTime updatedAt;
+  final bool pinned;
   final int currentMessageId;
   final List<_RawMessage> messages;
 }
@@ -829,6 +832,7 @@ SessionHistory _decodeSession(
       createdAt: raw.createdAt,
       updatedAt: raw.updatedAt,
       rootMessageId: current == null ? null : localIds[current.id],
+      pinned: raw.pinned,
     ),
     messages: messages,
   );

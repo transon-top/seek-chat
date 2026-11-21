@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:math' as math;
 
 import 'package:drift/drift.dart';
 import 'package:uuid/uuid.dart';
@@ -68,6 +69,188 @@ class ChatRepository {
   Future<void> renameSession(String sessionId, String title) async {
     await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
         .write(SessionsCompanion(title: Value(title)));
+  }
+
+  /// 置顶不算活动：不修改 `updatedAt`，只改变分组归属。
+  Future<void> setSessionsPinned(Iterable<String> ids, bool pinned) async {
+    final list = ids.toList();
+    if (list.isEmpty) return;
+    await (_db.update(_db.sessions)..where((t) => t.id.isIn(list)))
+        .write(SessionsCompanion(pinned: Value(pinned)));
+  }
+
+  /// 按标题与消息正文搜索会话，返回会话摘要与命中消息片段。
+  ///
+  /// 用户正文存在 `messages.text`；assistant 正文只在 `blocks` JSON 里，
+  /// SQL 先按原文粗筛，再解析文本块校验，排除思考块与工具块。
+  /// 每个会话取第一条命中消息作片段；标题命中而正文未命中时退到最新消息。
+  Future<List<SessionSearchHit>> searchSessions(String query) async {
+    final trimmed = query.trim();
+    if (trimmed.isEmpty) return const [];
+    final pattern = _likePattern(trimmed);
+    final sessionRows = await _db.customSelect(
+      '''
+      SELECT s.id AS id, s.title AS title, s.created_at AS created_at,
+             s.updated_at AS updated_at, s.pinned AS pinned,
+             (s.title LIKE ? ESCAPE '\\') AS title_hit
+        FROM sessions s
+       WHERE s.title LIKE ? ESCAPE '\\'
+          OR EXISTS (
+               SELECT 1 FROM messages m
+                WHERE m.session_id = s.id
+                  AND (m.text LIKE ? ESCAPE '\\'
+                       OR m.blocks LIKE ? ESCAPE '\\')
+             )
+       ORDER BY s.updated_at DESC
+      ''',
+      variables: [
+        Variable.withString(pattern),
+        Variable.withString(pattern),
+        Variable.withString(pattern),
+        Variable.withString(pattern),
+      ],
+      readsFrom: {_db.sessions, _db.messages},
+    ).get();
+    if (sessionRows.isEmpty) return const [];
+
+    final ids = [for (final row in sessionRows) row.read<String>('id')];
+    final titleHits = {
+      for (final row in sessionRows)
+        if (row.read<int>('title_hit') != 0) row.read<String>('id'),
+    };
+    final snippets = await _matchingSnippets(ids, pattern, trimmed);
+    await _fallbackSnippets(
+      [for (final id in titleHits) if (!snippets.containsKey(id)) id],
+      snippets,
+    );
+
+    return [
+      for (final row in sessionRows)
+        if (titleHits.contains(row.read<String>('id')) ||
+            snippets.containsKey(row.read<String>('id')))
+          SessionSearchHit(
+            session: SessionSummary(
+              id: row.read<String>('id'),
+              title: row.read<String>('title'),
+              createdAt: _date(row.read<int>('created_at')),
+              updatedAt: _date(row.read<int>('updated_at')),
+              pinned: row.read<int>('pinned') != 0,
+            ),
+            snippet: snippets[row.read<String>('id')] ?? '',
+          ),
+    ];
+  }
+
+  /// 命中消息的片段：先认 `text`，再把 assistant 的文本块拼起来校验。
+  Future<Map<String, String>> _matchingSnippets(
+    List<String> sessionIds,
+    String pattern,
+    String query,
+  ) async {
+    final snippets = <String, String>{};
+    for (final chunk in _chunks(sessionIds)) {
+      final rows = await _db.customSelect(
+        '''
+        SELECT m.session_id AS session_id, m.text AS text, m.blocks AS blocks
+          FROM messages m
+         WHERE m.session_id IN (${_placeholders(chunk.length)})
+           AND (m.text LIKE ? ESCAPE '\\' OR m.blocks LIKE ? ESCAPE '\\')
+         ORDER BY m.created_at, m.id
+        ''',
+        variables: [
+          for (final id in chunk) Variable.withString(id),
+          Variable.withString(pattern),
+          Variable.withString(pattern),
+        ],
+        readsFrom: {_db.messages},
+      ).get();
+      for (final row in rows) {
+        final sessionId = row.read<String>('session_id');
+        if (snippets.containsKey(sessionId)) continue;
+        final text = row.read<String?>('text');
+        if (text != null && _contains(text, query)) {
+          snippets[sessionId] = _searchSnippet(text, query);
+          continue;
+        }
+        final blocks = row.read<String?>('blocks');
+        if (blocks == null) continue;
+        final plain = _textBlockText(blocks);
+        if (_contains(plain, query)) {
+          snippets[sessionId] = _searchSnippet(plain, query);
+        }
+      }
+    }
+    return snippets;
+  }
+
+  /// 标题命中但没有正文命中时，用该会话最新一条消息兜底。
+  Future<void> _fallbackSnippets(
+    List<String> sessionIds,
+    Map<String, String> snippets,
+  ) async {
+    for (final chunk in _chunks(sessionIds)) {
+      final rows = await _db.customSelect(
+        '''
+        SELECT m.session_id AS session_id, m.text AS text, m.blocks AS blocks
+          FROM messages m
+         WHERE m.session_id IN (${_placeholders(chunk.length)})
+         ORDER BY m.created_at DESC, m.id DESC
+        ''',
+        variables: [for (final id in chunk) Variable.withString(id)],
+        readsFrom: {_db.messages},
+      ).get();
+      for (final row in rows) {
+        final sessionId = row.read<String>('session_id');
+        if (snippets.containsKey(sessionId)) continue;
+        final text = row.read<String?>('text');
+        final blocks = row.read<String?>('blocks');
+        final source = text ?? (blocks == null ? '' : _textBlockText(blocks));
+        if (source.trim().isNotEmpty) {
+          snippets[sessionId] = _searchSnippet(source, '');
+        }
+      }
+    }
+  }
+
+  /// SQLite 的变量上限因版本而异，按会话 id 分批查询。
+  static const _searchBatch = 400;
+
+  Iterable<List<String>> _chunks(List<String> ids) sync* {
+    for (var start = 0; start < ids.length; start += _searchBatch) {
+      yield ids.sublist(start, math.min(start + _searchBatch, ids.length));
+    }
+  }
+
+  String _textBlockText(String blocks) => decodeReplyBlocks(blocks)
+      .whereType<TextBlock>()
+      .map((block) => block.text)
+      .join('\n');
+
+  String _placeholders(int count) => List.filled(count, '?').join(', ');
+
+  bool _contains(String text, String query) =>
+      text.toLowerCase().contains(query.toLowerCase());
+
+  String _likePattern(String query) {
+    final escaped = query
+        .replaceAll('\\', '\\\\')
+        .replaceAll('%', '\\%')
+        .replaceAll('_', '\\_');
+    return '%$escaped%';
+  }
+
+  /// 片段窗口：命中位置前约 18 字、后约 60 字；截断侧补「…」。
+  String _searchSnippet(String text, String query) {
+    final collapsed = text.replaceAll(RegExp(r'\s+'), ' ').trim();
+    if (collapsed.isEmpty) return '';
+    final index = collapsed.toLowerCase().indexOf(query.toLowerCase());
+    final start = index > 18 ? index - 18 : 0;
+    final end = index < 0
+        ? math.min(collapsed.length, 60)
+        : math.min(collapsed.length, index + query.length + 60);
+    final prefix = start > 0 ? '…' : '';
+    final suffix = end < collapsed.length ? '…' : '';
+    return '$prefix${collapsed.substring(start, end)}$suffix';
   }
 
   /// 删除会话及其全部消息，再清理本会话引用过、且不再被引用的附件行。
@@ -503,6 +686,7 @@ class ChatRepository {
               createdAt: session.createdAt.millisecondsSinceEpoch,
               updatedAt: session.updatedAt.millisecondsSinceEpoch,
               rootMessageId: Value(session.rootMessageId),
+              pinned: Value(session.pinned),
             ));
 
         for (final message in tree.messages) {
@@ -700,6 +884,7 @@ class ChatRepository {
             title: row.title,
             createdAt: _date(row.createdAt),
             updatedAt: _date(row.updatedAt),
+            pinned: row.pinned,
           ),
       ];
 
@@ -709,6 +894,7 @@ class ChatRepository {
         createdAt: _date(row.createdAt),
         updatedAt: _date(row.updatedAt),
         rootMessageId: row.rootMessageId,
+        pinned: row.pinned,
       );
 
   Attachment _toAttachment(AttachmentRow row) => Attachment(

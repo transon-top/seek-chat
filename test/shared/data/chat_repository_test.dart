@@ -122,6 +122,97 @@ void main() {
     });
   });
 
+  group('search and pin', () {
+    test('pinning keeps updated_at and surfaces in summaries', () async {
+      final session = await repository.createSession();
+      await repository.addUserMessage(sessionId: session.id, text: 'hi');
+      final before = (await repository.getSession(session.id))!;
+
+      await repository.setSessionsPinned([session.id], true);
+
+      final after = (await repository.getSession(session.id))!;
+      expect(after.pinned, isTrue);
+      expect(after.updatedAt, before.updatedAt);
+      expect((await repository.listSessions()).single.pinned, isTrue);
+    });
+
+    test('searches titles and message text, escapes wildcards and snippets',
+        () async {
+      final alpha = await repository.createSession();
+      await repository.renameSession(alpha.id, 'Alpha');
+      await repository.addUserMessage(
+        sessionId: alpha.id,
+        text: 'the quick brown fox jumps over the lazy dog',
+      );
+
+      final percent = await repository.createSession();
+      await repository.renameSession(percent.id, 'About 100% done');
+      await repository.addUserMessage(
+        sessionId: percent.id,
+        text: 'nothing to see here',
+      );
+
+      final needle = await repository.createSession();
+      await repository.renameSession(needle.id, 'Other');
+      await repository.addUserMessage(
+        sessionId: needle.id,
+        text: 'a needle in a very long haystack that goes on and on',
+      );
+
+      final byMessage = await repository.searchSessions('quick');
+      expect(byMessage.single.session.id, alpha.id);
+      expect(byMessage.single.snippet, contains('quick'));
+
+      final byTitle = await repository.searchSessions('100%');
+      expect(byTitle.single.session.id, percent.id);
+      expect(byTitle.single.snippet, 'nothing to see here');
+
+      // % 与 _ 按字面匹配，不能当通配符。
+      expect(
+        (await repository.searchSessions('%')).single.session.id,
+        percent.id,
+      );
+      expect(await repository.searchSessions('_'), isEmpty);
+      expect(await repository.searchSessions('   '), isEmpty);
+
+      final long = await repository.createSession();
+      await repository.addUserMessage(
+        sessionId: long.id,
+        text: '${'a' * 40} keyword ${'b' * 100}',
+      );
+      final hit = (await repository.searchSessions('keyword')).single;
+      expect(hit.snippet, startsWith('…'));
+      expect(hit.snippet, endsWith('…'));
+      expect(hit.snippet, contains('keyword'));
+
+      // assistant 正文只在 blocks；思考块不参与匹配。
+      final assistant = await repository.createSession();
+      final question = await repository.addUserMessage(
+        sessionId: assistant.id,
+        text: 'question',
+      );
+      final reply = await repository.createReply(
+        sessionId: assistant.id,
+        userMessageId: question.id,
+        model: ChatModel.deepseekFlash,
+        thinking: true,
+        search: false,
+      );
+      await repository.updateReply(
+        messageId: reply.id,
+        status: ReplyStatus.done,
+        blocks: const [
+          ThinkingBlock(thinking: 'hidden thought'),
+          TextBlock(text: 'assistant body text'),
+        ],
+      );
+      final assistantHit = (await repository.searchSessions('body text')).single;
+      expect(assistantHit.session.id, assistant.id);
+      expect(assistantHit.snippet, 'assistant body text');
+      expect(await repository.searchSessions('hidden thought'), isEmpty);
+    });
+  });
+
   group('branches', () {
     test('regenerating adds a version and switching restores each branch', () async {
       final (session, user, firstReply) = await seeded();

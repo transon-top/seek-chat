@@ -9,15 +9,20 @@ class PushMenuController {
   PushMenuController({
     required TickerProvider vsync,
     Duration duration = const Duration(milliseconds: 300),
-  }) : _animation = AnimationController(vsync: vsync, duration: duration);
+  })  : _animation = AnimationController(vsync: vsync, duration: duration),
+        _searchAnimation = AnimationController(vsync: vsync, duration: duration);
 
   /// 松手时直接按速度吸附的阈值，与 Material Drawer 一致。
   static const double minFlingVelocity = 365;
 
   final AnimationController _animation;
+  final AnimationController _searchAnimation;
 
   /// 打开时内容层右移的距离；[PushMenu] 布局时更新。
   double travel = 0;
+
+  /// 搜索时内容层再右移的距离：刚好完全移出屏幕。
+  double searchTravel = 0;
 
   /// 打开时内容层盖住的右侧宽度；侧栏内容据此留出安全区。
   double openInset = 0;
@@ -26,14 +31,51 @@ class PushMenuController {
   double menuSlide = 0;
 
   double _lastDragX = 0;
+  bool _dragging = false;
+
+  /// 侧栏内容可拦截系统返回：返回 true 表示已处理，不关闭侧栏。
+  bool Function()? backHandler;
 
   Animation<double> get animation => _animation;
 
+  /// 菜单打开与搜索展开共用一套重绘监听。
+  Listenable get repaint => Listenable.merge([_animation, _searchAnimation]);
+
   double get progress => _animation.value;
+
+  /// 搜索展开进度：0 为普通抽屉宽度，1 为内容层完全移出屏幕。
+  double get searchProgress => _searchAnimation.value;
+
+  Animation<double> get searchAnimation => _searchAnimation;
 
   bool get isOpen => progress > 0;
 
-  void dispose() => _animation.dispose();
+  Future<void> searchOpen() {
+    _unfocus();
+    return _searchAnimation.animateTo(
+      1,
+      duration: const Duration(milliseconds: 260),
+      curve: Curves.easeOutCubic,
+    );
+  }
+
+  Future<void> searchClose() => _searchAnimation.animateTo(
+        0,
+        duration: const Duration(milliseconds: 240),
+        curve: Curves.easeOutCubic,
+      );
+
+  void resetSearch() => _searchAnimation.value = 0;
+
+  void addListener(VoidCallback listener) => _animation.addListener(listener);
+
+  void removeListener(VoidCallback listener) =>
+      _animation.removeListener(listener);
+
+  void dispose() {
+    _searchAnimation.dispose();
+    _animation.dispose();
+  }
 
   void toggle() => isOpen ? close() : open();
 
@@ -45,19 +87,24 @@ class PushMenuController {
   void close() => _settleTo(0);
 
   void dragStart(double globalX) {
+    // 搜索页内禁止拖动收起，避免文本选择手势误关侧栏。
+    if (searchProgress > 0) return;
     _unfocus();
     _animation.stop();
+    _dragging = true;
     _lastDragX = globalX;
   }
 
   void dragUpdate(double globalX) {
-    if (travel <= 0) return;
+    if (!_dragging || travel <= 0) return;
     final dx = globalX - _lastDragX;
     _lastDragX = globalX;
     _animation.value = math.min(1.0, math.max(0.0, progress + dx / travel));
   }
 
   void dragEnd(double velocity) {
+    if (!_dragging) return;
+    _dragging = false;
     final open = velocity.abs() >= minFlingVelocity
         ? velocity > 0
         : progress >= 0.5;
@@ -140,8 +187,7 @@ class PushMenu extends StatefulWidget {
   State<PushMenu> createState() => _PushMenuState();
 }
 
-class _PushMenuState extends State<PushMenu>
-    with SingleTickerProviderStateMixin {
+class _PushMenuState extends State<PushMenu> with TickerProviderStateMixin {
   late final PushMenuController _controller = PushMenuController(
     vsync: this,
     duration: widget.duration,
@@ -158,6 +204,14 @@ class _PushMenuState extends State<PushMenu>
     return LayoutBuilder(
       builder: (context, constraints) {
         _controller.travel = constraints.maxWidth * widget.openFraction;
+        // 内容层缩放后左右各留出一条空白；扣掉左留白，搜索展开到 1 时
+        // 对话层恰好完全移出屏幕，不会在搜索框满宽后继续滑动。
+        _controller.searchTravel = math.max(
+          0.0,
+          constraints.maxWidth -
+              _controller.travel -
+              constraints.maxWidth * (1 - widget.contentScale) / 2,
+        );
         _controller.openInset = math.max(
           0.0,
           constraints.maxWidth *
@@ -167,13 +221,15 @@ class _PushMenuState extends State<PushMenu>
         return PushMenuScope(
           controller: _controller,
           child: AnimatedBuilder(
-            animation: _controller.animation,
+            animation: _controller.repaint,
             builder: (context, child) {
               final progress = _controller.progress;
               return PopScope<void>(
                 canPop: progress == 0,
                 onPopInvokedWithResult: (didPop, _) {
-                  if (!didPop) _controller.close();
+                  if (didPop) return;
+                  if (_controller.backHandler?.call() ?? false) return;
+                  _controller.close();
                 },
                 child: Stack(
                   children: [
@@ -265,17 +321,26 @@ class _PushMenuState extends State<PushMenu>
       ],
     );
     return Transform.translate(
-      offset: Offset(_controller.travel * progress, 0),
+      offset: Offset(
+        _controller.travel * progress +
+            _controller.searchTravel * _controller.searchProgress,
+        0,
+      ),
       child: Transform.scale(
         scale: scale,
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            boxShadow: progress <= 0
+            boxShadow: progress <= 0 ||
+                    _controller.searchProgress >= 1
                 ? const []
                 : [
                     BoxShadow(
-                      color: const Color(0xFF000000).withValues(alpha: 0.06),
+                      // 搜索展开时阴影同步淡出，避免留边。
+                      color: const Color(0xFF000000).withValues(
+                        alpha:
+                            0.06 * (1 - _controller.searchProgress),
+                      ),
                       blurRadius: 20,
                       offset: const Offset(-4, 0),
                     ),

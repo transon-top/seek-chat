@@ -61,6 +61,19 @@ class $SessionsTable extends Sessions
     type: DriftSqlType.string,
     requiredDuringInsert: false,
   );
+  static const VerificationMeta _pinnedMeta = const VerificationMeta('pinned');
+  @override
+  late final GeneratedColumn<bool> pinned = GeneratedColumn<bool>(
+    'pinned',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("pinned" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   @override
   List<GeneratedColumn> get $columns => [
     id,
@@ -68,6 +81,7 @@ class $SessionsTable extends Sessions
     createdAt,
     updatedAt,
     rootMessageId,
+    pinned,
   ];
   @override
   String get aliasedName => _alias ?? actualTableName;
@@ -117,6 +131,12 @@ class $SessionsTable extends Sessions
         ),
       );
     }
+    if (data.containsKey('pinned')) {
+      context.handle(
+        _pinnedMeta,
+        pinned.isAcceptableOrUnknown(data['pinned']!, _pinnedMeta),
+      );
+    }
     return context;
   }
 
@@ -146,6 +166,10 @@ class $SessionsTable extends Sessions
         DriftSqlType.string,
         data['${effectivePrefix}root_message_id'],
       ),
+      pinned: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}pinned'],
+      )!,
     );
   }
 
@@ -161,12 +185,14 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
   final int createdAt;
   final int updatedAt;
   final String? rootMessageId;
+  final bool pinned;
   const SessionRow({
     required this.id,
     required this.title,
     required this.createdAt,
     required this.updatedAt,
     this.rootMessageId,
+    required this.pinned,
   });
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
@@ -178,6 +204,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     if (!nullToAbsent || rootMessageId != null) {
       map['root_message_id'] = Variable<String>(rootMessageId);
     }
+    map['pinned'] = Variable<bool>(pinned);
     return map;
   }
 
@@ -190,6 +217,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       rootMessageId: rootMessageId == null && nullToAbsent
           ? const Value.absent()
           : Value(rootMessageId),
+      pinned: Value(pinned),
     );
   }
 
@@ -204,6 +232,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       createdAt: serializer.fromJson<int>(json['createdAt']),
       updatedAt: serializer.fromJson<int>(json['updatedAt']),
       rootMessageId: serializer.fromJson<String?>(json['rootMessageId']),
+      pinned: serializer.fromJson<bool>(json['pinned']),
     );
   }
   @override
@@ -215,6 +244,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       'createdAt': serializer.toJson<int>(createdAt),
       'updatedAt': serializer.toJson<int>(updatedAt),
       'rootMessageId': serializer.toJson<String?>(rootMessageId),
+      'pinned': serializer.toJson<bool>(pinned),
     };
   }
 
@@ -224,6 +254,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     int? createdAt,
     int? updatedAt,
     Value<String?> rootMessageId = const Value.absent(),
+    bool? pinned,
   }) => SessionRow(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -232,6 +263,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
     rootMessageId: rootMessageId.present
         ? rootMessageId.value
         : this.rootMessageId,
+    pinned: pinned ?? this.pinned,
   );
   SessionRow copyWithCompanion(SessionsCompanion data) {
     return SessionRow(
@@ -242,6 +274,7 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
       rootMessageId: data.rootMessageId.present
           ? data.rootMessageId.value
           : this.rootMessageId,
+      pinned: data.pinned.present ? data.pinned.value : this.pinned,
     );
   }
 
@@ -252,14 +285,15 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           ..write('title: $title, ')
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
-          ..write('rootMessageId: $rootMessageId')
+          ..write('rootMessageId: $rootMessageId, ')
+          ..write('pinned: $pinned')
           ..write(')'))
         .toString();
   }
 
   @override
   int get hashCode =>
-      Object.hash(id, title, createdAt, updatedAt, rootMessageId);
+      Object.hash(id, title, createdAt, updatedAt, rootMessageId, pinned);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -268,7 +302,8 @@ class SessionRow extends DataClass implements Insertable<SessionRow> {
           other.title == this.title &&
           other.createdAt == this.createdAt &&
           other.updatedAt == this.updatedAt &&
-          other.rootMessageId == this.rootMessageId);
+          other.rootMessageId == this.rootMessageId &&
+          other.pinned == this.pinned);
 }
 
 class SessionsCompanion extends UpdateCompanion<SessionRow> {
@@ -277,6 +312,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
   final Value<int> createdAt;
   final Value<int> updatedAt;
   final Value<String?> rootMessageId;
+  final Value<bool> pinned;
   final Value<int> rowid;
   const SessionsCompanion({
     this.id = const Value.absent(),
@@ -284,6 +320,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     this.createdAt = const Value.absent(),
     this.updatedAt = const Value.absent(),
     this.rootMessageId = const Value.absent(),
+    this.pinned = const Value.absent(),
     this.rowid = const Value.absent(),
   });
   SessionsCompanion.insert({
@@ -292,6 +329,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     required int createdAt,
     required int updatedAt,
     this.rootMessageId = const Value.absent(),
+    this.pinned = const Value.absent(),
     this.rowid = const Value.absent(),
   }) : id = Value(id),
        createdAt = Value(createdAt),
@@ -302,6 +340,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Expression<int>? createdAt,
     Expression<int>? updatedAt,
     Expression<String>? rootMessageId,
+    Expression<bool>? pinned,
     Expression<int>? rowid,
   }) {
     return RawValuesInsertable({
@@ -310,6 +349,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       if (createdAt != null) 'created_at': createdAt,
       if (updatedAt != null) 'updated_at': updatedAt,
       if (rootMessageId != null) 'root_message_id': rootMessageId,
+      if (pinned != null) 'pinned': pinned,
       if (rowid != null) 'rowid': rowid,
     });
   }
@@ -320,6 +360,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     Value<int>? createdAt,
     Value<int>? updatedAt,
     Value<String?>? rootMessageId,
+    Value<bool>? pinned,
     Value<int>? rowid,
   }) {
     return SessionsCompanion(
@@ -328,6 +369,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
       rootMessageId: rootMessageId ?? this.rootMessageId,
+      pinned: pinned ?? this.pinned,
       rowid: rowid ?? this.rowid,
     );
   }
@@ -350,6 +392,9 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
     if (rootMessageId.present) {
       map['root_message_id'] = Variable<String>(rootMessageId.value);
     }
+    if (pinned.present) {
+      map['pinned'] = Variable<bool>(pinned.value);
+    }
     if (rowid.present) {
       map['rowid'] = Variable<int>(rowid.value);
     }
@@ -364,6 +409,7 @@ class SessionsCompanion extends UpdateCompanion<SessionRow> {
           ..write('createdAt: $createdAt, ')
           ..write('updatedAt: $updatedAt, ')
           ..write('rootMessageId: $rootMessageId, ')
+          ..write('pinned: $pinned, ')
           ..write('rowid: $rowid')
           ..write(')'))
         .toString();
@@ -2198,6 +2244,7 @@ typedef $$SessionsTableCreateCompanionBuilder = SessionsCompanion Function({
   required int createdAt,
   required int updatedAt,
   Value<String?> rootMessageId,
+  Value<bool> pinned,
   Value<int> rowid,
 });
 typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
@@ -2206,6 +2253,7 @@ typedef $$SessionsTableUpdateCompanionBuilder = SessionsCompanion Function({
   Value<int> createdAt,
   Value<int> updatedAt,
   Value<String?> rootMessageId,
+  Value<bool> pinned,
   Value<int> rowid,
 });
 
@@ -2263,6 +2311,11 @@ class $$SessionsTableFilterComposer
 
   ColumnFilters<String> get rootMessageId => $composableBuilder(
     column: $table.rootMessageId,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2325,6 +2378,11 @@ class $$SessionsTableOrderingComposer
     column: $table.rootMessageId,
     builder: (column) => ColumnOrderings(column),
   );
+
+  ColumnOrderings<bool> get pinned => $composableBuilder(
+    column: $table.pinned,
+    builder: (column) => ColumnOrderings(column),
+  );
 }
 
 class $$SessionsTableAnnotationComposer
@@ -2352,6 +2410,9 @@ class $$SessionsTableAnnotationComposer
     column: $table.rootMessageId,
     builder: (column) => column,
   );
+
+  GeneratedColumn<bool> get pinned =>
+      $composableBuilder(column: $table.pinned, builder: (column) => column);
 
   Expression<T> messagesRefs<T extends Object>(
     Expression<T> Function($$MessagesTableAnnotationComposer a) f,
@@ -2412,6 +2473,7 @@ class $$SessionsTableTableManager
                 Value<int> createdAt = const Value.absent(),
                 Value<int> updatedAt = const Value.absent(),
                 Value<String?> rootMessageId = const Value.absent(),
+                Value<bool> pinned = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SessionsCompanion(
                 id: id,
@@ -2419,6 +2481,7 @@ class $$SessionsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rootMessageId: rootMessageId,
+                pinned: pinned,
                 rowid: rowid,
               ),
           createCompanionCallback:
@@ -2428,6 +2491,7 @@ class $$SessionsTableTableManager
                 required int createdAt,
                 required int updatedAt,
                 Value<String?> rootMessageId = const Value.absent(),
+                Value<bool> pinned = const Value.absent(),
                 Value<int> rowid = const Value.absent(),
               }) => SessionsCompanion.insert(
                 id: id,
@@ -2435,6 +2499,7 @@ class $$SessionsTableTableManager
                 createdAt: createdAt,
                 updatedAt: updatedAt,
                 rootMessageId: rootMessageId,
+                pinned: pinned,
                 rowid: rowid,
               ),
           withReferenceMapper: (p0) => p0
