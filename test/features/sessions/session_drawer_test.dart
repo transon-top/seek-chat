@@ -392,9 +392,62 @@ void main() {
     // 入口叠在列表上，不再单独占一行。
     expect(
       tester.getTopLeft(find.byKey(const Key('drawer-select'))).dy,
-      lessThan(tester.getTopLeft(find.byKey(ValueKey('session-row-${session.id}'))).dy),
+      lessThan(
+        tester.getTopLeft(find.byKey(ValueKey('session-row-${session.id}'))).dy,
+      ),
     );
     await db.close();
+  });
+
+  testWidgets('next group label pushes the sticky label out', (tester) async {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+    final sessions = [
+      for (var index = 0; index < 3; index++) session('today$index', now),
+      for (var index = 0; index < 3; index++)
+        session('yesterday$index', yesterday),
+    ];
+
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          sessionsProvider.overrideWith((ref) => Stream.value(sessions)),
+        ],
+        child: ShadApp(
+          locale: const Locale('zh'),
+          theme: buildShadTheme(brightness: Brightness.light, chinese: true),
+          localizationsDelegates: appLocalizationDelegates,
+          supportedLocales: AppLocalizations.supportedLocales,
+          home: Scaffold(
+            body: SessionDrawer(
+              currentSessionId: null,
+              onOpen: (_) {},
+              onOpenSettings: () {},
+              cancelSession: (_) {},
+              onDeleted: (_) {},
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    // 吸顶标签始终只渲染一份，首组的列表标题只占高度。
+    expect(find.text('今天'), findsOneWidget);
+    final before = tester.getTopLeft(find.text('今天'));
+
+    // 首组 3 行：标题 29 + 行 3×44 + 组间 20，昨天标题起点 181。
+    // 滚到昨天标题还差 10 就贴顶，此时今天的标签应被顶出 19。
+    final scrollable = find.descendant(
+      of: find.byType(CustomScrollView),
+      matching: find.byType(Scrollable),
+    );
+    tester.state<ScrollableState>(scrollable).position.jumpTo(171);
+    await tester.pump();
+
+    expect(find.text('今天'), findsOneWidget);
+    expect(tester.getTopLeft(find.text('今天')).dy, lessThan(before.dy - 10));
+    expect(tester.getTopLeft(find.text('昨天')).dy, greaterThan(0));
   });
 
   testWidgets('search expands the drawer and pushes the chat off screen', (
@@ -450,10 +503,7 @@ void main() {
 
     // 对话层在展开过程中持续右移，搜索框随之露出。
     await tester.pump(const Duration(milliseconds: 130));
-    expect(
-      tester.getTopLeft(find.text('CHAT')).dx,
-      greaterThan(chatBefore),
-    );
+    expect(tester.getTopLeft(find.text('CHAT')).dx, greaterThan(chatBefore));
 
     await tester.pump(const Duration(milliseconds: 200));
     expect(tester.getTopLeft(find.text('CHAT')).dx, greaterThan(800));

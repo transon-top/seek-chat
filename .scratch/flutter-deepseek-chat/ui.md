@@ -118,9 +118,8 @@
   `AppSidebarColors.border`；左侧 `search` 16 `labelTertiary`，间距 8，
   占位「搜索对话内容…」16sp / `labelTertiary`；下距 8。入口只作按钮，
   不接收输入，点击推入全屏搜索页。侧栏不提供品牌文字标、收起按钮与新建对话入口。
-- 多选入口：44×44 点击区，叠在列表第一行分组头的右侧，与当前吸顶的日期标签
-  同一行；图标 Lucide `listChecks` 16，`labelTertiary`；不单独占一行，滚动时
-  固定在列表右上。
+- 多选入口：44×44 点击区，位于当前吸顶日期标签行的右侧；图标 Lucide
+  `listChecks` 16，`labelTertiary`；不单独占一行，随吸顶标签一起被下一组顶出。
 - 会话分组：`置顶` / `今天` / `昨天` / `7 天内` / `更早`；组标题移动端 14sp / 22 / w500 /
   `AppSidebarColors.labelTertiary`，内边距 4 / 10 / 3，滚动时吸顶，
   底色同 `AppSidebarColors.fill`；组间 16。组内按 `updatedAt` 倒序。
