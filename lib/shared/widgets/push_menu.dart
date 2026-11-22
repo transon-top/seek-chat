@@ -9,8 +9,8 @@ class PushMenuController {
   PushMenuController({
     required TickerProvider vsync,
     Duration duration = const Duration(milliseconds: 300),
-  })  : _animation = AnimationController(vsync: vsync, duration: duration),
-        _searchAnimation = AnimationController(vsync: vsync, duration: duration);
+  }) : _animation = AnimationController(vsync: vsync, duration: duration),
+       _searchAnimation = AnimationController(vsync: vsync, duration: duration);
 
   /// 松手时直接按速度吸附的阈值，与 Material Drawer 一致。
   static const double minFlingVelocity = 365;
@@ -54,16 +54,16 @@ class PushMenuController {
     _unfocus();
     return _searchAnimation.animateTo(
       1,
-      duration: const Duration(milliseconds: 260),
+      duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
     );
   }
 
   Future<void> searchClose() => _searchAnimation.animateTo(
-        0,
-        duration: const Duration(milliseconds: 240),
-        curve: Curves.easeOutCubic,
-      );
+    0,
+    duration: const Duration(milliseconds: 200),
+    curve: Curves.easeOutCubic,
+  );
 
   void resetSearch() => _searchAnimation.value = 0;
 
@@ -79,16 +79,18 @@ class PushMenuController {
 
   void toggle() => isOpen ? close() : open();
 
+  /// 点击开合按官方实测：40ms 内完成，几乎瞬开；拖动结束仍走缓动。
+  static const _snapDuration = Duration(milliseconds: 60);
+
   void open() {
     _unfocus();
-    _settleTo(1);
+    _settleTo(1, duration: _snapDuration);
   }
 
-  void close() => _settleTo(0);
+  void close() => _settleTo(0, duration: _snapDuration);
 
   void dragStart(double globalX) {
-    // 搜索页内禁止拖动收起，避免文本选择手势误关侧栏。
-    if (searchProgress > 0) return;
+    // 官方在搜索态也允许左滑收起整个侧栏；抽屉关闭时顺带退出搜索。
     _unfocus();
     _animation.stop();
     _dragging = true;
@@ -111,7 +113,7 @@ class PushMenuController {
     _settleTo(open ? 1 : 0);
   }
 
-  void _settleTo(double target) {
+  void _settleTo(double target, {Duration? duration}) {
     final remaining = (target - progress).abs();
     if (remaining < 0.001) {
       _animation.value = target;
@@ -119,9 +121,9 @@ class PushMenuController {
     }
     _animation.animateTo(
       target,
-      duration: Duration(
-        milliseconds: math.max(120, (300 * remaining).round()),
-      ),
+      duration:
+          duration ??
+          Duration(milliseconds: math.max(80, (240 * remaining).round())),
       curve: Curves.easeOutCubic,
     );
   }
@@ -159,9 +161,9 @@ class PushMenu extends StatefulWidget {
     super.key,
     required this.menu,
     required this.child,
-    this.openFraction = 0.78,
-    this.contentScale = 0.92,
-    this.cornerRadius = 24,
+    this.openFraction = 0.8,
+    this.contentScale = 0.95,
+    this.cornerRadius = 32,
     this.menuSlideFraction = 1,
     this.duration = const Duration(milliseconds: 300),
   });
@@ -212,10 +214,10 @@ class _PushMenuState extends State<PushMenu> with TickerProviderStateMixin {
               _controller.travel -
               constraints.maxWidth * (1 - widget.contentScale) / 2,
         );
+        // 侧栏内容宽度按官方实测收在可见侧栏内：右内缩 = 被内容层盖住的部分。
         _controller.openInset = math.max(
           0.0,
-          constraints.maxWidth *
-              (1 - widget.openFraction - (1 - widget.contentScale) / 2),
+          constraints.maxWidth * (1 - widget.openFraction),
         );
         _controller.menuSlide = constraints.maxWidth * widget.menuSlideFraction;
         return PushMenuScope(
@@ -287,11 +289,12 @@ class _PushMenuState extends State<PushMenu> with TickerProviderStateMixin {
               child: ColoredBox(
                 key: const Key('push-menu-content-veil'),
                 // 浅色蒙版随进度淡入：全开后对话层变淡，视觉重心留在侧栏。
+                // 亮色 70% 为官方逐帧实测值。
                 color: const Color(0xFFFFFFFF).withValues(
                   alpha:
                       (Theme.of(context).brightness == Brightness.dark
                           ? 0.08
-                          : 0.55) *
+                          : 0.7) *
                       progress,
                 ),
               ),
@@ -331,15 +334,13 @@ class _PushMenuState extends State<PushMenu> with TickerProviderStateMixin {
         child: DecoratedBox(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(radius),
-            boxShadow: progress <= 0 ||
-                    _controller.searchProgress >= 1
+            boxShadow: progress <= 0 || _controller.searchProgress >= 1
                 ? const []
                 : [
                     BoxShadow(
                       // 搜索展开时阴影同步淡出，避免留边。
                       color: const Color(0xFF000000).withValues(
-                        alpha:
-                            0.06 * (1 - _controller.searchProgress),
+                        alpha: 0.06 * (1 - _controller.searchProgress),
                       ),
                       blurRadius: 20,
                       offset: const Offset(-4, 0),

@@ -123,13 +123,16 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
   /// 抽屉被点遮罩或左滑收起时，顺带退出多选与搜索，避免下次打开还停在
   /// 选择态或保留搜索内容。
   void _onMenuChanged() {
-    if (!mounted || (_menuController?.progress ?? 0) > 0) return;
-    if (_searching) {
+    if (!mounted) return;
+    final progress = _menuController?.progress ?? 0;
+    // 官方从搜索态收起时先回抽屉页再滑出，而不是留搜索页到最后再跳回。
+    if (_searching && progress < 1) {
       _searchFocus.unfocus();
       _menuController?.resetSearch();
       _menuController?.backHandler = null;
       setState(() => _searching = false);
     }
+    if (progress > 0) return;
     if (_selecting) _exitSelection();
   }
 
@@ -334,148 +337,162 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     final controller = PushMenuScope.maybeOf(context);
     final openInset = controller?.openInset ?? 0;
 
-    Widget content = _searching
-        ? SessionSearchPage(
-            focusNode: _searchFocus,
-            onBack: () => unawaited(_closeSearch()),
-            onOpen: _openSearchResult,
-          )
-        : SafeArea(
-            child: Padding(
-              padding: EdgeInsets.fromLTRB(14, 10, 14 + openInset, 0),
-              child: Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10),
-                    child: AnimatedSwitcher(
-                      duration: const Duration(milliseconds: 200),
-                      switchInCurve: Curves.easeOutCubic,
-                      switchOutCurve: Curves.easeInCubic,
-                      transitionBuilder: (child, animation) =>
-                          FadeTransition(opacity: animation, child: child),
-                      child: _selecting
-                          ? _SelectionHeader(
-                              key: const ValueKey('selection-header'),
-                              count: selected.length,
-                              onClose: _exitSelection,
-                            )
-                          : _SearchEntry(
-                              key: const ValueKey('search-entry'),
-                              onTap: _openSearch,
-                            ),
-                    ),
-                  ),
-                  Expanded(
-                    child: sessions.when(
-                      data: (items) => items.isEmpty
-                          ? Center(
-                              child: Text(
-                                l10n.noSessions,
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: colors.labelTertiary,
-                                ),
-                              ),
-                            )
-                          : _SessionList(
-                              sessions: items,
-                              currentSessionId: widget.currentSessionId,
-                              selecting: _selecting,
-                              selected: _selected,
-                              onOpen: (id) {
-                                _closeMenu(context);
-                                widget.onOpen(id);
-                              },
-                              onToggle: _toggle,
-                              onSelect: () => _enterSelection(),
-                              onRename: (session, title) => ref
-                                  .read(chatRepositoryProvider)
-                                  .renameSession(session.id, title.trim()),
-                              onDelete: _delete,
-                              onPin: _pinSession,
-                              onMultiSelect: (session) =>
-                                  _enterSelection(session.id),
-                            ),
-                      loading: () => const SessionListSkeleton(),
-                      error: (error, stackTrace) => Center(
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(
-                              l10n.sessionsLoadFailed,
-                              style: TextStyle(
-                                fontSize: 14,
-                                color: colors.labelTertiary,
-                              ),
-                            ),
-                            const SizedBox(height: 8),
-                            ShadButton.outline(
-                              onPressed: () => ref.invalidate(sessionsProvider),
-                              child: Text(l10n.retry),
-                            ),
-                          ],
-                        ),
+    final drawerBody = SafeArea(
+      child: Padding(
+        padding: EdgeInsets.fromLTRB(14, 10, 14 + openInset, 0),
+        child: Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(bottom: 10),
+              child: AnimatedSwitcher(
+                duration: const Duration(milliseconds: 200),
+                switchInCurve: Curves.easeOutCubic,
+                switchOutCurve: Curves.easeInCubic,
+                transitionBuilder: (child, animation) =>
+                    FadeTransition(opacity: animation, child: child),
+                child: _selecting
+                    ? _SelectionHeader(
+                        key: const ValueKey('selection-header'),
+                        count: selected.length,
+                        onClose: _exitSelection,
+                      )
+                    : _SearchEntry(
+                        key: const ValueKey('search-entry'),
+                        onTap: _openSearch,
                       ),
-                    ),
-                  ),
-                  if (_selecting)
-                    _SelectionActions(
-                      enabled: selected.isNotEmpty,
-                      pinned: allPinned,
-                      onPin: () => _pinSelected(selected),
-                      onDelete: () => _deleteSelected(selected),
-                    )
-                  else
-                    Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 12),
-                      child: Material(
-                        color: Colors.transparent,
-                        child: InkWell(
-                          key: const Key('drawer-settings'),
-                          borderRadius: BorderRadius.circular(12),
-                          onTap: () {
-                            _closeMenu(context);
-                            widget.onOpenSettings();
-                          },
-                          child: Padding(
-                            padding: const EdgeInsets.symmetric(
-                              horizontal: 10,
-                              vertical: 9,
-                            ),
-                            child: Row(
-                              children: [
-                                Icon(
-                                  LucideIcons.settings,
-                                  size: 20,
-                                  color: colors.labelPrimary,
-                                ),
-                                const SizedBox(width: 10),
-                                Text(
-                                  l10n.settingsEntry,
-                                  style: TextStyle(
-                                    fontSize: 16,
-                                    height: 22 / 16,
-                                    color: colors.labelPrimary,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
               ),
             ),
-          );
-    if (controller != null) {
+            Expanded(
+              child: sessions.when(
+                data: (items) => items.isEmpty
+                    ? Center(
+                        child: Text(
+                          l10n.noSessions,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: colors.labelTertiary,
+                          ),
+                        ),
+                      )
+                    : _SessionList(
+                        sessions: items,
+                        currentSessionId: widget.currentSessionId,
+                        selecting: _selecting,
+                        selected: _selected,
+                        onOpen: (id) {
+                          _closeMenu(context);
+                          widget.onOpen(id);
+                        },
+                        onToggle: _toggle,
+                        onSelect: () => _enterSelection(),
+                        onRename: (session, title) => ref
+                            .read(chatRepositoryProvider)
+                            .renameSession(session.id, title.trim()),
+                        onDelete: _delete,
+                        onPin: _pinSession,
+                        onMultiSelect: (session) => _enterSelection(session.id),
+                      ),
+                loading: () => const SessionListSkeleton(),
+                error: (error, stackTrace) => Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        l10n.sessionsLoadFailed,
+                        style: TextStyle(
+                          fontSize: 14,
+                          color: colors.labelTertiary,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ShadButton.outline(
+                        onPressed: () => ref.invalidate(sessionsProvider),
+                        child: Text(l10n.retry),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            if (_selecting)
+              _SelectionActions(
+                enabled: selected.isNotEmpty,
+                pinned: allPinned,
+                onPin: () => _pinSelected(selected),
+                onDelete: () => _deleteSelected(selected),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 12),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    key: const Key('drawer-settings'),
+                    borderRadius: BorderRadius.circular(12),
+                    onTap: () {
+                      _closeMenu(context);
+                      widget.onOpenSettings();
+                    },
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 9,
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            LucideIcons.settings,
+                            size: 20,
+                            color: colors.labelPrimary,
+                          ),
+                          const SizedBox(width: 10),
+                          Text(
+                            l10n.settingsEntry,
+                            style: TextStyle(
+                              fontSize: 16,
+                              height: 22 / 16,
+                              color: colors.labelPrimary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+    final searchPage = SessionSearchPage(
+      focusNode: _searchFocus,
+      onBack: () => unawaited(_closeSearch()),
+      onOpen: _openSearchResult,
+    );
+    Widget content;
+    if (controller == null) {
+      content = _searching ? searchPage : drawerBody;
+    } else {
       content = AnimatedBuilder(
         animation: controller.animation,
-        child: content,
-        builder: (context, child) => Transform.translate(
+        builder: (context, _) => Transform.translate(
           // 进度 0 时整体左移一段，随打开滑回原位。
           offset: Offset((controller.progress - 1) * controller.menuSlide, 0),
-          child: child!,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              // 官方式：搜索页从侧栏胶囊位置展开，旧列表原地淡出。
+              AnimatedBuilder(
+                animation: controller.searchAnimation,
+                child: drawerBody,
+                builder: (context, child) => Opacity(
+                  opacity: _searching ? 1 - controller.searchProgress : 1,
+                  child: IgnorePointer(ignoring: _searching, child: child),
+                ),
+              ),
+              if (_searching) searchPage,
+            ],
+          ),
         ),
       );
     }
@@ -505,7 +522,6 @@ class _SearchEntry extends StatelessWidget {
           decoration: BoxDecoration(
             color: colors.inputFill,
             borderRadius: BorderRadius.circular(999),
-            border: Border.all(color: colors.border),
           ),
           child: Row(
             children: [

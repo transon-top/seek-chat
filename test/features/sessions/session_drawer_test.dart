@@ -501,6 +501,11 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('search-field')), findsOneWidget);
 
+    // 展开起点：搜索框与侧栏胶囊重合（左 14、右 0.8×800-14）。
+    final start = tester.getRect(find.byKey(const Key('search-field')));
+    expect(start.left, closeTo(14, 0.5));
+    expect(start.right, closeTo(626, 0.5));
+
     // 对话层在展开过程中持续右移，搜索框随之露出。
     await tester.pump(const Duration(milliseconds: 130));
     expect(tester.getTopLeft(find.text('CHAT')).dx, greaterThan(chatBefore));
