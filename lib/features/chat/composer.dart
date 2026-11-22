@@ -168,7 +168,8 @@ class Composer extends StatelessWidget {
                                     ? null
                                     : onTogglePanel,
                               ),
-                              if (!hasText && !busy)
+                              if (!hasText && !busy) ...[
+                                const SizedBox(width: 8),
                                 VoiceButton(
                                   phase: phase,
                                   enabled: !reading,
@@ -178,17 +179,21 @@ class Composer extends StatelessWidget {
                                   onCancelArmedChanged: onVoiceCancelArmed,
                                   onCancelRecording: onVoiceCancel,
                                 ),
-                              const SizedBox(width: 2),
-                              SendButton(
-                                busy: busy,
-                                enabled:
-                                    !busy &&
-                                    !voiceBusy &&
-                                    ready &&
-                                    (hasText || attachments.isNotEmpty),
-                                onSend: onSend,
-                                onStop: onStop,
-                              ),
+                              ],
+                              // 无可发送内容（空文本且无附件）时不渲染发送按钮。
+                              if (busy || hasText || attachments.isNotEmpty) ...[
+                                const SizedBox(width: 8),
+                                SendButton(
+                                  busy: busy,
+                                  enabled:
+                                      !busy &&
+                                      !voiceBusy &&
+                                      ready &&
+                                      (hasText || attachments.isNotEmpty),
+                                  onSend: onSend,
+                                  onStop: onStop,
+                                ),
+                              ],
                             ],
                           );
                         },
@@ -317,32 +322,56 @@ class _PlusButton extends StatelessWidget {
     final reduceMotion = MediaQuery.of(context).disableAnimations;
     return Tooltip(
       message: open ? l10n.closeAttachmentPanel : l10n.addAttachment,
-      child: ShadIconButton.ghost(
-        key: const Key('attach-button'),
-        onPressed: onPressed,
-        enabled: onPressed != null,
-        icon: AnimatedSwitcher(
-          duration: reduceMotion
-              ? Duration.zero
-              : const Duration(milliseconds: 180),
-          transitionBuilder: (child, animation) => FadeTransition(
-            opacity: animation,
-            child: RotationTransition(
-              turns: Tween<double>(begin: 0, end: 0.25).animate(animation),
-              child: child,
-            ),
-          ),
-          child: Icon(
-            open ? LucideIcons.x : LucideIcons.plus,
-            key: ValueKey(open),
-            size: 18,
+      child: Opacity(
+        opacity: onPressed == null ? 0.4 : 1,
+        // 视觉 32 描边圆，点击区保持 40。
+        child: SizedBox(
+          width: 40,
+          height: 40,
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Container(
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  border: Border.all(color: colors.foreground, width: 1.5),
+                ),
+              ),
+              ShadIconButton.ghost(
+                key: const Key('attach-button'),
+                onPressed: onPressed,
+                enabled: onPressed != null,
+                icon: AnimatedSwitcher(
+                  duration: reduceMotion
+                      ? Duration.zero
+                      : const Duration(milliseconds: 180),
+                  transitionBuilder: (child, animation) => FadeTransition(
+                    opacity: animation,
+                    child: RotationTransition(
+                      turns: Tween<double>(
+                        begin: 0,
+                        end: 0.25,
+                      ).animate(animation),
+                      child: child,
+                    ),
+                  ),
+                  child: Icon(
+                    open ? LucideIcons.x : LucideIcons.plus,
+                    key: ValueKey(open),
+                    size: 18,
+                  ),
+                ),
+                iconSize: 18,
+                width: 40,
+                height: 40,
+                padding: EdgeInsets.zero,
+                foregroundColor: colors.foreground,
+              ),
+            ],
           ),
         ),
-        iconSize: 18,
-        width: 40,
-        height: 40,
-        padding: EdgeInsets.zero,
-        foregroundColor: colors.mutedForeground,
       ),
     );
   }
@@ -378,8 +407,8 @@ class SendButton extends StatelessWidget {
             key: const Key('stop-button'),
             onTap: onStop,
             child: Container(
-              width: 34,
-              height: 34,
+              width: 40,
+              height: 40,
               alignment: Alignment.center,
               decoration: BoxDecoration(
                 color: colors.primary,
@@ -412,8 +441,8 @@ class SendButton extends StatelessWidget {
             duration: reduceMotion
                 ? Duration.zero
                 : const Duration(milliseconds: 150),
-            width: 34,
-            height: 34,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               color: enabled
                   ? colors.primary

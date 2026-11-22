@@ -568,7 +568,8 @@ void main() {
     expect(find.text('How can I help you?'), findsOneWidget);
     expect(find.text('DeepThink'), findsOneWidget);
     expect(find.text('Search'), findsOneWidget);
-    expect(find.byTooltip('Send'), findsOneWidget);
+    expect(find.byTooltip('Hold to talk'), findsOneWidget);
+    expect(find.byTooltip('Send'), findsNothing);
 
     await openDrawer(tester);
     expect(find.text('No chats yet'), findsOneWidget);
