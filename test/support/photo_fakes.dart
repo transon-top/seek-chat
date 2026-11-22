@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:open_chat/features/chat/photo_import.dart';
+import 'package:open_chat/features/chat/photo_strip.dart';
 
 /// 1×1 PNG，供照片格缩略图测试解码。
 final Uint8List testPhotoThumbnail = base64Decode(
@@ -39,5 +41,55 @@ class FakePhotoAsset implements PhotoAsset {
   Future<Uint8List?> transcodedJpeg() async {
     transcodedCalls++;
     return transcoded;
+  }
+}
+
+/// 可配置的 `PhotoLibrary`：覆盖权限四态、空图库、读取失败与「管理」返回。
+class FakePhotoLibrary implements PhotoLibrary {
+  FakePhotoLibrary({
+    this.status = PhotoAccessStatus.authorized,
+    this.statusAfterRequest,
+    this.fail = false,
+    List<PhotoAsset>? assets,
+  }) : assets = assets ?? const [];
+
+  PhotoAccessStatus status;
+  PhotoAccessStatus? statusAfterRequest;
+  List<PhotoAsset> assets;
+  bool fail = false;
+  Completer<void>? gate;
+  int accessCalls = 0;
+  int requestCalls = 0;
+  int loadCalls = 0;
+  int lastLimit = 0;
+  int presentLimitedCalls = 0;
+  int settingsCalls = 0;
+
+  @override
+  Future<PhotoAccessStatus> access({required bool request}) async {
+    accessCalls++;
+    if (!request) return status;
+    requestCalls++;
+    if (statusAfterRequest != null) status = statusAfterRequest!;
+    return status;
+  }
+
+  @override
+  Future<List<PhotoAsset>> recentImages({int limit = 30}) async {
+    loadCalls++;
+    lastLimit = limit;
+    if (gate != null) await gate!.future;
+    if (fail) throw StateError('load failed');
+    return assets;
+  }
+
+  @override
+  Future<void> presentLimited() async {
+    presentLimitedCalls++;
+  }
+
+  @override
+  Future<void> openSettings() async {
+    settingsCalls++;
   }
 }

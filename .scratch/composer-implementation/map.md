@@ -45,6 +45,8 @@
 - [06: 蓝色动态浮层视觉](issues/06-voice-overlay-visual.md):
   `CustomPainter` 漂移团块 + pointer 高光 + 32 根电平波形；三文案共用同一
   蓝色、减少动画冻结、颜色由主题 token 派生；analyze、477 测试通过。
+- [08: 固定高度文件卡的动态字体封顶](issues/08-draft-card-dynamic-type-cap.md):
+  210×64 与字号 2.0 冲突，卡内文字封顶 1.3 倍；测试断言封顶值，词汇表补例外。
 
 ## Not yet specified
 

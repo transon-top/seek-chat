@@ -11,59 +11,21 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../support/photo_fakes.dart';
 
-class _FakeLibrary implements PhotoLibrary {
-  _FakeLibrary({
-    this.status = PhotoAccessStatus.authorized,
-    this.statusAfterRequest,
-    List<PhotoAsset>? assets,
-  }) : assets = assets ?? const [];
-
-  PhotoAccessStatus status;
-  PhotoAccessStatus? statusAfterRequest;
-  List<PhotoAsset> assets;
-  bool fail = false;
-  Completer<void>? gate;
-  int accessCalls = 0;
-  int requestCalls = 0;
-  int loadCalls = 0;
-  int lastLimit = 0;
-  int presentLimitedCalls = 0;
-  int settingsCalls = 0;
-
-  @override
-  Future<PhotoAccessStatus> access({required bool request}) async {
-    accessCalls++;
-    if (!request) return status;
-    requestCalls++;
-    if (statusAfterRequest != null) status = statusAfterRequest!;
-    return status;
-  }
-
-  @override
-  Future<List<PhotoAsset>> recentImages({int limit = 30}) async {
-    loadCalls++;
-    lastLimit = limit;
-    if (gate != null) await gate!.future;
-    if (fail) throw StateError('load failed');
-    return assets;
-  }
-
-  @override
-  Future<void> presentLimited() async {
-    presentLimitedCalls++;
-  }
-
-  @override
-  Future<void> openSettings() async {
-    settingsCalls++;
-  }
-}
-
 void main() {
+  const buildEnabled = bool.fromEnvironment(
+    'OPEN_CHAT_PHOTO_STRIP',
+    defaultValue: true,
+  );
+
   test('photo strip is enabled on both platforms by default', () {
     expect(photoStripEnabledFor(TargetPlatform.android), isTrue);
     expect(photoStripEnabledFor(TargetPlatform.iOS), isTrue);
-  });
+  }, skip: !buildEnabled);
+
+  test('photo strip can be disabled on Android at build time', () {
+    expect(photoStripEnabledFor(TargetPlatform.android), isFalse);
+    expect(photoStripEnabledFor(TargetPlatform.iOS), isTrue);
+  }, skip: buildEnabled);
 
   Widget host(PhotoStrip strip) => ShadApp(
     theme: buildShadTheme(brightness: Brightness.light, chinese: true),
@@ -82,7 +44,8 @@ void main() {
   testWidgets('shows six skeletons, queries 30 assets, and keeps order', (
     tester,
   ) async {
-    final library = _FakeLibrary(assets: assets(5))..gate = Completer<void>();
+    final library = FakePhotoLibrary(assets: assets(5))
+      ..gate = Completer<void>();
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -127,7 +90,7 @@ void main() {
   });
 
   testWidgets('requests permission only when not determined', (tester) async {
-    final library = _FakeLibrary(
+    final library = FakePhotoLibrary(
       status: PhotoAccessStatus.notDetermined,
       statusAfterRequest: PhotoAccessStatus.authorized,
       assets: assets(1),
@@ -150,7 +113,7 @@ void main() {
   });
 
   testWidgets('authorized access never prompts', (tester) async {
-    final library = _FakeLibrary(assets: assets(1));
+    final library = FakePhotoLibrary(assets: assets(1));
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -169,7 +132,7 @@ void main() {
   });
 
   testWidgets('denied shows settings without loading assets', (tester) async {
-    final library = _FakeLibrary(status: PhotoAccessStatus.denied);
+    final library = FakePhotoLibrary(status: PhotoAccessStatus.denied);
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -193,7 +156,7 @@ void main() {
   testWidgets('limited puts a manage tile first and reloads after it', (
     tester,
   ) async {
-    final library = _FakeLibrary(
+    final library = FakePhotoLibrary(
       status: PhotoAccessStatus.limited,
       assets: assets(2),
     );
@@ -221,7 +184,7 @@ void main() {
     expect(library.presentLimitedCalls, 1);
     expect(library.loadCalls, 2);
 
-    final empty = _FakeLibrary(status: PhotoAccessStatus.limited);
+    final empty = FakePhotoLibrary(status: PhotoAccessStatus.limited);
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -240,7 +203,7 @@ void main() {
   });
 
   testWidgets('empty library shows the empty message', (tester) async {
-    final library = _FakeLibrary();
+    final library = FakePhotoLibrary();
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -258,7 +221,7 @@ void main() {
   });
 
   testWidgets('load failure retries in place', (tester) async {
-    final library = _FakeLibrary(assets: assets(1))..fail = true;
+    final library = FakePhotoLibrary(assets: assets(1))..fail = true;
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -285,7 +248,7 @@ void main() {
     tester,
   ) async {
     final toggled = <String>[];
-    final library = _FakeLibrary(assets: assets(2));
+    final library = FakePhotoLibrary(assets: assets(2));
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -311,7 +274,7 @@ void main() {
   ) async {
     final toggled = <String>[];
     var limits = 0;
-    final library = _FakeLibrary(assets: assets(2));
+    final library = FakePhotoLibrary(assets: assets(2));
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -344,7 +307,7 @@ void main() {
   });
 
   testWidgets('resuming the app reloads the strip', (tester) async {
-    final library = _FakeLibrary(assets: assets(1));
+    final library = FakePhotoLibrary(assets: assets(1));
     await tester.pumpWidget(
       host(
         PhotoStrip(
@@ -367,7 +330,7 @@ void main() {
   });
 
   testWidgets('picker resume does not reload the strip', (tester) async {
-    final library = _FakeLibrary(assets: assets(1));
+    final library = FakePhotoLibrary(assets: assets(1));
     PhotoStrip strip({required bool reloadOnResume}) => PhotoStrip(
       library: library,
       selectedAssetIds: const {},

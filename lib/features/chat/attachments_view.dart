@@ -14,6 +14,9 @@ import 'upload_tasks.dart';
 const double _draftImageSize = 64;
 const double _draftStripHeight = 76;
 const double _draftDocumentWidth = 210;
+
+/// 文件卡固定 64 高，两行文字在系统字号 2.0 下放不下；卡内封顶到 1.3。
+const double _draftDocumentTextScaleMax = 1.3;
 const double _draftImageRadius = 12;
 const double _draftCardRadius = 8;
 const double _draftBadgeSize = 20;
@@ -265,30 +268,35 @@ class _DraftDocument extends StatelessWidget {
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.only(right: _draftBadgeSize),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        attachment.name,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: failed ? colors.error : colors.onSurface,
+                  child: MediaQuery.withClampedTextScaling(
+                    maxScaleFactor: _draftDocumentTextScaleMax,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          attachment.name,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: failed ? colors.error : colors.onSurface,
+                          ),
                         ),
-                      ),
-                      const SizedBox(height: 3),
-                      Text(
-                        subtitle,
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 11,
-                          color: failed ? colors.error : colors.onSurfaceVariant,
+                        const SizedBox(height: 3),
+                        Text(
+                          subtitle,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: failed
+                                ? colors.error
+                                : colors.onSurfaceVariant,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
               ),
