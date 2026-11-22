@@ -342,11 +342,11 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
           )
         : SafeArea(
             child: Padding(
-              padding: EdgeInsets.fromLTRB(12, 6, 12 + openInset, 0),
+              padding: EdgeInsets.fromLTRB(14, 10, 14 + openInset, 0),
               child: Column(
                 children: [
                   Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 10),
                     child: AnimatedSwitcher(
                       duration: const Duration(milliseconds: 200),
                       switchInCurve: Curves.easeOutCubic,
@@ -500,7 +500,7 @@ class _SearchEntry extends StatelessWidget {
         borderRadius: BorderRadius.circular(999),
         onTap: onTap,
         child: Container(
-          height: 40,
+          height: 44,
           padding: const EdgeInsets.symmetric(horizontal: 12),
           decoration: BoxDecoration(
             color: colors.inputFill,
@@ -573,7 +573,7 @@ class _SelectionHeader extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = _sidebarColorsOf(context);
     return SizedBox(
-      height: 40,
+      height: 44,
       child: Row(
         children: [
           Expanded(
@@ -758,57 +758,55 @@ class _SessionListState extends State<_SessionList> {
     // 分组头高度随字号缩放；固定值在非标准字号下会与子项实际高度不一致。
     final headerExtent =
         7 + MediaQuery.textScalerOf(context).scale(14) * 22 / 14;
-    final list = Padding(
-      padding: const EdgeInsets.only(top: 16),
-      child: ScrollEdgeFade(
+    final list = ScrollEdgeFade(
+      controller: _controller,
+      color: colors.fill,
+      // 顶部渐隐从吸顶分组头下缘开始，分组头本身不参与渐隐。
+      topInset: headerExtent,
+      child: CustomScrollView(
         controller: _controller,
-        color: colors.fill,
-        // 顶部渐隐从吸顶分组头下缘开始，分组头本身不参与渐隐。
-        topInset: headerExtent,
-        child: CustomScrollView(
-          controller: _controller,
-          slivers: [
-            for (final (index, (group, items)) in groups.indexed) ...[
-              if (index > 0)
-                const SliverToBoxAdapter(child: SizedBox(height: 16)),
-              // 与 chat-demo 一致：每个分组标题上方留 4。
-              const SliverToBoxAdapter(child: SizedBox(height: 4)),
-              SliverPersistentHeader(
-                pinned: true,
-                delegate: _GroupHeaderDelegate(
-                  colors: colors,
-                  extent: headerExtent,
-                  label: switch (group) {
-                    SessionGroup.pinned => l10n.sessionGroupPinned,
-                    SessionGroup.today => l10n.sessionGroupToday,
-                    SessionGroup.yesterday => l10n.sessionGroupYesterday,
-                    SessionGroup.last7Days => l10n.sessionGroupLast7Days,
-                    SessionGroup.earlier => l10n.sessionGroupEarlier,
-                  },
-                ),
-              ),
-              SliverList.builder(
-                itemCount: items.length,
-                itemBuilder: (context, index) {
-                  final session = items[index];
-                  return _SessionRow(
-                    session: session,
-                    current: session.id == widget.currentSessionId,
-                    selecting: widget.selecting,
-                    selected: widget.selected.contains(session.id),
-                    onOpen: () => widget.onOpen(session.id),
-                    onToggle: () => widget.onToggle(session.id),
-                    onRename: (title) => widget.onRename(session, title),
-                    onDelete: () => widget.onDelete(session),
-                    onPin: () => widget.onPin(session),
-                    onMultiSelect: () => widget.onMultiSelect(session),
-                  );
+        slivers: [
+          for (final (index, (group, items)) in groups.indexed) ...[
+            if (index > 0)
+              const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // 与 chat-demo 一致：分组标题上方留 4；首组不留，使搜索框下缘
+            // 到首个标题的距离与 DeepSeek 一致（17）。
+            if (index > 0) const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            SliverPersistentHeader(
+              pinned: true,
+              delegate: _GroupHeaderDelegate(
+                colors: colors,
+                extent: headerExtent,
+                label: switch (group) {
+                  SessionGroup.pinned => l10n.sessionGroupPinned,
+                  SessionGroup.today => l10n.sessionGroupToday,
+                  SessionGroup.yesterday => l10n.sessionGroupYesterday,
+                  SessionGroup.last7Days => l10n.sessionGroupLast7Days,
+                  SessionGroup.earlier => l10n.sessionGroupEarlier,
                 },
               ),
-            ],
-            const SliverToBoxAdapter(child: SizedBox(height: 8)),
+            ),
+            SliverList.builder(
+              itemCount: items.length,
+              itemBuilder: (context, index) {
+                final session = items[index];
+                return _SessionRow(
+                  session: session,
+                  current: session.id == widget.currentSessionId,
+                  selecting: widget.selecting,
+                  selected: widget.selected.contains(session.id),
+                  onOpen: () => widget.onOpen(session.id),
+                  onToggle: () => widget.onToggle(session.id),
+                  onRename: (title) => widget.onRename(session, title),
+                  onDelete: () => widget.onDelete(session),
+                  onPin: () => widget.onPin(session),
+                  onMultiSelect: () => widget.onMultiSelect(session),
+                );
+              },
+            ),
           ],
-        ),
+          const SliverToBoxAdapter(child: SizedBox(height: 8)),
+        ],
       ),
     );
     return Stack(
@@ -816,7 +814,8 @@ class _SessionListState extends State<_SessionList> {
         list,
         if (!widget.selecting)
           Positioned(
-            top: 11,
+            // 44 高按钮中心对齐首组标题文字中心（标题区 29，文字居中后 18）。
+            top: -4,
             right: 0,
             child: _SelectButton(onPressed: widget.onSelect),
           ),
