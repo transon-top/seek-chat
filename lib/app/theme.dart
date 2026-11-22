@@ -28,7 +28,8 @@ class AppSidebarColors {
   });
 
   static const light = AppSidebarColors(
-    fill: Color(0xFFF9FAFB),
+    // 官方侧栏与对话层同为纯白，只靠内容层阴影分隔。
+    fill: Color(0xFFFFFFFF),
     border: Color(0x0A000000),
     labelPrimary: Color(0xFF0F1115),
     labelTertiary: Color(0xFF81858C),
@@ -36,7 +37,7 @@ class AppSidebarColors {
     activeItemFill: Color(0xFFE4EDFD),
     activeItemForeground: Color(0xFF3964FE),
     elevatedFill: Color(0xFFFFFFFF),
-    inputFill: Color(0xFFFFFFFF),
+    inputFill: Color(0xFFF4F4F5),
     menuFill: Color(0xFFFFFFFF),
     danger: Color(0xFFEC1313),
   );

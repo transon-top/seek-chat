@@ -10,6 +10,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/logging.dart';
 import '../../shared/models/types.dart';
 import '../../shared/providers.dart';
+import '../../shared/widgets/push_menu.dart';
 import 'session_skeleton.dart';
 
 /// 会话搜索页；嵌在抽屉层里，由抽屉驱动展开与收起。
@@ -89,112 +90,150 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
 
   @override
   Widget build(BuildContext context) {
+    final controller = PushMenuScope.maybeOf(context);
+    if (controller == null) return _build(context, 1);
+    return AnimatedBuilder(
+      animation: controller.searchAnimation,
+      builder: (context, _) => _build(context, controller.searchProgress),
+    );
+  }
+
+  /// [t] 为搜索展开进度：0 时搜索框与侧栏胶囊重合，1 时占满全屏。
+  Widget _build(BuildContext context, double t) {
     final l10n = AppLocalizations.of(context)!;
     final colors = _colors;
+    final width = MediaQuery.sizeOf(context).width;
+    final travel = PushMenuScope.maybeOf(context)?.travel ?? width * 0.8;
+    final left = _lerp(14, 4, t);
+    final fieldRight = _lerp(travel - 14, width - 16, t);
+    final backWidth = _lerp(0, 44, t);
+    final backOpacity = Curves.easeIn.transform(
+      ((t - 0.35) / 0.65).clamp(0.0, 1.0),
+    );
     return Scaffold(
-      backgroundColor: colors.fill,
-      body: SafeArea(
-        child: Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(4, 6, 16, 8),
-              child: Row(
-                children: [
-                  Semantics(
-                    button: true,
-                    label: l10n.searchBack,
-                    child: IconButton(
-                      key: const Key('search-back'),
-                      onPressed: widget.onBack,
-                      icon: Icon(
-                        LucideIcons.chevronLeft,
-                        size: 20,
-                        color: colors.labelPrimary,
+      backgroundColor: Colors.transparent,
+      body: ColoredBox(
+        color: colors.fill.withValues(alpha: t),
+        child: SafeArea(
+          child: Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.fromLTRB(left, 10, width - fieldRight, 8),
+                child: Row(
+                  children: [
+                    SizedBox(
+                      width: backWidth,
+                      child: Opacity(
+                        opacity: backOpacity,
+                        child: Semantics(
+                          button: true,
+                          label: l10n.searchBack,
+                          child: IconButton(
+                            key: const Key('search-back'),
+                            onPressed: widget.onBack,
+                            icon: Icon(
+                              LucideIcons.chevronLeft,
+                              size: 20,
+                              color: colors.labelPrimary,
+                            ),
+                            constraints: const BoxConstraints.tightFor(
+                              width: 44,
+                              height: 44,
+                            ),
+                            padding: EdgeInsets.zero,
+                            style: IconButton.styleFrom(
+                              shape: const CircleBorder(),
+                            ),
+                          ),
+                        ),
                       ),
-                      constraints: const BoxConstraints.tightFor(
-                        width: 44,
+                    ),
+                    Expanded(
+                      // 与侧栏搜索胶囊同高，展开时只变宽不跳高。
+                      child: SizedBox(
                         height: 44,
-                      ),
-                      padding: EdgeInsets.zero,
-                      style: IconButton.styleFrom(shape: const CircleBorder()),
-                    ),
-                  ),
-                  Expanded(
-                    child: TextField(
-                      key: const Key('search-field'),
-                      controller: _controller,
-                      focusNode: widget.focusNode,
-                      autofocus: true,
-                      onChanged: _onChanged,
-                      style: TextStyle(
-                        fontSize: 16,
-                        height: 22 / 16,
-                        color: colors.labelPrimary,
-                      ),
-                      cursorColor: colors.brand,
-                      decoration: InputDecoration(
-                        isDense: true,
-                        hintText: l10n.searchChatsPlaceholder,
-                        hintStyle: TextStyle(
-                          fontSize: 16,
-                          height: 22 / 16,
-                          color: colors.labelTertiary,
-                        ),
-                        filled: true,
-                        fillColor: colors.inputFill,
-                        contentPadding: const EdgeInsets.symmetric(
-                          vertical: 10,
-                        ),
-                        prefixIcon: Icon(
-                          LucideIcons.search,
-                          size: 16,
-                          color: colors.labelTertiary,
-                        ),
-                        prefixIconConstraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 36,
-                        ),
-                        suffixIcon: _controller.text.isEmpty
-                            ? null
-                            : IconButton(
-                                key: const Key('search-clear'),
-                                onPressed: _clear,
-                                tooltip: l10n.clearSearch,
-                                icon: Icon(
-                                  LucideIcons.x,
-                                  size: 14,
-                                  color: colors.labelTertiary,
-                                ),
-                                constraints: const BoxConstraints.tightFor(
-                                  width: 36,
-                                  height: 36,
-                                ),
-                                padding: EdgeInsets.zero,
-                              ),
-                        suffixIconConstraints: const BoxConstraints(
-                          minWidth: 40,
-                          minHeight: 36,
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(999),
-                          borderSide: BorderSide(color: colors.border),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(999),
-                          borderSide: BorderSide(color: colors.border),
+                        child: TextField(
+                          key: const Key('search-field'),
+                          controller: _controller,
+                          focusNode: widget.focusNode,
+                          autofocus: true,
+                          onChanged: _onChanged,
+                          style: TextStyle(
+                            fontSize: 16,
+                            height: 22 / 16,
+                            color: colors.labelPrimary,
+                          ),
+                          cursorColor: colors.brand,
+                          decoration: InputDecoration(
+                            isDense: true,
+                            hintText: l10n.searchChatsPlaceholder,
+                            hintStyle: TextStyle(
+                              fontSize: 16,
+                              height: 22 / 16,
+                              color: colors.labelTertiary,
+                            ),
+                            filled: true,
+                            fillColor: colors.inputFill,
+                            // 与侧栏搜索胶囊同高（44）。
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 11.5,
+                            ),
+                            prefixIcon: Icon(
+                              LucideIcons.search,
+                              size: 16,
+                              color: colors.labelTertiary,
+                            ),
+                            prefixIconConstraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 36,
+                            ),
+                            suffixIcon: _controller.text.isEmpty
+                                ? null
+                                : IconButton(
+                                    key: const Key('search-clear'),
+                                    onPressed: _clear,
+                                    tooltip: l10n.clearSearch,
+                                    icon: Icon(
+                                      LucideIcons.x,
+                                      size: 14,
+                                      color: colors.labelTertiary,
+                                    ),
+                                    constraints: const BoxConstraints.tightFor(
+                                      width: 36,
+                                      height: 36,
+                                    ),
+                                    padding: EdgeInsets.zero,
+                                  ),
+                            suffixIconConstraints: const BoxConstraints(
+                              minWidth: 40,
+                              minHeight: 36,
+                            ),
+                            // 官方搜索框为无描边灰底胶囊。
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              borderSide: BorderSide.none,
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(999),
+                              borderSide: BorderSide.none,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
-            ),
-            Expanded(child: _body(l10n, colors)),
-          ],
+              Expanded(child: _body(l10n, colors)),
+            ],
+          ),
         ),
       ),
     );
   }
+
+  static double _lerp(double begin, double end, double t) =>
+      begin + (end - begin) * t;
 
   Widget _body(AppLocalizations l10n, AppSidebarColors colors) {
     if (_query.isEmpty) return const SizedBox.shrink();
