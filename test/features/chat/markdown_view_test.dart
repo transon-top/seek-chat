@@ -3,10 +3,10 @@ import 'package:gpt_markdown/custom_widgets/code_field.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_flutter/mermaid_flutter.dart';
+import 'package:open_chat/app/markdown_theme.dart';
 import 'package:open_chat/features/chat/markdown_view.dart';
 import 'package:open_chat/features/chat/reply_view.dart';
 import 'package:open_chat/shared/widgets/horizontal_fade_scroll.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:val_latex_flutter/val_latex_flutter.dart' show Math;
 
 Source _source(int index) => Source(
@@ -111,10 +111,42 @@ void main() {
     await pumpMarkdown(tester, '- [x] 已完成任务\n- [ ] 未完成任务');
 
     expect(find.byType(Checkbox), findsNothing);
-    expect(find.byIcon(LucideIcons.squareCheck), findsOneWidget);
-    expect(find.byIcon(LucideIcons.square), findsOneWidget);
+    // 选中态自绘（☑ 在 Android 会变成彩色 emoji），未选中用 □ 字形。
+    expect(find.text('□'), findsOneWidget);
+    expect(
+      find.byWidgetPredicate(
+        (widget) => widget.runtimeType.toString() == '_CheckedBox',
+      ),
+      findsOneWidget,
+    );
     expect(find.textContaining('[x]', findRichText: true), findsNothing);
     expect(find.textContaining('已完成任务', findRichText: true), findsWidgets);
+  });
+
+  testWidgets('spaces list items 6px apart like the official app', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: MarkdownView(
+            text: '1. alpha\n2. beta\n\n- [ ] task a\n- [ ] task b',
+            textStyle: TextStyle(fontSize: 16, height: 28 / 16),
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    double top(String text) => tester
+        .getTopLeft(find.textContaining(text, findRichText: true).first)
+        .dy;
+    expect(top('beta') - top('alpha'), 28 + 6);
+    expect(top('task b') - top('task a'), 28 + 6);
+
+    final marker = tester.widget<Text>(find.text('1.'));
+    expect(marker.style?.color, AppMarkdownColors.light.labelTertiary);
+    expect(marker.style?.fontWeight, FontWeight.w400);
   });
 
   testWidgets('renders LaTeX written with \\(...\\)', (tester) async {

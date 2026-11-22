@@ -45,7 +45,7 @@ dependencies:
 | 文件 | 改动 |
 | --- | --- |
 | `lib/features/chat/chat_page.dart` | 空态问候语布局与隐藏规则；`_addAttachments` 拆成面板入口；发送闸门保持 |
-| `lib/features/chat/composer.dart` | `minLines: 2`、两态占位、按钮矩阵、`+`/`×`、面板挂载、`AnimatedSize` |
+| `lib/features/chat/composer.dart` | `minLines: 1`、两态占位、按钮矩阵、`+`/`×`、面板挂载、`AnimatedSize` |
 | `lib/features/chat/attachments_view.dart` | 草稿行单行横滑、64 / 210×64、卡片内徽标、色块图标、上传 / 失败覆盖层 |
 | `lib/features/chat/attachment_panel.dart`（新增） | 面板壳、开合与键盘时序、返回键优先、三宫格 |
 | `lib/features/chat/photo_strip.dart`（新增） | `photo_manager` 读取 / 骨架 / 勾选 / 权限四态 / 管理格 / 重试 |
@@ -126,7 +126,8 @@ dependencies:
 ### 6.1 现有测试改动
 
 - `test/features/chat/composer_test.dart`：占位两态与文本非空隐藏；按钮矩阵逐行；
-  `minLines: 2`；`+`/`×` 切换；面板开合与点输入框收起；无 Key 提示。
+  `minLines: 1`（官方窄屏约 1.25 行高）、输入框下缘到按钮行 16；
+  `+`/`×` 切换；面板开合与点输入框收起；无 Key 提示。
 - `test/features/chat/attachments_view_test.dart`：单行横滑、图片 64 / 文件卡 210×64、
   卡片内移除徽标、扩展名色块、上传中 / 可重试 / 不可重试覆盖层。
 - `test/features/chat/speech/speech_controller_test.dart`：

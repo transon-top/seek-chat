@@ -135,7 +135,7 @@ class _VoiceButtonState extends State<VoiceButton> {
           onPointerMove: _handleMove,
           onPointerUp: _handleUp,
           onPointerCancel: _handleCancel,
-          // 视觉 24 描边圆，点击区保持 40（参照 DeepSeek 官方输入区）。
+          // 视觉 20 描边圆，点击区保持 40（参照官方 app）。
           child: SizedBox(
             width: 40,
             height: 40,
@@ -145,18 +145,14 @@ class _VoiceButtonState extends State<VoiceButton> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 24,
-                    height: 24,
+                    width: 20,
+                    height: 20,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      border: Border.all(color: colors.foreground, width: 1.5),
+                      border: Border.all(color: colors.foreground, width: 1.2),
                     ),
                   ),
-                  Icon(
-                    LucideIcons.mic,
-                    size: 18,
-                    color: colors.foreground,
-                  ),
+                  _VoiceWaveIcon(color: colors.foreground),
                 ],
               ),
             ),
@@ -165,4 +161,45 @@ class _VoiceButtonState extends State<VoiceButton> {
       ),
     );
   }
+}
+
+/// 官方 app 的语音图标：左侧圆点 + 右侧两道声波弧。
+class _VoiceWaveIcon extends StatelessWidget {
+  const _VoiceWaveIcon({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: const Size(12, 12), painter: _VoiceWavePainter(color));
+}
+
+class _VoiceWavePainter extends CustomPainter {
+  const _VoiceWavePainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final center = Offset(size.width * 0.30, size.height / 2);
+    canvas.drawCircle(center, 1.4, Paint()..color = color);
+    final stroke = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 1.5
+      ..strokeCap = StrokeCap.round;
+    for (final radius in const [3.4, 6.4]) {
+      canvas.drawArc(
+        Rect.fromCircle(center: center, radius: radius),
+        -0.9,
+        1.8,
+        false,
+        stroke,
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(_VoiceWavePainter oldDelegate) =>
+      oldDelegate.color != color;
 }

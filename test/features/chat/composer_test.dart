@@ -80,14 +80,31 @@ void main() {
   );
 
   BoxDecoration decorationOf(WidgetTester tester, Key key) {
-    final container = tester.widget<AnimatedContainer>(
-      find.descendant(
-        of: find.byKey(key),
-        matching: find.byType(AnimatedContainer),
-      ),
+    final container = tester.widget<Container>(
+      find.descendant(of: find.byKey(key), matching: find.byType(Container)),
     );
     return container.decoration! as BoxDecoration;
   }
+
+  testWidgets('input starts at one line with the official toolbar gap', (
+    tester,
+  ) async {
+    await tester.pumpWidget(host());
+    await tester.pumpAndSettle();
+
+    final field = tester.widget<ShadInput>(
+      find.byKey(const Key('composer-input')),
+    );
+    expect(field.minLines, 1);
+    final inputBottom = tester
+        .getBottomLeft(find.byKey(const Key('composer-input')))
+        .dy;
+    final toggleTop = tester
+        .getTopLeft(find.byKey(const Key('thinking-toggle')))
+        .dy;
+    // 输入框下缘 16；40 命中区里的 29 胶囊再居中 5.5。
+    expect(toggleTop - inputBottom, closeTo(21.5, 0.6));
+  });
 
   testWidgets('toggles show the blue active style and report taps', (
     tester,
@@ -106,11 +123,9 @@ void main() {
       tester.element(find.byKey(const Key('thinking-toggle'))),
     ).colorScheme;
     final active = decorationOf(tester, const Key('thinking-toggle'));
-    expect(active.color, colors.primary.withValues(alpha: 0.10));
-    expect(
-      (active.border! as Border).top.color,
-      colors.primary.withValues(alpha: 0.45),
-    );
+    // 激活色照搬官方 app：blue-50 底 + 浅蓝描边。
+    expect(active.color, const Color(0xFFEDF3FE));
+    expect((active.border! as Border).top.color, const Color(0xFFD3E1FF));
     final label = tester.widget<Text>(
       find.descendant(
         of: find.byKey(const Key('thinking-toggle')),
@@ -121,7 +136,7 @@ void main() {
 
     final idle = decorationOf(tester, const Key('search-toggle'));
     expect(idle.color, Colors.transparent);
-    expect((idle.border! as Border).top.color, colors.border);
+    expect((idle.border! as Border).top.color, const Color(0xFFEDEDED));
 
     await tester.tap(find.byKey(const Key('thinking-toggle')));
     await tester.pump();

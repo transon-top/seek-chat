@@ -131,8 +131,11 @@ GptMarkdownThemeData buildMarkdownTheme(Brightness brightness) {
         margin: EdgeInsets.zero,
       ),
       list: ListStyle(
-        bulletColor: colors.labelSecondary,
-        markerTextStyle: TextStyle(color: colors.labelSecondary),
+        bulletColor: colors.labelTertiary,
+        markerTextStyle: TextStyle(
+          color: colors.labelTertiary,
+          fontWeight: FontWeight.w400,
+        ),
       ),
       codeBlock: CodeBlockStyle(
         backgroundColor: colors.codeBlockFill,
