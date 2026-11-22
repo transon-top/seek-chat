@@ -750,6 +750,9 @@ class _SessionListState extends State<_SessionList> {
     super.dispose();
   }
 
+  /// 会话行固定高度；吸顶标签按它推算各分组头的滚动位置。
+  static const _rowExtent = 44.0;
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -758,34 +761,48 @@ class _SessionListState extends State<_SessionList> {
     // 分组头高度随字号缩放；固定值在非标准字号下会与子项实际高度不一致。
     final headerExtent =
         7 + MediaQuery.textScalerOf(context).scale(14) * 22 / 14;
+    final labels = [
+      for (final (group, _) in groups)
+        switch (group) {
+          SessionGroup.pinned => l10n.sessionGroupPinned,
+          SessionGroup.today => l10n.sessionGroupToday,
+          SessionGroup.yesterday => l10n.sessionGroupYesterday,
+          SessionGroup.last7Days => l10n.sessionGroupLast7Days,
+          SessionGroup.earlier => l10n.sessionGroupEarlier,
+        },
+    ];
+    // 各分组头在滚动坐标里的起点，供吸顶标签判定当前分组与顶出位移。
+    final headerOffsets = <double>[];
+    var cursor = 0.0;
+    for (final (index, (_, items)) in groups.indexed) {
+      if (index > 0) cursor += 20; // 组间 16 + 标题上方 4
+      headerOffsets.add(cursor);
+      cursor += headerExtent + items.length * _rowExtent;
+    }
     final list = ScrollEdgeFade(
       controller: _controller,
       color: colors.fill,
-      // 顶部渐隐从吸顶分组头下缘开始，分组头本身不参与渐隐。
+      // 顶部渐隐从吸顶标签下缘开始，标签本身不参与渐隐。
       topInset: headerExtent,
       child: CustomScrollView(
         controller: _controller,
         slivers: [
-          for (final (index, (group, items)) in groups.indexed) ...[
+          for (final (index, (_, items)) in groups.indexed) ...[
             if (index > 0)
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
             // 与 chat-demo 一致：分组标题上方留 4；首组不留，使搜索框下缘
             // 到首个标题的距离与 DeepSeek 一致（17）。
             if (index > 0) const SliverToBoxAdapter(child: SizedBox(height: 4)),
-            SliverPersistentHeader(
-              pinned: true,
-              delegate: _GroupHeaderDelegate(
-                colors: colors,
-                extent: headerExtent,
-                label: switch (group) {
-                  SessionGroup.pinned => l10n.sessionGroupPinned,
-                  SessionGroup.today => l10n.sessionGroupToday,
-                  SessionGroup.yesterday => l10n.sessionGroupYesterday,
-                  SessionGroup.last7Days => l10n.sessionGroupLast7Days,
-                  SessionGroup.earlier => l10n.sessionGroupEarlier,
-                },
-              ),
-            ),
+            // 首组标签常驻吸顶行，列表里只留高度，避免同一标签出现两次。
+            index == 0
+                ? SliverToBoxAdapter(child: SizedBox(height: headerExtent))
+                : SliverToBoxAdapter(
+                    child: _GroupHeader(
+                      colors: colors,
+                      extent: headerExtent,
+                      label: labels[index],
+                    ),
+                  ),
             SliverList.builder(
               itemCount: items.length,
               itemBuilder: (context, index) {
@@ -812,68 +829,94 @@ class _SessionListState extends State<_SessionList> {
     return Stack(
       children: [
         list,
-        if (!widget.selecting)
-          Positioned(
-            // 44 高按钮中心对齐首组标题文字中心（标题区 29，文字居中后 18）。
-            top: -4,
-            right: 0,
-            child: _SelectButton(onPressed: widget.onSelect),
+        // 照搬真机：日期标签一次只吸一条，下一条到来时把当前条顶出；
+        // 多选入口属于吸顶行，随标签一起顶出。
+        Positioned(
+          top: 0,
+          left: 0,
+          right: 0,
+          height: headerExtent,
+          child: ClipRect(
+            child: AnimatedBuilder(
+              animation: _controller,
+              builder: (context, _) {
+                final position = _controller.hasClients
+                    ? math.max(0.0, _controller.offset)
+                    : 0.0;
+                var active = 0;
+                while (active + 1 < headerOffsets.length &&
+                    headerOffsets[active + 1] <= position) {
+                  active++;
+                }
+                final next = active + 1;
+                final shift = next < headerOffsets.length
+                    ? math.min(
+                        0.0,
+                        headerOffsets[next] - position - headerExtent,
+                      )
+                    : 0.0;
+                return Transform.translate(
+                  offset: Offset(0, shift),
+                  child: _GroupHeader(
+                    colors: colors,
+                    extent: headerExtent,
+                    label: labels[active],
+                    trailing: widget.selecting
+                        ? null
+                        : _SelectButton(onPressed: widget.onSelect),
+                  ),
+                );
+              },
+            ),
           ),
+        ),
       ],
     );
   }
 }
 
-/// 分组标题吸顶；高度 = 上 4 + 行高 22（随字号缩放）+ 下 3。
-class _GroupHeaderDelegate extends SliverPersistentHeaderDelegate {
-  const _GroupHeaderDelegate({
+/// 分组标题；高度 = 上 4 + 行高 22（随字号缩放）+ 下 3。
+class _GroupHeader extends StatelessWidget {
+  const _GroupHeader({
     required this.colors,
     required this.label,
     required this.extent,
+    this.trailing,
   });
 
   final AppSidebarColors colors;
   final String label;
   final double extent;
+  final Widget? trailing;
 
   @override
-  double get minExtent => extent;
-
-  @override
-  double get maxExtent => extent;
-
-  @override
-  Widget build(
-    BuildContext context,
-    double shrinkOffset,
-    bool overlapsContent,
-  ) {
-    // 子项高度必须与 extent 一致，否则吸顶头的布局几何不合法。
-    return SizedBox(
-      height: extent,
-      child: ColoredBox(
-        color: colors.fill,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 4, 10, 3),
-          child: Text(
-            label,
-            style: TextStyle(
-              fontSize: 14,
-              height: 22 / 14,
-              fontWeight: FontWeight.w500,
-              color: colors.labelTertiary,
+  Widget build(BuildContext context) => SizedBox(
+    height: extent,
+    child: ColoredBox(
+      color: colors.fill,
+      child: Stack(
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(10, 4, 10, 3),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 22 / 14,
+                  fontWeight: FontWeight.w500,
+                  color: colors.labelTertiary,
+                ),
+              ),
             ),
           ),
-        ),
+          if (trailing != null)
+            Positioned(right: 0, top: (extent - 44) / 2, child: trailing!),
+        ],
       ),
-    );
-  }
-
-  @override
-  bool shouldRebuild(covariant _GroupHeaderDelegate oldDelegate) =>
-      oldDelegate.label != label ||
-      oldDelegate.colors != colors ||
-      oldDelegate.extent != extent;
+    ),
+  );
 }
 
 class _SessionRow extends StatefulWidget {
