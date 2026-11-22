@@ -757,4 +757,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get settingsOpenSystemSettings => 'Open system settings';
+
+  @override
+  String get scrollToBottom => 'Back to bottom';
 }

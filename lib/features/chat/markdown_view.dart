@@ -169,6 +169,15 @@ class _MarkdownViewState extends State<MarkdownView> {
             style: style,
             useDollarSignsForLatex: false,
             isStreaming: widget.streaming,
+            // 流式期间逐字浮现并淡入；结束后回到静态文档，避免残留 ticker。
+            animation: widget.streaming
+                ? GptMarkdownAnimation.fade
+                : GptMarkdownAnimation.none,
+            charactersPerSecond: 25,
+            revealFadeSeconds: 0.3,
+            blockAnimation: widget.streaming
+                ? GptMarkdownBlockAnimation.fadeIn
+                : GptMarkdownBlockAnimation.none,
             onLinkTap: widget.disableLinks ? null : openExternalLink,
             inlineLinkBuilder: widget.disableLinks
                 ? (details) =>

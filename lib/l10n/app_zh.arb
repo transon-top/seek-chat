@@ -311,5 +311,6 @@
   "settingsMicGranted": "已允许",
   "settingsMicDenied": "已拒绝",
   "settingsSpeechDescription": "语音输入需要麦克风权限；朗读不需要。v1 只在前台工作。",
-  "settingsOpenSystemSettings": "打开系统设置"
+  "settingsOpenSystemSettings": "打开系统设置",
+  "scrollToBottom": "回到底部"
 }

@@ -173,6 +173,84 @@ void main() {
     expect(tester.getBottomLeft(last).dy, greaterThan(800));
   });
 
+  testWidgets(
+    'scrolling up pauses follow while streaming and returning to bottom resumes',
+    (tester) async {
+      String tail(int repeats) => List.filled(repeats, '段落内容').join('\n\n');
+      List<Message> conversation(String text) => [
+        for (var i = 0; i < 24; i++) ...[
+          UserMessage(
+            id: 'u$i',
+            createdAt: DateTime(2026),
+            text: 'Question $i',
+          ),
+          _reply(
+            [
+              TextBlock(
+                text: i == 23 ? text : 'Answer\n\nAnswer\n\nAnswer\n\nAnswer',
+              ),
+            ],
+            id: 'r$i',
+            status: i == 23 ? ReplyStatus.streaming : ReplyStatus.done,
+            thinking: false,
+          ),
+        ],
+      ];
+
+      await pumpMessages(
+        tester,
+        conversation(tail(20)),
+        width: 390,
+        settle: false,
+      );
+      final position = tester.state<ScrollableState>(_listScrollable).position;
+      expect(position.maxScrollExtent, greaterThan(600));
+
+      // 上滑离开底部：出现悬浮按钮，内容继续增长时视口保持原位。
+      position.jumpTo(position.maxScrollExtent - 600);
+      await tester.pump();
+      await tester.pump();
+      final held = position.pixels;
+      expect(find.byKey(const Key('scroll-to-bottom')), findsOneWidget);
+
+      await pumpMessages(
+        tester,
+        conversation(tail(40)),
+        width: 390,
+        settle: false,
+      );
+      for (var i = 0; i < 5; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(position.pixels, moreOrLessEquals(held, epsilon: 1));
+
+      // 点悬浮按钮回到底部，随后恢复跟随。
+      await tester.tap(find.byKey(const Key('scroll-to-bottom')));
+      await tester.pump();
+      await tester.pump();
+      await tester.pump(const Duration(milliseconds: 200));
+      expect(
+        position.pixels,
+        moreOrLessEquals(position.maxScrollExtent, epsilon: 1),
+      );
+      expect(find.byKey(const Key('scroll-to-bottom')), findsNothing);
+
+      await pumpMessages(
+        tester,
+        conversation(tail(80)),
+        width: 390,
+        settle: false,
+      );
+      for (var i = 0; i < 8; i++) {
+        await tester.pump(const Duration(milliseconds: 100));
+      }
+      expect(
+        position.pixels,
+        moreOrLessEquals(position.maxScrollExtent, epsilon: 1),
+      );
+    },
+  );
+
   testWidgets('long conversations render only the tail window first', (
     tester,
   ) async {
@@ -597,6 +675,35 @@ void main() {
 
     expect(find.text('正在思考'), findsOneWidget);
     expect(find.text('停止生成'), findsNothing);
+    expect(find.byKey(const Key('waiting-dots')), findsNothing);
+  });
+
+  testWidgets('waiting dots only show before any content arrives', (
+    tester,
+  ) async {
+    await pumpMessages(tester, [
+      AssistantMessage(
+        id: 'pending',
+        createdAt: DateTime(2026),
+        status: ReplyStatus.pending,
+        blocks: const [],
+        thinking: false,
+      ),
+    ], settle: false);
+
+    expect(find.byKey(const Key('waiting-dots')), findsOneWidget);
+
+    await pumpMessages(tester, [
+      AssistantMessage(
+        id: 'pending',
+        createdAt: DateTime(2026),
+        status: ReplyStatus.streaming,
+        blocks: const [TextBlock(text: 'partial')],
+        thinking: false,
+      ),
+    ], settle: false);
+
+    expect(find.byKey(const Key('waiting-dots')), findsNothing);
   });
 
   testWidgets('a browsing step reads as in progress until it finishes', (

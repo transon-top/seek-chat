@@ -712,4 +712,7 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get settingsOpenSystemSettings => '打开系统设置';
+
+  @override
+  String get scrollToBottom => '回到底部';
 }

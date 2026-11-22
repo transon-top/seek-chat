@@ -374,5 +374,6 @@
   "settingsMicGranted": "Allowed",
   "settingsMicDenied": "Denied",
   "settingsSpeechDescription": "Voice input needs microphone access; read-aloud does not. Works in the foreground only.",
-  "settingsOpenSystemSettings": "Open system settings"
+  "settingsOpenSystemSettings": "Open system settings",
+  "scrollToBottom": "Back to bottom"
 }

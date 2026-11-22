@@ -340,6 +340,8 @@ graph TD
   ) async {
     await tester.pumpWidget(app('a', streaming: true));
     await tester.pumpWidget(app('ab', streaming: true));
+    // 逐字淡入会把新追加的字符推迟到后续帧。
+    await tester.pump(const Duration(milliseconds: 120));
     expect(find.textContaining('ab', findRichText: true), findsWidgets);
 
     await tester.pumpWidget(app('abc', streaming: true));
@@ -348,6 +350,7 @@ graph TD
 
     await tester.pumpWidget(app('abcd', streaming: true));
     await tester.pump(const Duration(milliseconds: 60));
+    await tester.pump(const Duration(milliseconds: 100));
     expect(find.textContaining('abcd', findRichText: true), findsWidgets);
 
     await tester.pumpWidget(app('abcde'));

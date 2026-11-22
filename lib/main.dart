@@ -7,6 +7,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'app/app.dart';
 import 'dev/mock_seed.dart';
+import 'dev/mock_stream_client.dart';
+import 'shared/api/client.dart';
 import 'shared/providers.dart';
 import 'shared/data/attachment_store.dart';
 import 'shared/data/chat_repository.dart';
@@ -49,6 +51,22 @@ Future<void> main() async {
         chatRepositoryProvider.overrideWithValue(repository),
         attachmentStoreProvider.overrideWithValue(attachmentStore),
         sharedPreferencesProvider.overrideWithValue(preferences),
+        // 弱网流式样本：传输层换成按节奏吐 SSE 的 mock，不影响其他逻辑。
+        if (kDebugMode && const bool.fromEnvironment('OPEN_CHAT_MOCK_STREAM'))
+          apiClientProvider.overrideWith((ref) {
+            final client = DeepSeekApiClient(
+              httpClient: MockStreamClient(
+                chunkDelay: Duration(
+                  milliseconds: const int.fromEnvironment(
+                    'OPEN_CHAT_MOCK_STREAM_DELAY_MS',
+                    defaultValue: 150,
+                  ),
+                ),
+              ),
+            );
+            ref.onDispose(client.close);
+            return client;
+          }),
       ],
       child: const OpenChatApp(),
     ),
