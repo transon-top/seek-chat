@@ -287,11 +287,11 @@ void main() {
       (element.renderObject! as RenderBox).size.height,
   ];
 
-  testWidgets('the starting overlay shows a static 32-bar low skeleton', (
+  testWidgets('the starting overlay shows a static 40-bar low skeleton', (
     tester,
   ) async {
     await pumpHost(tester, const RecordingOverlay(phase: SpeechPhase.starting));
-    expect(waveBars, findsNWidgets(32));
+    expect(waveBars, findsNWidgets(40));
     final before = barHeights(tester);
     expect(before.every((height) => height <= 8), isTrue);
 
@@ -307,7 +307,7 @@ void main() {
       tester,
       const RecordingOverlay(phase: SpeechPhase.transcribing),
     );
-    expect(waveBars, findsNWidgets(32));
+    expect(waveBars, findsNWidgets(40));
     expect(barHeights(tester).every((height) => height <= 8), isTrue);
     await tester.pumpWidget(const SizedBox());
   });

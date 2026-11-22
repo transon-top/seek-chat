@@ -595,6 +595,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       if (previous == null || previous.noticeId == next.noticeId) return;
       final voice = next.voiceFailure;
       if (voice != null) {
+        if (voice == VoiceInputFailure.empty) {
+          showVoiceEmptyToast(context, voiceInputErrorText(strings, voice));
+          return;
+        }
         final needsSettings = voice == VoiceInputFailure.permissionDenied;
         _showToast(
           voiceInputErrorText(strings, voice),
@@ -741,7 +745,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       ),
                     ),
                   ),
-                  composer,
+                  // 录音 / 识别期间隐藏输入卡，让浮层渐变铺满底部（参照官方）。
+                  Visibility(
+                    visible: !speech.voiceBusy,
+                    maintainState: true,
+                    maintainAnimation: true,
+                    maintainSize: true,
+                    child: composer,
+                  ),
                 ],
               ),
               const Positioned(

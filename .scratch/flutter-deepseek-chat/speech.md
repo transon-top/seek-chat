@@ -27,7 +27,7 @@
 | 音色 | `stella`（默认，女声）/ `tide`（男声），存 `tts.voice`，开始朗读时读取 |
 | 互斥 | 录音与朗读不能同时进行；新意图优先，朗读中开始录音会先停朗读 |
 | 前后台 | v1 仅前台；进入非 `resumed` 状态即取消录音并停止朗读 |
-| 波形 | 浮层内 32 根波形条，复用 `SpeechState.level` 做约 30fps 插值缓动；真实频谱不进 v1 |
+| 波形 | 浮层内 40 根波形条，复用 `SpeechState.level` 做约 30fps 插值缓动；真实频谱不进 v1 |
 | 持久化 | 语音与音频不写数据库、不进历史归档、不做 TTS 缓存 |
 | 依赖 | 新增 `record`、`flutter_soloud`、`permission_handler`；不引入 `audio_session`、动效库 |
 
@@ -323,13 +323,12 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 
 ## 7. 波形与动画
 
-- 录音、识别、取消共用同一蓝色动态浮层：贴底覆盖输入卡与草稿行，约 60% 屏高，
+- 录音、识别、取消共用同一贴底浮层：覆盖输入卡与草稿行，约 60% 屏高，
   不盖顶部栏、不遮消息区、不加全屏遮罩、不响应点击。
-- 蓝区自绘 6 枚缓慢漂移、互相重叠的径向椭圆，形成动态不规则上缘；顶部全透明、
-  底部渐到实色；不引入渐变 / 动效库。
-- 高光锚定按下 / 移动的真实 pointer 坐标，随 `SpeechState.level` 平滑值脉动；
-  取消态不变色，仅把文案换成「松开取消」。
-- 波形 32 根（高 28、宽 2.4、间距 1.6），由 `record.onAmplitudeChanged(100ms)`
+- 蓝区为贴底平滑渐变，顶部全透明、自屏高约 62% 淡入到底部主色；不引入
+  渐变 / 动效库。录音期间隐藏输入卡。
+- 取消态整片转红，渐变、文案与波形同步变红，文案换成「松开取消」。
+- 波形 40 根（高 28、宽 2、间距 3.6），由 `record.onAmplitudeChanged(100ms)`
   的 dBFS 值映射到 `[-50, 0] → 0..1` 后做约 30fps 插值缓动；录音未开始时为
   静止低幅骨架。识别中保留低幅波形。
 - 电平与计时刷新不驱动整页重建，只重建浮层。
@@ -359,7 +358,7 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 | `voiceInputPermissionDenied` | 无法使用麦克风，请在系统设置中允许访问 | Microphone access is denied. Allow it in system settings. | 权限拒绝 |
 | `voiceInputNoDevice` | 未检测到麦克风 | No microphone detected | 无输入设备 |
 | `voiceInputFailed` | 语音识别失败，请稍后再试 | Speech recognition failed. Please try again later. | ASR 与录音失败 |
-| `voiceInputEmpty` | 未识别到语音内容 | No speech detected | 空录音 / 空结果 |
+| `voiceInputEmpty` | 未识别到内容 | No speech detected | 空录音 / 空结果 |
 | `voiceInputLimitReached` | 已达到单次录音时长上限 | Maximum recording length reached | 120 秒自动结束 |
 | `voiceInputInterrupted` | 录音已中断 | Recording interrupted | 来电 / 路由 / 中断 |
 | `ttsPlay` | 朗读 | Read aloud | 朗读按钮空闲态 |
@@ -462,14 +461,14 @@ idle ──点击可朗读回复 / 有 Key──▶ loading ──首块 PCM─�
 4. 录满 120 秒 → 提示上限并自动转写发送；文件不超过 8 MiB。
 5. 识别中无取消入口；切会话 / 进后台 / 来电 → 取消转写或丢弃录音，不插入文本，
    临时文件已删除。
-6. 静音 / 空结果 → 「未识别到语音内容」。
+6. 静音 / 空结果 → 屏幕居中深色胶囊「未识别到内容」（官方样式，2 s）。
 7. 断网、无效 Key、429 / 503 等 ASR 失败 → 统一「语音识别失败」。
 8. 生成中 / 附件上传中松手 → 只插入并提示对应原因；发送抛错文本留在输入框。
 9. 点击可朗读回复 → `loading` → 首帧即播；再次点击停止；点另一条切换；
    全程只有一条在读。
 10. 朗读中发送 / 停止生成 / 重新生成 / 切会话 / 进后台 → 立即停止。
 11. TTS 400 → 「这条回答暂时无法朗读」；401 / 402 / 429 / 503 文案符合 §6.2。
-12. 开启减少动画：朗读竖条静态、浮层蓝区与波形冻结；无障碍标签随状态变化。
+12. 开启减少动画：朗读竖条静态、浮层波形冻结；无障碍标签随状态变化。
 13. 中英双语、浅深主题下浮层、Toast、设置区文案正确。
 
 v1 截图第 6 项「朗读回答与语音输入」对应本节的 1–13；票 19 的验收对照表

@@ -624,7 +624,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get voiceInputFailed => '语音识别失败，请稍后再试';
 
   @override
-  String get voiceInputEmpty => '未识别到语音内容';
+  String get voiceInputEmpty => '未识别到内容';
 
   @override
   String get voiceInputLimitReached => '已达到单次录音时长上限';
