@@ -150,15 +150,29 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
           onPointerMove: _handleMove,
           onPointerUp: _handleUp,
           onPointerCancel: _handleCancel,
+          // 视觉 32 描边圆，点击区保持 40。
           child: SizedBox(
             width: 40,
             height: 40,
             child: Opacity(
               opacity: interactive ? 1 : 0.4,
-              child: Icon(
-                LucideIcons.mic,
-                size: 18,
-                color: colors.mutedForeground,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(color: colors.foreground, width: 1.5),
+                    ),
+                  ),
+                  Icon(
+                    LucideIcons.mic,
+                    size: 18,
+                    color: colors.foreground,
+                  ),
+                ],
               ),
             ),
           ),

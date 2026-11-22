@@ -135,9 +135,9 @@ void main() {
   ) async {
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
-    expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isFalse);
-    await tester.tap(find.byKey(const Key('send-button')));
-    expect(events, isEmpty);
+    // 空输入且无附件时不渲染发送按钮，只显示 + 与语音。
+    expect(find.byKey(const Key('send-button')), findsNothing);
+    expect(find.byKey(const Key('voice-button')), findsOneWidget);
 
     input.text = 'Hello';
     await tester.pumpWidget(host());
@@ -312,7 +312,7 @@ void main() {
   testWidgets('button matrix covers empty, text and reading states', (
     tester,
   ) async {
-    // 无文本无附件：+ 可用、麦克风显示、发送禁用。
+    // 无文本无附件：+ 可用、麦克风显示、发送隐藏。
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
     expect(
@@ -322,7 +322,7 @@ void main() {
       isNotNull,
     );
     expect(find.byKey(const Key('voice-button')), findsOneWidget);
-    expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isFalse);
+    expect(find.byKey(const Key('send-button')), findsNothing);
 
     // 有文本：麦克风隐藏、发送可用。
     input.text = 'Hello';
