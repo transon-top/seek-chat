@@ -97,7 +97,7 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
         child: Column(
           children: [
             Padding(
-              padding: const EdgeInsets.fromLTRB(8, 6, 16, 8),
+              padding: const EdgeInsets.fromLTRB(4, 6, 16, 8),
               child: Row(
                 children: [
                   Semantics(
@@ -112,13 +112,13 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                         color: colors.labelPrimary,
                       ),
                       constraints: const BoxConstraints.tightFor(
-                        width: 36,
+                        width: 44,
                         height: 44,
                       ),
                       padding: EdgeInsets.zero,
+                      style: IconButton.styleFrom(shape: const CircleBorder()),
                     ),
                   ),
-                  const SizedBox(width: 8),
                   Expanded(
                     child: TextField(
                       key: const Key('search-field'),
