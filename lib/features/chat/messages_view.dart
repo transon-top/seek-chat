@@ -204,14 +204,31 @@ class _ChatMessageListState extends State<ChatMessageList> {
   void _onScroll() {
     final position = _controller.position;
     final offset = position.pixels;
-    if (position.maxScrollExtent - offset - position.viewportDimension <
-        _stickyThreshold) {
-      _sticky = true;
+    // `maxScrollExtent` 已扣除视口高度；再减 viewportDimension 会让判断
+    // 恒为真，用户一旦上滑也会被流式更新拉回底部。
+    if (position.maxScrollExtent - offset < _stickyThreshold) {
+      _setSticky(true);
     } else if (offset < _lastOffset) {
-      _sticky = false;
+      _setSticky(false);
     }
     _lastOffset = offset;
     if (offset <= _loadMoreDistance) _expandWindow();
+  }
+
+  /// 跟随状态变化只影响悬浮按钮，延迟到帧末刷新，避开布局阶段的滚动通知。
+  void _setSticky(bool sticky) {
+    if (_sticky == sticky) return;
+    _sticky = sticky;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) setState(() {});
+    });
+  }
+
+  /// 回到底部：瞬时定位，流式内容增长时继续跟随。
+  void _jumpToBottom() {
+    if (!_controller.hasClients) return;
+    _setSticky(true);
+    _controller.jumpTo(_controller.position.maxScrollExtent);
   }
 
   /// 布局后若仍在跟随状态就跳到最新内容。懒加载下列表的
@@ -255,53 +272,126 @@ class _ChatMessageListState extends State<ChatMessageList> {
   Widget build(BuildContext context) {
     final messages = widget.messages;
     final anchorKey = _anchorKeyFor(_keyedMessageId);
-    return ScrollEdgeFade(
-      controller: _controller,
-      color: Theme.of(context).colorScheme.surface,
-      child: ListView.builder(
-        controller: _controller,
-        scrollCacheExtent: _correctionPhase == 0
-            ? null
-            : const ScrollCacheExtent.pixels(_measureCacheExtent),
-        padding: _listPadding,
-        itemCount: messages.length - _windowStart,
-        findChildIndexCallback: _indexFor,
-        itemBuilder: (context, index) {
-          final position = _windowStart + index;
-          final message = messages[position];
-          final view = _MessageView(
-            message: message,
-            versions: widget.versions[message.id],
-            isLast: position == messages.length - 1,
-            busy: widget.busy,
-            speech: widget.speech,
-            onReadAloud: widget.onReadAloud,
-            onEdit: widget.onEdit,
-            onSelectVersion: widget.onSelectVersion,
-            onRegenerate: widget.onRegenerate,
-            onContinue: widget.onContinue,
-            onRetryUpload: widget.onRetryUpload,
-          );
-          final item = Padding(
-            // 顶部留白只加在第一条消息之前，其余消息间距 16。
-            padding: EdgeInsets.only(top: position == 0 ? 0 : 16),
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: ConstrainedBox(
-                constraints: const BoxConstraints(maxWidth: 760),
-                child: view,
+    final reduceMotion =
+        MediaQuery.maybeOf(context)?.disableAnimations ?? false;
+    return Stack(
+      children: [
+        NotificationListener<ScrollMetricsNotification>(
+          // 流式渲染会逐帧撑高内容；尺寸变化也要重新贴底，不能只靠消息更新。
+          onNotification: (_) {
+            if (_sticky) _scheduleFollow();
+            return false;
+          },
+          child: ScrollEdgeFade(
+            controller: _controller,
+            color: Theme.of(context).colorScheme.surface,
+            child: ListView.builder(
+              controller: _controller,
+              scrollCacheExtent: _correctionPhase == 0
+                  ? null
+                  : const ScrollCacheExtent.pixels(_measureCacheExtent),
+              padding: _listPadding,
+              itemCount: messages.length - _windowStart,
+              findChildIndexCallback: _indexFor,
+              itemBuilder: (context, index) {
+                final position = _windowStart + index;
+                final message = messages[position];
+                final view = _MessageView(
+                  message: message,
+                  versions: widget.versions[message.id],
+                  isLast: position == messages.length - 1,
+                  busy: widget.busy,
+                  speech: widget.speech,
+                  onReadAloud: widget.onReadAloud,
+                  onEdit: widget.onEdit,
+                  onSelectVersion: widget.onSelectVersion,
+                  onRegenerate: widget.onRegenerate,
+                  onContinue: widget.onContinue,
+                  onRetryUpload: widget.onRetryUpload,
+                );
+                final item = Padding(
+                  // 顶部留白只加在第一条消息之前，其余消息间距 16。
+                  padding: EdgeInsets.only(top: position == 0 ? 0 : 16),
+                  child: Align(
+                    alignment: Alignment.topCenter,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 760),
+                      child: view,
+                    ),
+                  ),
+                );
+                return KeyedSubtree(
+                  // 消息 key 供前插历史时按 id 复用子项。
+                  key: ValueKey(message.id),
+                  // 锚点包住整条消息，量到的是条目顶端而非正文顶端。
+                  child: anchorKey != null && message.id == _anchorKeyId
+                      ? KeyedSubtree(key: anchorKey, child: item)
+                      : item,
+                );
+              },
+            ),
+          ),
+        ),
+        Positioned(
+          right: 16,
+          bottom: 12,
+          child: AnimatedSwitcher(
+            duration: reduceMotion
+                ? Duration.zero
+                : const Duration(milliseconds: 150),
+            transitionBuilder: (child, animation) => FadeTransition(
+              opacity: animation,
+              child: ScaleTransition(
+                scale: Tween<double>(begin: 0.9, end: 1).animate(animation),
+                child: child,
               ),
             ),
-          );
-          return KeyedSubtree(
-            // 消息 key 供前插历史时按 id 复用子项。
-            key: ValueKey(message.id),
-            // 锚点包住整条消息，量到的是条目顶端而非正文顶端。
-            child: anchorKey != null && message.id == _anchorKeyId
-                ? KeyedSubtree(key: anchorKey, child: item)
-                : item,
-          );
-        },
+            child: _sticky
+                ? const SizedBox.shrink()
+                : _ScrollToBottomButton(onPressed: _jumpToBottom),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// 回到底部悬浮按钮：内容区右下角，用户离开底部时出现。
+class _ScrollToBottomButton extends StatelessWidget {
+  const _ScrollToBottomButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = ShadTheme.of(context).colorScheme;
+    return Tooltip(
+      message: l10n.scrollToBottom,
+      child: Container(
+        decoration: BoxDecoration(
+          color: colors.card,
+          shape: BoxShape.circle,
+          border: Border.all(color: colors.border),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.08),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ShadIconButton.ghost(
+          key: const Key('scroll-to-bottom'),
+          onPressed: onPressed,
+          icon: const Icon(LucideIcons.arrowDown),
+          iconSize: 18,
+          width: 40,
+          height: 40,
+          padding: EdgeInsets.zero,
+          foregroundColor: colors.foreground,
+          hoverForegroundColor: colors.foreground,
+        ),
       ),
     );
   }
@@ -733,6 +823,13 @@ class _AssistantMessageView extends StatelessWidget {
     final canCopy =
         copyText.isNotEmpty && reply.status != ReplyStatus.streaming;
     final continuing = canContinueReply(reply) && isLast;
+    // 等待首包：还没有思考、工具行或正文时显示三点呼吸（同 chat-demo）。
+    final waiting =
+        reply.isInFlight &&
+        !refused &&
+        view.steps.isEmpty &&
+        view.answer == null &&
+        reply.thinking != true;
     return Semantics(
       label: strings.assistantReply,
       container: true,
@@ -765,7 +862,7 @@ class _AssistantMessageView extends StatelessWidget {
                   textStyle: markdownBodyStyle(context),
                 ),
               ),
-            if (reply.isInFlight && !refused) const _StreamingCursor(),
+            if (waiting) const _WaitingDots(),
             if (!refused && !reply.isInFlight && view.searchResults.isNotEmpty)
               _SourcePill(sources: view.searchResults),
             Padding(
@@ -957,21 +1054,22 @@ class _ReplyError extends StatelessWidget {
   }
 }
 
-/// 流式光标：2×16 主色竖条，650 ms 往返；减少动画时静止（§3.8）。
-class _StreamingCursor extends StatefulWidget {
-  const _StreamingCursor({this.height = 16});
-
-  final double height;
+/// 等待首包：3 个 6 px 圆点，900 ms 循环、透明度 0.3→1、
+/// 相邻相位错开 100 ms；减少动画时静止（同 chat-demo）。
+class _WaitingDots extends StatefulWidget {
+  const _WaitingDots();
 
   @override
-  State<_StreamingCursor> createState() => _StreamingCursorState();
+  State<_WaitingDots> createState() => _WaitingDotsState();
 }
 
-class _StreamingCursorState extends State<_StreamingCursor>
+class _WaitingDotsState extends State<_WaitingDots>
     with SingleTickerProviderStateMixin {
+  static const _cycle = Duration(milliseconds: 900);
+
   late final AnimationController _controller = AnimationController(
     vsync: this,
-    duration: const Duration(milliseconds: 650),
+    duration: _cycle,
   );
   bool _animate = true;
 
@@ -980,10 +1078,10 @@ class _StreamingCursorState extends State<_StreamingCursor>
     super.didChangeDependencies();
     _animate = !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
     if (_animate && !_controller.isAnimating) {
-      _controller.repeat(reverse: true);
+      _controller.repeat();
     } else if (!_animate && _controller.isAnimating) {
       _controller.stop();
-      _controller.value = 1;
+      _controller.value = 0;
     }
   }
 
@@ -993,21 +1091,44 @@ class _StreamingCursorState extends State<_StreamingCursor>
     super.dispose();
   }
 
+  /// chat-demo 的关键帧：0%/100% 为 0.3，33%–66% 为 1。
+  double _opacityAt(double phase) {
+    if (phase < 0.33) return 0.3 + 0.7 * (phase / 0.33);
+    if (phase < 0.66) return 1;
+    return 1 - 0.7 * ((phase - 0.66) / 0.34);
+  }
+
   @override
   Widget build(BuildContext context) {
     final colors = ShadTheme.of(context).colorScheme;
-    return Padding(
-      padding: const EdgeInsets.only(top: 2),
-      child: AnimatedBuilder(
-        animation: _controller,
-        builder: (context, child) => Opacity(
-          opacity: _animate ? 0.2 + _controller.value * 0.8 : 1,
-          child: child,
-        ),
-        child: Container(
-          width: 2,
-          height: widget.height,
-          color: colors.primary,
+    return ExcludeSemantics(
+      child: SizedBox(
+        key: const Key('waiting-dots'),
+        height: 34,
+        child: Row(
+          children: [
+            for (var index = 0; index < 3; index++) ...[
+              if (index > 0) const SizedBox(width: 6),
+              AnimatedBuilder(
+                animation: _controller,
+                builder: (context, child) {
+                  final phase = (_controller.value - index * 0.1 / 0.9) % 1;
+                  return Opacity(
+                    opacity: _animate ? _opacityAt(phase) : 1,
+                    child: child,
+                  );
+                },
+                child: Container(
+                  width: 6,
+                  height: 6,
+                  decoration: BoxDecoration(
+                    color: colors.mutedForeground,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+            ],
+          ],
         ),
       ),
     );
@@ -1100,10 +1221,6 @@ class _ThinkingAreaState extends State<_ThinkingArea> {
                         ),
                       ),
                     ),
-                    if (reply.isInFlight) ...[
-                      const SizedBox(width: 4),
-                      const _StreamingCursor(height: 12),
-                    ],
                     const SizedBox(width: 4),
                     AnimatedRotation(
                       turns: _open ? 0 : -0.5,

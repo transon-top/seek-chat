@@ -1406,6 +1406,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open system settings'**
   String get settingsOpenSystemSettings;
+
+  /// No description provided for @scrollToBottom.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to bottom'**
+  String get scrollToBottom;
 }
 
 class _AppLocalizationsDelegate
