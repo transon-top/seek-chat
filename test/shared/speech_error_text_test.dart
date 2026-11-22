@@ -18,7 +18,7 @@ void main() {
       voiceInputErrorText(en, VoiceInputFailure.failed),
       'Speech recognition failed. Please try again later.',
     );
-    expect(voiceInputErrorText(zh, VoiceInputFailure.empty), '未识别到语音内容');
+    expect(voiceInputErrorText(zh, VoiceInputFailure.empty), '未识别到内容');
     expect(
       voiceInputErrorText(zh, VoiceInputFailure.limitReached),
       '已达到单次录音时长上限',

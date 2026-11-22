@@ -169,7 +169,7 @@ class Composer extends StatelessWidget {
                                     : onTogglePanel,
                               ),
                               if (!hasText && !busy) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 4),
                                 VoiceButton(
                                   phase: phase,
                                   enabled: !reading,
@@ -182,7 +182,7 @@ class Composer extends StatelessWidget {
                               ],
                               // 无可发送内容（空文本且无附件）时不渲染发送按钮。
                               if (busy || hasText || attachments.isNotEmpty) ...[
-                                const SizedBox(width: 8),
+                                const SizedBox(width: 4),
                                 SendButton(
                                   busy: busy,
                                   enabled:
@@ -324,7 +324,7 @@ class _PlusButton extends StatelessWidget {
       message: open ? l10n.closeAttachmentPanel : l10n.addAttachment,
       child: Opacity(
         opacity: onPressed == null ? 0.4 : 1,
-        // 视觉 32 描边圆，点击区保持 40。
+        // 视觉 24 描边圆，点击区保持 40（参照 DeepSeek 官方输入区）。
         child: SizedBox(
           width: 40,
           height: 40,
@@ -332,8 +332,8 @@ class _PlusButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Container(
-                width: 28,
-                height: 28,
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
                   border: Border.all(color: colors.foreground, width: 1.5),
@@ -377,8 +377,8 @@ class _PlusButton extends StatelessWidget {
   }
 }
 
-/// 发送 / 停止圆形按钮：可用为主色，禁用为主色 35%，生成中同底换成实心方块停止图标
-/// （照搬 chat-demo，ui.md §5.2）。
+/// 发送 / 停止圆形按钮：视觉 28 实心圆（点击区 40），可用为主色，禁用为主色 35%，
+/// 生成中同底换成实心方块停止图标（参照 DeepSeek 官方输入区，ui.md §5.2）。
 class SendButton extends StatelessWidget {
   const SendButton({
     super.key,
@@ -406,21 +406,27 @@ class SendButton extends StatelessWidget {
           child: GestureDetector(
             key: const Key('stop-button'),
             onTap: onStop,
-            child: Container(
+            child: SizedBox(
               width: 40,
               height: 40,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: colors.primary,
-                shape: BoxShape.circle,
-              ),
-              // chat-demo IconStopFill16：16 画布内 12×12 实心圆角方块。
-              child: Container(
-                width: 12,
-                height: 12,
-                decoration: BoxDecoration(
-                  color: colors.primaryForeground,
-                  borderRadius: BorderRadius.circular(2.9),
+              child: Center(
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: colors.primary,
+                    shape: BoxShape.circle,
+                  ),
+                  // 实心圆角方块，按官方比例收在 28 圆内。
+                  child: Container(
+                    width: 10,
+                    height: 10,
+                    decoration: BoxDecoration(
+                      color: colors.primaryForeground,
+                      borderRadius: BorderRadius.circular(2.5),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -437,22 +443,28 @@ class SendButton extends StatelessWidget {
         child: GestureDetector(
           key: const Key('send-button'),
           onTap: enabled ? onSend : null,
-          child: AnimatedContainer(
-            duration: reduceMotion
-                ? Duration.zero
-                : const Duration(milliseconds: 150),
+          child: SizedBox(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: enabled
-                  ? colors.primary
-                  : colors.primary.withValues(alpha: 0.35),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              LucideIcons.arrowUp,
-              size: 18,
-              color: colors.primaryForeground,
+            child: Center(
+              child: AnimatedContainer(
+                duration: reduceMotion
+                    ? Duration.zero
+                    : const Duration(milliseconds: 150),
+                width: 28,
+                height: 28,
+                decoration: BoxDecoration(
+                  color: enabled
+                      ? colors.primary
+                      : colors.primary.withValues(alpha: 0.35),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  LucideIcons.arrowUp,
+                  size: 20,
+                  color: colors.primaryForeground,
+                ),
+              ),
             ),
           ),
         ),

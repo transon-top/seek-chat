@@ -2,13 +2,11 @@ import 'dart:async';
 
 import 'package:flutter/semantics.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
-import 'voice_hotspot.dart';
 
 /// 取消阈值：以按下瞬间的全局 Y 为基准，上滑 ≥80dp 进入取消态
 /// （`speech.md` §3.2）。纯函数，便于单测。
@@ -22,7 +20,7 @@ bool shouldCancelVoice({
 /// （`speech.md` §2.1、§3.2；ui.md §5.8）。
 ///
 /// 录音与识别期间按钮被浮层覆盖，但保留在语义树里，读屏用户可结束或取消。
-class VoiceButton extends ConsumerStatefulWidget {
+class VoiceButton extends StatefulWidget {
   const VoiceButton({
     super.key,
     required this.phase,
@@ -43,11 +41,10 @@ class VoiceButton extends ConsumerStatefulWidget {
   final VoidCallback onCancelRecording;
 
   @override
-  ConsumerState<VoiceButton> createState() => _VoiceButtonState();
+  State<VoiceButton> createState() => _VoiceButtonState();
 }
 
-class _VoiceButtonState extends ConsumerState<VoiceButton> {
-  late final VoiceHotspot _hotspot = ref.read(voiceHotspotProvider.notifier);
+class _VoiceButtonState extends State<VoiceButton> {
   int? _pointer;
   double _startY = 0;
   bool _armed = false;
@@ -81,13 +78,11 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
     _pointer = event.pointer;
     _startY = event.position.dy;
     _armed = false;
-    _hotspot.set(event.position);
     widget.onStart();
   }
 
   void _handleMove(PointerMoveEvent event) {
     if (event.pointer != _pointer) return;
-    _hotspot.set(event.position);
     final armed = shouldCancelVoice(
       startY: _startY,
       currentY: event.position.dy,
@@ -100,13 +95,10 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
     widget.onCancelArmedChanged(armed);
   }
 
-  void _releaseHotspot() => _hotspot.set(null);
-
   void _handleUp(PointerUpEvent event) {
     if (event.pointer != _pointer) return;
     _pointer = null;
     _armed = false;
-    _releaseHotspot();
     widget.onEnd();
   }
 
@@ -114,14 +106,7 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
     if (event.pointer != _pointer) return;
     _pointer = null;
     _armed = false;
-    _releaseHotspot();
     widget.onGestureCancel();
-  }
-
-  @override
-  void dispose() {
-    if (_pointer != null) _releaseHotspot();
-    super.dispose();
   }
 
   @override
@@ -150,7 +135,7 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
           onPointerMove: _handleMove,
           onPointerUp: _handleUp,
           onPointerCancel: _handleCancel,
-          // 视觉 32 描边圆，点击区保持 40。
+          // 视觉 24 描边圆，点击区保持 40（参照 DeepSeek 官方输入区）。
           child: SizedBox(
             width: 40,
             height: 40,
@@ -160,8 +145,8 @@ class _VoiceButtonState extends ConsumerState<VoiceButton> {
                 alignment: Alignment.center,
                 children: [
                   Container(
-                    width: 28,
-                    height: 28,
+                    width: 24,
+                    height: 24,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
                       border: Border.all(color: colors.foreground, width: 1.5),
