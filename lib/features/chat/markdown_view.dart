@@ -3,11 +3,11 @@ import 'dart:math' as math;
 
 import 'package:flutter/scheduler.dart';
 import 'package:gpt_markdown/custom_widgets/code_field.dart';
+import 'package:gpt_markdown/custom_widgets/unordered_ordered_list.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_core/mermaid_core.dart' as mermaid_core;
 import 'package:mermaid_flutter/mermaid_flutter.dart';
-import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../app/markdown_theme.dart';
@@ -184,7 +184,15 @@ class _MarkdownViewState extends State<MarkdownView> {
             // chat-demo 不识别 GitHub Alert，按普通引用块渲染。
             alertBuilder: (context, details) => details.asBlockQuote(),
             // chat-demo 的任务项画成 `☑`/`□` 文本，不用 Material 复选框。
-            checkboxBuilder: _taskCheckbox,
+            checkboxBuilder: (context, checked, content, checkboxStyle) =>
+                _taskCheckbox(
+                  context,
+                  checked,
+                  content,
+                  style ?? DefaultTextStyle.of(context).style,
+                ),
+            orderedListBuilder: _orderedListItem,
+            unOrderedListBuilder: _unorderedListItem,
             // 思考内容比正文更紧凑。
             styleSheet: widget.dense
                 ? const GptMarkdownStyleSheet(blockSpacing: 12)
@@ -238,35 +246,138 @@ String _detachedTaskItems(String text) => text.replaceAllMapped(
   (match) => '',
 );
 
-/// 任务复选框：用同色的 Lucide 方框替代 Material 复选框的高对比填充。
+/// 列表项间距 6（官方 app `li` 的 margin-top）。
+///
+/// `gpt_markdown` 没有项间距样式，项目靠 `WidgetSpan` 的基线放置：给内容加
+/// 底部留白只把行盒向下撑 6，文字基线不动。
+const double _listItemGap = 6;
+
+/// 有序列表项：序号 `labelTertiary` 常规字重、左缩进 4、与正文间距 7
+/// （官方 app 实测）。
+Widget _orderedListItem(
+  BuildContext context,
+  String no,
+  Widget child,
+  GptMarkdownConfig config,
+) {
+  final colors = AppMarkdownColors.of(context);
+  final marker = (config.style ?? const TextStyle()).copyWith(
+    color: colors.labelTertiary,
+    fontWeight: FontWeight.w400,
+  );
+  return MarkdownTextScaling.wrap(
+    Row(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      textBaseline: TextBaseline.alphabetic,
+      children: [
+        Padding(
+          padding: const EdgeInsetsDirectional.only(start: 4, end: 7),
+          child: Text('$no.', style: marker),
+        ),
+        Flexible(
+          child: Padding(
+            padding: const EdgeInsets.only(bottom: _listItemGap),
+            child: child,
+          ),
+        ),
+      ],
+    ),
+    enabled: config.blocksRenderDirectly,
+  );
+}
+
+/// 无序列表项：项目符号沿用包内的悬挂缩进，仅补项间距与符号颜色。
+Widget _unorderedListItem(
+  BuildContext context,
+  Widget child,
+  GptMarkdownConfig config,
+) {
+  final colors = AppMarkdownColors.of(context);
+  final fontSize =
+      config.style?.fontSize ?? DefaultTextStyle.of(context).style.fontSize;
+  return UnorderedListView(
+    scalesItsOwnText: config.blocksRenderDirectly,
+    padding: 6,
+    spacing: 10,
+    bulletSize: 0.3 * (fontSize ?? 14),
+    bulletColor: colors.labelTertiary,
+    textDirection: config.textDirection,
+    child: Padding(
+      padding: const EdgeInsets.only(bottom: _listItemGap),
+      child: child,
+    ),
+  );
+}
+
+/// 任务复选框：官方 app 用的是 `☑`/`□` 字形，与正文同色、贴着文案。
 Widget _taskCheckbox(
   BuildContext context,
   bool checked,
   Widget content,
-  CheckboxStyle style,
+  TextStyle style,
 ) {
   final colors = AppMarkdownColors.of(context);
-  return Row(
-    mainAxisSize: MainAxisSize.min,
-    textBaseline: TextBaseline.alphabetic,
-    crossAxisAlignment: CrossAxisAlignment.baseline,
-    children: [
-      Text.rich(
-        WidgetSpan(
-          alignment: PlaceholderAlignment.middle,
-          child: Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: Icon(
-              checked ? LucideIcons.squareCheck : LucideIcons.square,
-              size: 16,
-              color: colors.labelSecondary,
-            ),
-          ),
-        ),
-      ),
-      Flexible(child: content),
-    ],
+  return Padding(
+    padding: const EdgeInsets.only(bottom: _listItemGap),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      textBaseline: TextBaseline.alphabetic,
+      crossAxisAlignment: CrossAxisAlignment.baseline,
+      children: [
+        // `□` 用字形；`☑` 在 Android 会回退成彩色 emoji（VS15 也拦不住），
+        // 所以选中态自绘，保持与 `□` 同形的单色方框。
+        checked
+            ? Text.rich(
+                WidgetSpan(
+                  alignment: PlaceholderAlignment.middle,
+                  child: _CheckedBox(color: colors.labelPrimary),
+                ),
+              )
+            : Text('□', style: style.copyWith(color: colors.labelPrimary)),
+        Flexible(child: content),
+      ],
+    ),
   );
+}
+
+/// 已勾选任务项：13×13 直角方框 + 勾，笔触点与 `□` 字形相当。
+class _CheckedBox extends StatelessWidget {
+  const _CheckedBox({required this.color});
+
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) =>
+      CustomPaint(size: const Size(13, 13), painter: _CheckedBoxPainter(color));
+}
+
+class _CheckedBoxPainter extends CustomPainter {
+  const _CheckedBoxPainter(this.color);
+
+  final Color color;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final stroke = Paint()
+      ..color = color
+      ..style = PaintingStyle.stroke
+      ..strokeCap = StrokeCap.round
+      ..strokeJoin = StrokeJoin.round;
+    canvas.drawRect(
+      const Rect.fromLTWH(0.55, 0.55, 11.9, 11.9),
+      stroke..strokeWidth = 1.1,
+    );
+    final check = Path()
+      ..moveTo(2.8, 6.9)
+      ..lineTo(5.4, 9.4)
+      ..lineTo(10.4, 3.6);
+    canvas.drawPath(check, stroke..strokeWidth = 1.5);
+  }
+
+  @override
+  bool shouldRepaint(_CheckedBoxPainter oldDelegate) =>
+      oldDelegate.color != color;
 }
 
 /// 标题间距：`h1`-`h3` 上方 32，`h4`-`h6` 只保留块间距 16。

@@ -78,7 +78,9 @@ class Composer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
-              padding: const EdgeInsets.fromLTRB(16, 12, 12, 10),
+              // 下 5：按钮行 40 命中区比 29 胶囊高 5.5，胶囊下缘到卡片边
+              // 才是官方 app 的约 10。
+              padding: const EdgeInsets.fromLTRB(16, 12, 12, 5),
               decoration: BoxDecoration(
                 color: colors.card,
                 borderRadius: BorderRadius.circular(28),
@@ -103,7 +105,8 @@ class Composer extends StatelessWidget {
                       controller: input,
                       focusNode: inputFocus,
                       readOnly: voiceBusy,
-                      minLines: 2,
+                      // 官方 app 窄屏输入区约 1.25 行高；单行起步，随内容增高。
+                      minLines: 1,
                       maxLines: 5,
                       padding: EdgeInsets.zero,
                       decoration: ShadDecoration.none,
@@ -124,7 +127,8 @@ class Composer extends StatelessWidget {
                       ),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  // 官方 app：输入框下缘到按钮行 = 4 外边距 + 12 行内边距。
+                  const SizedBox(height: 16),
                   Row(
                     children: [
                       // 左侧开关可横向滚动，右侧按钮定宽不动，避免窄屏溢出。
@@ -169,7 +173,6 @@ class Composer extends StatelessWidget {
                                     : onTogglePanel,
                               ),
                               if (!hasText && !busy) ...[
-                                const SizedBox(width: 4),
                                 VoiceButton(
                                   phase: phase,
                                   enabled: !reading,
@@ -181,7 +184,9 @@ class Composer extends StatelessWidget {
                                 ),
                               ],
                               // 无可发送内容（空文本且无附件）时不渲染发送按钮。
-                              if (busy || hasText || attachments.isNotEmpty) ...[
+                              if (busy ||
+                                  hasText ||
+                                  attachments.isNotEmpty) ...[
                                 const SizedBox(width: 4),
                                 SendButton(
                                   busy: busy,
@@ -225,13 +230,16 @@ class Composer extends StatelessWidget {
   }
 }
 
+const _lightToggleIdleBorder = Color(0xFFEDEDED);
+const _lightToggleFill = Color(0xFFEDF3FE);
+const _lightToggleBorder = Color(0xFFD3E1FF);
 const _darkToggleFill = Color(0xFF283142);
 const _darkToggleBorder = Color(0xFF4868B2);
 const _darkToggleForeground = Color(0xFF679EFE);
 const _darkToggleIdleForeground = Color(0xFFF9FAFB);
 
-/// 深度思考 / 智能搜索胶囊；激活为浅蓝底 + 蓝描边 + 蓝色图标文字（ui.md §5.2）。
-/// 深色取值照搬 chat-demo（blue-900 填充 / blue-600 描边 / blue-400 前景）。
+/// 深度思考 / 智能搜索胶囊；照搬官方 app：高 29、未激活近黑字、激活浅蓝底 +
+/// 蓝描边 + 蓝图标文字。深色取值照搬 chat-demo（blue-900 / blue-600 / blue-400）。
 class ComposerToggle extends StatelessWidget {
   const ComposerToggle({
     super.key,
@@ -255,8 +263,7 @@ class ComposerToggle extends StatelessWidget {
     final dark = theme.brightness == Brightness.dark;
     final foreground = selected
         ? (dark ? _darkToggleForeground : colors.primary)
-        : (dark ? _darkToggleIdleForeground : colors.mutedForeground);
-    final reduceMotion = MediaQuery.of(context).disableAnimations;
+        : (dark ? _darkToggleIdleForeground : colors.foreground);
     return Semantics(
       button: true,
       selected: selected,
@@ -265,39 +272,33 @@ class ComposerToggle extends StatelessWidget {
       child: GestureDetector(
         onTap: enabled ? () => onChanged(!selected) : null,
         behavior: HitTestBehavior.opaque,
-        child: AnimatedContainer(
-          duration: reduceMotion
-              ? Duration.zero
-              : const Duration(milliseconds: 150),
-          height: 34,
-          padding: const EdgeInsets.symmetric(horizontal: 10),
+        // 官方 app 点击后底色 / 描边 / 文字同帧切换，不做渐变。
+        child: Container(
+          constraints: const BoxConstraints(minHeight: 29),
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
           decoration: BoxDecoration(
             color: selected
-                ? (dark
-                      ? _darkToggleFill
-                      : colors.primary.withValues(alpha: 0.10))
+                ? (dark ? _darkToggleFill : _lightToggleFill)
                 : Colors.transparent,
             borderRadius: BorderRadius.circular(999),
             border: Border.all(
               color: selected
-                  ? (dark
-                        ? _darkToggleBorder
-                        : colors.primary.withValues(alpha: 0.45))
-                  : colors.border,
+                  ? (dark ? _darkToggleBorder : _lightToggleBorder)
+                  : (dark ? colors.border : _lightToggleIdleBorder),
             ),
           ),
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(icon, size: 15, color: foreground),
-              const SizedBox(width: 6),
+              Icon(icon, size: 14, color: foreground),
+              const SizedBox(width: 5),
               Text(
                 label,
                 style: TextStyle(
-                  fontSize: 12.5,
-                  height: 16 / 12.5,
+                  fontSize: 13,
+                  height: 18 / 13,
                   color: foreground,
-                  fontWeight: selected ? FontWeight.w500 : FontWeight.w400,
+                  fontWeight: FontWeight.w500,
                 ),
               ),
             ],
@@ -324,7 +325,7 @@ class _PlusButton extends StatelessWidget {
       message: open ? l10n.closeAttachmentPanel : l10n.addAttachment,
       child: Opacity(
         opacity: onPressed == null ? 0.4 : 1,
-        // 视觉 24 描边圆，点击区保持 40（参照 DeepSeek 官方输入区）。
+        // 视觉 20 描边圆，点击区保持 40（参照官方 app）。
         child: SizedBox(
           width: 40,
           height: 40,
@@ -332,11 +333,11 @@ class _PlusButton extends StatelessWidget {
             alignment: Alignment.center,
             children: [
               Container(
-                width: 24,
-                height: 24,
+                width: 20,
+                height: 20,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: colors.foreground, width: 1.5),
+                  border: Border.all(color: colors.foreground, width: 1.2),
                 ),
               ),
               ShadIconButton.ghost(
@@ -360,10 +361,10 @@ class _PlusButton extends StatelessWidget {
                   child: Icon(
                     open ? LucideIcons.x : LucideIcons.plus,
                     key: ValueKey(open),
-                    size: 18,
+                    size: 11,
                   ),
                 ),
-                iconSize: 18,
+                iconSize: 11,
                 width: 40,
                 height: 40,
                 padding: EdgeInsets.zero,
