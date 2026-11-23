@@ -100,6 +100,7 @@ void main() {
     SpeechPhase phase = SpeechPhase.idle,
     List<DraftAttachment> attachments = const [],
     Map<String, UploadTask> tasks = const {},
+    bool showKeyPrompt = false,
   }) => app(
     locale: locale,
     brightness: brightness,
@@ -124,6 +125,8 @@ void main() {
           onRemoveAttachment: (_) {},
           onSend: () {},
           onStop: () {},
+          showKeyPrompt: showKeyPrompt,
+          onKeyPrompt: showKeyPrompt ? () {} : null,
           onVoiceStart: () {},
           onVoiceEnd: () {},
           onVoicePointerCancel: () {},
@@ -184,6 +187,22 @@ void main() {
             locale: locale,
             brightness: brightness,
             attachmentPanel: panel(library),
+          ),
+        );
+        await tester.pumpAndSettle();
+        expectNoOverflow(tester);
+
+        // ZH
+        // 无 Key：输入卡上方的 Key Prompt 在 320 宽 / 2x 下不溢出。
+        //
+        // EN
+        // No key: the Key Prompt above the composer does not overflow at 320 wide / 2x.
+        await tester.pumpWidget(
+          host(
+            locale: locale,
+            brightness: brightness,
+            attachmentPanel: panel(library),
+            showKeyPrompt: true,
           ),
         );
         await tester.pumpAndSettle();

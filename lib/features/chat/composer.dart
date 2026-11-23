@@ -38,12 +38,17 @@ class Composer extends StatelessWidget {
     required this.onRemoveAttachment,
     required this.onSend,
     required this.onStop,
+    this.showKeyPrompt = false,
+    this.onKeyPrompt,
     required this.onVoiceStart,
     required this.onVoiceEnd,
     required this.onVoicePointerCancel,
     required this.onVoiceCancelArmed,
     required this.onVoiceCancel,
-  });
+  }) : assert(
+         !showKeyPrompt || onKeyPrompt != null,
+         'The Key Prompt must be tappable.',
+       );
 
   final TextEditingController input;
   final FocusNode inputFocus;
@@ -62,6 +67,15 @@ class Composer extends StatelessWidget {
   final ValueChanged<String> onRemoveAttachment;
   final VoidCallback onSend;
   final VoidCallback onStop;
+
+  /// ZH
+  /// 无 API Key 时常驻的 Key Prompt（`GLOSSARY.md`）。
+  ///
+  /// EN
+  /// The persistent Key Prompt shown while no API Key is saved (see `GLOSSARY.md`).
+  final bool showKeyPrompt;
+  final VoidCallback? onKeyPrompt;
+
   final VoidCallback onVoiceStart;
   final VoidCallback onVoiceEnd;
   final VoidCallback onVoicePointerCancel;
@@ -83,6 +97,14 @@ class Composer extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
+            if (showKeyPrompt) ...[
+              _KeyPrompt(
+                message: l10n.keyPromptMessage,
+                action: l10n.keyPromptAction,
+                onTap: onKeyPrompt,
+              ),
+              const SizedBox(height: 8),
+            ],
             Container(
               // ZH
               // 下 5：按钮行 40 命中区比 29 胶囊高 5.5，胶囊下缘到卡片边
@@ -251,6 +273,91 @@ class Composer extends StatelessWidget {
                   : const SizedBox(width: double.infinity),
             ),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+const _lightKeyPromptFill = Color(0xFFFFF7E6);
+const _lightKeyPromptAccent = Color(0xFFB45309);
+const _darkKeyPromptFill = Color(0xFF3A2F1F);
+const _darkKeyPromptAccent = Color(0xFFF5B544);
+
+/// ZH
+/// Key Prompt：输入卡上方的可点击警示条，整条读作一个按钮。
+///
+/// EN
+/// Key Prompt: tappable warning bar above the composer, read as one button.
+class _KeyPrompt extends StatelessWidget {
+  const _KeyPrompt({
+    required this.message,
+    required this.action,
+    required this.onTap,
+  });
+
+  final String message;
+  final String action;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final theme = ShadTheme.of(context);
+    final colors = theme.colorScheme;
+    final dark = theme.brightness == Brightness.dark;
+    final accent = dark ? _darkKeyPromptAccent : _lightKeyPromptAccent;
+    return Semantics(
+      button: true,
+      label: '$message $action',
+      onTap: onTap,
+      excludeSemantics: true,
+      child: GestureDetector(
+        key: const Key('key-prompt'),
+        behavior: HitTestBehavior.opaque,
+        onTap: onTap,
+        // shortcut: prompt text scaling is capped at 1.4× so the trailing action
+        // cannot squeeze the message into a one-glyph column on narrow screens;
+        // revisit if the copy shortens.
+        child: MediaQuery.withClampedTextScaling(
+          maxScaleFactor: 1.4,
+          child: Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            decoration: BoxDecoration(
+              color: dark ? _darkKeyPromptFill : _lightKeyPromptFill,
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Row(
+              children: [
+                Icon(LucideIcons.triangleAlert, size: 16, color: accent),
+                const SizedBox(width: 8),
+                Expanded(
+                  // ZH
+                  // 不设 maxLines：大字号下宁可多占行，也不裁切文案。
+                  //
+                  // EN
+                  // No maxLines: at large text scales extra lines beat clipped copy.
+                  child: Text(
+                    message,
+                    style: TextStyle(
+                      fontSize: 13,
+                      height: 18 / 13,
+                      color: colors.foreground,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Text(
+                  action,
+                  style: TextStyle(
+                    fontSize: 13,
+                    height: 18 / 13,
+                    fontWeight: FontWeight.w500,
+                    color: accent,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

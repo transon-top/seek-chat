@@ -309,12 +309,17 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
     }
   }
 
-  Future<void> _openSettings() => showSettingsSheet(
+  Future<void> _openSettings({
+    SettingsView initialView = SettingsView.general,
+    bool focusApiKey = false,
+  }) => showSettingsSheet(
     context,
     dataManagement: HistorySection(
       stopGeneration: _stopAllGenerations,
       onImported: _historyImported,
     ),
+    initialView: initialView,
+    focusApiKey: focusApiKey,
   );
 
   @override
@@ -353,6 +358,9 @@ class _ChatHomeState extends ConsumerState<ChatHome> {
           onNewChat: _newChat,
           onSessionCreated: _created,
           onSessionDiscarded: _discarded,
+          onOpenKeySettings: () => unawaited(
+            _openSettings(initialView: SettingsView.data, focusApiKey: true),
+          ),
           drawer: SessionDrawer(
             currentSessionId: current,
             onOpen: _open,
