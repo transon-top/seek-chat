@@ -627,6 +627,48 @@ abstract class AppLocalizations {
   /// **'Could not load chats'**
   String get sessionsLoadFailed;
 
+  /// No description provided for @startupFailedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot open SeekChat'**
+  String get startupFailedTitle;
+
+  /// No description provided for @startupFailedBody.
+  ///
+  /// In en, this message translates to:
+  /// **'Local data could not be read. Try again; if the problem persists, clear local chats and attachments to start over.'**
+  String get startupFailedBody;
+
+  /// No description provided for @startupClearData.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear local chats and attachments'**
+  String get startupClearData;
+
+  /// No description provided for @startupClearDataConfirmTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear local chats and attachments?'**
+  String get startupClearDataConfirmTitle;
+
+  /// No description provided for @startupClearDataConfirmBody.
+  ///
+  /// In en, this message translates to:
+  /// **'All chats, messages, and attachment originals will be permanently deleted. Settings and the API key are kept. This cannot be undone.'**
+  String get startupClearDataConfirmBody;
+
+  /// No description provided for @startupClearDataConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Clear'**
+  String get startupClearDataConfirm;
+
+  /// No description provided for @startupClearDataFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not clear data. Try again.'**
+  String get startupClearDataFailed;
+
   /// No description provided for @chatEmptyTitle.
   ///
   /// In en, this message translates to:

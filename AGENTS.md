@@ -57,11 +57,13 @@ Release 不写样本。
 只有被两个以上功能复用的代码才进 `shared/`。`shared/` 不得 import
 `features/`，功能之间不直接 import（先下沉到 `shared/`）。
 
-**启动顺序**（`lib/main.dart`）：打开 drift 数据库 → `resetInterruptedReplies()`
-把残留 `pending`/`streaming` 置为 `stopped` → 读 `SharedPreferences` →
-debug 样本 → 附件孤儿清理 → `runApp(ProviderScope(overrides: ...))` 注入
-database / repository / attachmentStore / preferences 四个实例。测试同样用
-override + `NativeDatabase.memory()`。
+**启动顺序**（`lib/app/startup.dart`，`main()` 只组装依赖并 `runApp`）：读
+`SharedPreferences` → 打开 drift 数据库并 `resetInterruptedReplies()` 把残留
+`pending`/`streaming` 置为 `stopped` → debug 样本 → 附件孤儿清理 →
+`runApp(ProviderScope(overrides: ...))` 注入 database / repository /
+attachmentStore / preferences 四个实例。偏好、数据库与收尾失败进入
+`ProviderScope` 外的启动失败页（重试 / 清除本地会话与附件）；样本与清理失败
+不阻塞。测试同样用 override + `NativeDatabase.memory()`。
 
 **状态管理**：`flutter_riverpod` 3.5 手写 Provider，不用 `riverpod_generator`。
 基础设施 Provider 集中在 `lib/shared/providers.dart`。会话列表用
