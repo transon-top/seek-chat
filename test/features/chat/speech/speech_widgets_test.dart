@@ -322,7 +322,11 @@ void main() {
     );
     await tester.pumpAndSettle();
     expect(find.text('松手发送，上滑取消'), findsOneWidget);
+    // ZH
     // 漂移与高光脉动由 ticker 驱动；冻结后不再请求帧。
+    //
+    // EN
+    // Drift and highlight pulse are ticker-driven; a frozen overlay requests no frames.
     expect(tester.binding.hasScheduledFrame, isFalse);
     final before = barHeights(tester);
 

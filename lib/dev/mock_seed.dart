@@ -5,35 +5,66 @@ import '../shared/data/database.dart';
 import '../shared/models/types.dart';
 import 'markdown_samples.dart';
 
+/// ZH
 /// 样本会话标题；改名会让旧会话留在列表里，直到下次哈希变化被清理。
+///
+/// EN
+/// Sample session titles; renaming leaves old sessions until the next hash change cleans them.
 const String markdownSampleSessionTitle = 'Markdown 渲染测试';
 const String longTextSampleSessionTitle = 'Markdown 超长文本降级';
 
+/// ZH
 /// 历史会话样本标题前缀：扩建或改内容时按前缀整体重建。
+///
+/// EN
+/// History sample title prefix: rebuild the whole set by prefix when content changes.
 const String historySampleTitlePrefix = '历史样本';
 
+/// ZH
 /// 历史会话样本条数：覆盖抽屉列表滚动、分组与渐隐的长时间场景。
+///
+/// EN
+/// History sample count: covers long-list scrolling, grouping and edge fading in the drawer.
 const int historySampleCount = 50;
 
+/// ZH
 /// 压测样本前缀：一个长会话加大量会话，供列表性能基线测量使用。
+///
+/// EN
+/// Stress sample prefix: one long session plus many sessions for list performance baselines.
 const String stressSampleTitlePrefix = '压测样本';
 const String longSessionSampleTitle = '压测样本 · 长会话 1000 条';
 const String stressSessionTitlePrefix = '$stressSampleTitlePrefix · 会话';
 
+/// ZH
 /// 长会话的总消息条数（提问与回复各一半）。
+///
+/// EN
+/// Total messages in the long session (half prompts, half replies).
 const int longSessionSampleMessages = 1000;
 
+/// ZH
 /// 压测会话条数，与现有 50 条历史样本叠加。
+///
+/// EN
+/// Stress session count, added on top of the existing 50 history samples.
 const int stressSessionSampleCount = 1000;
 
 const String _sampleHashKey = 'dev.markdownSampleHash';
 const String _historyHashKey = 'dev.historySampleHash';
 const String _stressHashKey = 'dev.stressSampleHash';
 
+/// ZH
 /// debug 构建启动时写入 Markdown 样本会话。
 ///
 /// 样本内容哈希与上次一致时跳过；变化时删除两个样本会话后重建，
 /// 改样本只需热重启，不必手动删除会话。
+///
+/// EN
+/// Debug builds seed the Markdown sample sessions at startup.
+///
+/// Skip when the sample hash matches; otherwise delete both sample sessions and rebuild,
+/// so editing samples needs only a hot restart, not manual deletion.
 Future<void> seedMarkdownSamples(
   ChatRepository repository,
   SharedPreferences prefs,
@@ -47,7 +78,11 @@ Future<void> seedMarkdownSamples(
       await repository.deleteSession(session.id);
     }
   }
+  // ZH
   // 先写超长文本会话，让主样本会话更新、冷启动自动打开。
+  //
+  // EN
+  // Seed the long-text session first so the main sample stays newest for cold start.
   await _seedSession(repository, longTextSampleSessionTitle, [longTextSample]);
   await _seedSession(repository, markdownSampleSessionTitle, markdownSamples);
   await prefs.setInt(_sampleHashKey, hash);
@@ -80,10 +115,17 @@ Future<void> _seedSession(
   }
 }
 
+/// ZH
 /// 写入 50 条历史会话样本，覆盖抽屉的四个时间分组。
 ///
 /// 时间戳需要落在不同日期，所以用可注入时钟的仓库生成；样本内容哈希不变
 /// 时跳过，变化时按标题前缀整体重建。
+///
+/// EN
+/// Seed 50 history sessions covering the drawer's four time groups.
+///
+/// Timestamps must fall on different days, so use a repository with an injectable clock;
+/// skip when the hash is unchanged, otherwise rebuild the whole set by title prefix.
 Future<void> seedHistorySamples(
   AppDatabase database,
   SharedPreferences prefs,
@@ -135,11 +177,19 @@ Future<void> seedHistorySamples(
   await prefs.setInt(_historyHashKey, hash);
 }
 
+/// ZH
 /// 写入压测样本：一个 1000 条消息的长会话与 1000 条会话。
 ///
 /// 供列表性能基线测量使用；由 `OPEN_CHAT_STRESS_SEED` 或集成测试显式调用，
 /// 默认启动不写，避免污染日常开发数据。样本内容哈希不变时跳过，变化时按
 /// 前缀整体重建。
+///
+/// EN
+/// Seed stress samples: one 1000-message long session and 1000 sessions.
+///
+/// For list performance baselines; called explicitly by `OPEN_CHAT_STRESS_SEED` or
+/// integration tests, never at default startup, to keep daily dev data clean. Skip when
+/// the sample hash is unchanged; otherwise rebuild the whole set by prefix.
 Future<void> seedStressSamples(
   AppDatabase database,
   SharedPreferences prefs,
@@ -164,7 +214,11 @@ Future<void> seedStressSamples(
     }
   }
 
+  // ZH
   // 会话样本：每条一个问答，时间从最近往前每 30 分钟一条铺开约 21 天。
+  //
+  // EN
+  // Session samples: one Q&A each, spaced 30 minutes back from now over about 21 days.
   for (var index = 0; index < stressSessionSampleCount; index++) {
     cursor = now.subtract(Duration(minutes: 30 * (index + 1)));
     final session = await repository.createSession();
@@ -191,7 +245,11 @@ Future<void> seedStressSamples(
     );
   }
 
+  // ZH
   // 长会话放最后写入，成为最近会话，便于测量从抽屉首屏打开。
+  //
+  // EN
+  // Seed the long session last so it is the latest, for measuring opening from the drawer.
   cursor = now;
   final session = await repository.createSession();
   await repository.renameSession(session.id, longSessionSampleTitle);
@@ -230,7 +288,11 @@ const List<String> _historyTopics = [
   'SQLite 索引怎么建',
 ];
 
+/// ZH
 /// 50 条样本循环使用 5 组问答，标题带序号以便区分。
+///
+/// EN
+/// 50 samples cycle through five Q&A pairs; titles carry an index for distinction.
 List<_HistorySample> _historySamples() {
   const exchanges = [
     (
@@ -295,7 +357,11 @@ List<_HistorySample> _historySamples() {
   ];
 }
 
+/// ZH
 /// 压测会话的问答池：五种格式各一条，循环使用。
+///
+/// EN
+/// Q&A pool for stress sessions: one per format, five total, cycled.
 const List<({String prompt, String reply})> _stressExchanges = [
   (
     prompt: '压测：给一段带列表与图片的 Markdown。',
@@ -346,7 +412,11 @@ const List<({String prompt, String reply})> _stressExchanges = [
   ),
 ];
 
+/// ZH
 /// 长会话的回复池：五种格式循环，覆盖列表里最重的渲染路径。
+///
+/// EN
+/// Reply pool for the long session: five formats cycling through the heaviest render paths.
 String _stressReply(int index) {
   final label = '压测回复 ${index + 1}';
   switch (index % 5) {
@@ -386,7 +456,11 @@ String _stressReply(int index) {
   }
 }
 
+/// ZH
 /// 前 10 条在最近两小时内，接着 10 条在昨天，15 条在最近七天，其余更早。
+///
+/// EN
+/// First 10 within two hours, next 10 yesterday, 15 in the last seven days, the rest older.
 DateTime _historySessionTime(DateTime now, int index) {
   final today = DateTime(now.year, now.month, now.day);
   if (index < 10) {
@@ -410,7 +484,11 @@ DateTime _historySessionTime(DateTime now, int index) {
       .add(const Duration(hours: 15));
 }
 
+/// ZH
 /// FNV-1a 32 位：跨进程稳定，用于判断样本是否被编辑过。
+///
+/// EN
+/// 32-bit FNV-1a: stable across processes, used to detect edited samples.
 int _fnv1a(Iterable<String> values) {
   var hash = 0x811c9dc5;
   for (final value in values) {

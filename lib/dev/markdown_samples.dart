@@ -1,8 +1,14 @@
 import '../shared/models/types.dart';
 
+/// ZH
 /// Markdown 渲染样本：debug 构建写入一个测试会话，冒烟测试复用同一份数据。
 ///
 /// user 文本只作类别标签；覆盖内容全部在 assistant 的回复块里。
+///
+/// EN
+/// Markdown rendering samples: debug builds seed a test session; smoke tests reuse it.
+///
+/// User text only labels the category; all covered content lives in assistant reply blocks.
 final class MarkdownSample {
   const MarkdownSample({
     required this.label,
@@ -15,11 +21,19 @@ final class MarkdownSample {
   final String prompt;
   final List<ReplyBlock> blocks;
 
+  /// ZH
   /// 样本回复创建时是否打开深度思考，仅影响消息元数据。
+  ///
+  /// EN
+  /// Whether the sample reply enables deep thinking; affects message metadata only.
   final bool thinking;
 }
 
+/// ZH
 /// 超过 `MarkdownView.plainTextLimit`（200000）的正文，验证降级为纯文本。
+///
+/// EN
+/// Body over `MarkdownView.plainTextLimit` (200000), verifying plain-text fallback.
 String _longText() => '# 超长内容\n\n**不应解析**\n\n${'超长内容测试。' * 28573}';
 
 final List<MarkdownSample> markdownSamples = [
@@ -299,7 +313,11 @@ void main() {
   ),
 ];
 
+/// ZH
 /// 超长文本单独成会话：200000 字会占满滚动区，混进总样本会挡住其它类别。
+///
+/// EN
+/// Long text gets its own session: 200000 chars fill the viewport and hide other samples.
 final MarkdownSample longTextSample = MarkdownSample(
   label: '超长文本降级',
   prompt: '超长文本（>200000 字，应降级为纯文本）',

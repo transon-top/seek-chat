@@ -211,7 +211,11 @@ void main() {
     }
     await pumpEventQueue();
 
+    // ZH
     // 并发上限 3：第四个还在排队。
+    //
+    // EN
+    // Concurrency cap is 3: the fourth task is still queued.
     expect(gates, hasLength(3));
 
     tasks.remove('att-3');

@@ -13,7 +13,11 @@ import '../../shared/providers.dart';
 import '../../shared/widgets/push_menu.dart';
 import 'session_skeleton.dart';
 
+/// ZH
 /// 会话搜索页；嵌在抽屉层里，由抽屉驱动展开与收起。
+///
+/// EN
+/// Session search page; embedded in the drawer layer, expanded and collapsed by the drawer.
 class SessionSearchPage extends ConsumerStatefulWidget {
   const SessionSearchPage({
     super.key,
@@ -98,7 +102,11 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
     );
   }
 
+  /// ZH
   /// [t] 为搜索展开进度：0 时搜索框与侧栏胶囊重合，1 时占满全屏。
+  ///
+  /// EN
+  /// [t] is search expand progress: 0 overlaps the sidebar pill, 1 fills the screen.
   Widget _build(BuildContext context, double t) {
     final l10n = AppLocalizations.of(context)!;
     final colors = _colors;
@@ -149,7 +157,11 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                       ),
                     ),
                     Expanded(
+                      // ZH
                       // 与侧栏搜索胶囊同高，展开时只变宽不跳高。
+                      //
+                      // EN
+                      // Same height as the sidebar search pill; expands in width only, no jump.
                       child: SizedBox(
                         height: 44,
                         child: TextField(
@@ -174,7 +186,11 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                             ),
                             filled: true,
                             fillColor: colors.inputFill,
+                            // ZH
                             // 与侧栏搜索胶囊同高（44）。
+                            //
+                            // EN
+                            // Same height as the sidebar search pill (44).
                             contentPadding: const EdgeInsets.symmetric(
                               vertical: 11.5,
                             ),
@@ -208,7 +224,11 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                               minWidth: 40,
                               minHeight: 36,
                             ),
+                            // ZH
                             // 官方搜索框为无描边灰底胶囊。
+                            //
+                            // EN
+                            // The official search box is a borderless gray pill.
                             enabledBorder: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(999),
                               borderSide: BorderSide.none,
@@ -358,7 +378,11 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
   }
 }
 
+/// ZH
 /// 无结果态：虚线圆放大镜。
+///
+/// EN
+/// Empty state: dashed-circle magnifier.
 class _DashedSearchPainter extends CustomPainter {
   const _DashedSearchPainter(this.color);
 

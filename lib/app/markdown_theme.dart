@@ -1,7 +1,11 @@
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 
+/// ZH
 /// Markdown 配色：照搬 chat-demo `theme.css` 的 markdown 令牌。
+///
+/// EN
+/// Markdown colors: copied from the markdown tokens in chat-demo `theme.css`.
 class AppMarkdownColors {
   const AppMarkdownColors({
     required this.labelPrimary,
@@ -69,21 +73,33 @@ class AppMarkdownColors {
   final Color placeholderFill;
 }
 
+/// ZH
 /// 正文：chat-demo `--dsw-font-markdown-base`（16/28）。
+///
+/// EN
+/// Body: chat-demo `--dsw-font-markdown-base` (16/28).
 TextStyle markdownBodyStyle(BuildContext context) => TextStyle(
   fontSize: 16,
   height: 28 / 16,
   color: AppMarkdownColors.of(context).labelPrimary,
 );
 
+/// ZH
 /// 思考与过程性正文：chat-demo `--dsw-font-markdown-small`（14/24）。
+///
+/// EN
+/// Thinking and process text: chat-demo `--dsw-font-markdown-small` (14/24).
 TextStyle markdownSmallStyle(BuildContext context) => TextStyle(
   fontSize: 14,
   height: 24 / 14,
   color: AppMarkdownColors.of(context).labelSecondary,
 );
 
+/// ZH
 /// 全局 Markdown 主题：字号、链接色、代码块与引用块，取自 chat-demo `markdown.css`。
+///
+/// EN
+/// Global Markdown theme: type scale, link color, code and quote blocks from chat-demo `markdown.css`.
 GptMarkdownThemeData buildMarkdownTheme(Brightness brightness) {
   final colors = brightness == Brightness.dark
       ? AppMarkdownColors.dark
@@ -108,7 +124,11 @@ GptMarkdownThemeData buildMarkdownTheme(Brightness brightness) {
     hrLineThickness: 1,
     hrLineColor: colors.borderL2,
     hrLinePadding: const EdgeInsets.symmetric(vertical: 16),
+    // ZH
     // chat-demo 的 h1 下方没有分隔线。
+    //
+    // EN
+    // chat-demo has no divider line below h1.
     autoAddDividerLineAfterH1: false,
     inlineCode: InlineCodeStyle(
       fontSizeFactor: 0.875,
@@ -120,7 +140,11 @@ GptMarkdownThemeData buildMarkdownTheme(Brightness brightness) {
       padding: const EdgeInsets.symmetric(horizontal: 5),
     ),
     styleSheet: GptMarkdownStyleSheet(
+      // ZH
       // chat-demo 段落间距 16。
+      //
+      // EN
+      // chat-demo paragraph spacing is 16.
       blockSpacing: 16,
       link: const LinkStyle(decoration: TextDecoration.none),
       blockQuote: BlockQuoteStyle(

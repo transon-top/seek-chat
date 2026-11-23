@@ -2,7 +2,11 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+/// ZH
 /// SSE 帧与响应构造器，供 API、控制器与界面测试共用。
+///
+/// EN
+/// SSE frame and response builders shared by API, controller, and UI tests.
 String frame(String event, Map<String, dynamic> payload) =>
     'event: $event\ndata: ${jsonEncode(payload)}\n\n';
 

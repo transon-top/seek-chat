@@ -19,19 +19,33 @@ import 'reply_view.dart';
 import 'speech/read_aloud_button.dart';
 import 'speech/speech_controller.dart';
 
+/// ZH
 /// 消息区需要的语音状态切片：阶段、语音占用与正在朗读的消息。
+///
+/// EN
+/// Speech state slice for the message area: phase, voice busy, and the message being read.
 typedef SpeechView = ({
   SpeechPhase phase,
   bool voiceBusy,
   String? readingMessageId,
 });
 
+/// ZH
 /// 消息区：用户气泡、助手正文、思考 / 工具时间线、来源与操作条
 /// （ui.md §9 第 4 步、§5.3–§5.6）。
 ///
 /// 列表水平内边距 16、消息间距 16，宽屏内容最大 760 并居中（§1.3、§4）。
 /// 列表正序排列：内容不足一屏时提问从视口顶部开始，超过一屏后跟随底部，
 /// 用户上滑离开底部则停止跟随（与 chat-demo 一致）。
+///
+/// EN
+/// Message area: user bubbles, assistant body, thinking / tool timeline,
+/// sources and action bar (ui.md §9 step 4, §5.3–§5.6).
+///
+/// List horizontal padding 16, message gap 16; max width 760, centered on wide
+/// screens (§1.3, §4). Chronological: under one screen the question starts at the
+/// top; over one it follows the bottom. If the user scrolls up from the bottom,
+/// following stops (same as chat-demo).
 class ChatMessageList extends StatefulWidget {
   const ChatMessageList({
     super.key,
@@ -63,22 +77,46 @@ class ChatMessageList extends StatefulWidget {
 }
 
 class _ChatMessageListState extends State<ChatMessageList> {
+  /// ZH
   /// 距底部小于该值时视为在底部，流式内容增长时继续跟随（chat-demo 同值）。
+  ///
+  /// EN
+  /// At-bottom threshold; streaming growth keeps following within it (same value as chat-demo).
   static const double _stickyThreshold = 40;
 
+  /// ZH
   /// 初始窗口：打开会话时只渲染可见路径末尾的最近 50 条。
+  ///
+  /// EN
+  /// Initial window: on opening a Session, render only the last 50 messages of the visible path.
   static const int _initialWindow = 50;
 
+  /// ZH
   /// 向上滚动接近已渲染范围起点时，每次补 40 条。
+  ///
+  /// EN
+  /// Scrolling up near the start of the rendered range adds 40 more messages each time.
   static const int _windowBatch = 40;
 
+  /// ZH
   /// 距顶部小于该值时触发补历史。
+  ///
+  /// EN
+  /// Within this distance from the top triggers loading more history.
   static const double _loadMoreDistance = 200;
 
+  /// ZH
   /// 补历史当帧临时放大的缓存，让锚点消息进入布局供测量。
+  ///
+  /// EN
+  /// Enlarged cache in the load-more frame so the anchor message is laid out for measurement.
   static const double _measureCacheExtent = 1500;
 
+  /// ZH
   /// 列表内边距。
+  ///
+  /// EN
+  /// List padding.
   static const EdgeInsets _listPadding = EdgeInsets.fromLTRB(16, 4, 16, 8);
 
   GlobalKey _anchorKey = GlobalKey();
@@ -92,25 +130,49 @@ class _ChatMessageListState extends State<ChatMessageList> {
   Map<String, int> _indexById = const {};
   List<Message>? _indexedMessages;
 
+  /// ZH
   /// 渲染窗口起点（绝对下标）；窗口只扩不缩，重新打开会话时随 State 重建。
+  ///
+  /// EN
+  /// Render window start (absolute index); the window only grows and is rebuilt with State on reopen.
   late int _windowStart;
 
+  /// ZH
   /// 补历史时作为锚点的消息 id。
+  ///
+  /// EN
+  /// Message id used as the anchor when loading more history.
   String? _anchorId;
 
+  /// ZH
   /// 补历史前的滚动偏移与最大偏移，用于补正计算。
+  ///
+  /// EN
+  /// Scroll offset and max extent before loading more, used for correction.
   double _pixelsBeforeExpand = 0;
   double _maxExtentBeforeExpand = 0;
 
+  /// ZH
   /// 0 空闲；1 等第一轮布局后按最大偏移估算补正；2 等第二轮布局后按锚点补正。
+  ///
+  /// EN
+  /// Phase 0 idle; 1 correct from max-extent delta after first layout; 2 correct after second layout.
   int _correctionPhase = 0;
 
+  /// ZH
   /// 带 GlobalKey 的消息 id：补历史过程中锁住旧起点，平时跟随窗口起点。
+  ///
+  /// EN
+  /// GlobalKey message id: locked to the old start during load more, otherwise follows the window start.
   String? get _keyedMessageId => _correctionPhase == 0
       ? (widget.messages.isEmpty ? null : widget.messages[_windowStart].id)
       : _anchorId;
 
+  /// ZH
   /// 锚点换到另一条消息时换新 key，避免把旧消息的元素状态挪给新消息。
+  ///
+  /// EN
+  /// Use a new key when the anchor moves, so element state is not moved to another message.
   GlobalKey? _anchorKeyFor(String? id) {
     if (id == null) return null;
     if (_anchorKeyId != id) {
@@ -125,20 +187,32 @@ class _ChatMessageListState extends State<ChatMessageList> {
     super.initState();
     _windowStart = max(0, widget.messages.length - _initialWindow);
     _controller.addListener(_onScroll);
+    // ZH
     // 首次布局后落到最新消息（打开历史会话时从底部开始）。
+    //
+    // EN
+    // Jump to the latest message after first layout (start at the bottom when opening a history Session).
     _scheduleFollow();
   }
 
   @override
   void didUpdateWidget(covariant ChatMessageList oldWidget) {
     super.didUpdateWidget(oldWidget);
+    // ZH
     // 新请求（发送、编辑、重新生成、续写）一律重新跟随底部。
+    //
+    // EN
+    // Any new request (send, edit, regenerate, continue) re-enables sticky bottom following.
     if (!oldWidget.busy && widget.busy) _sticky = true;
     _syncWindow(oldWidget.messages.length);
     _scheduleFollow();
   }
 
+  /// ZH
   /// 版本切换或编辑导致消息数变化时重算窗口，保证消息仍在渲染范围内。
+  ///
+  /// EN
+  /// Recompute the window when the message count changes, so messages stay rendered.
   void _syncWindow(int oldLength) {
     final length = widget.messages.length;
     if (length == oldLength) return;
@@ -147,10 +221,17 @@ class _ChatMessageListState extends State<ChatMessageList> {
     }
   }
 
+  /// ZH
   /// 补历史后修正滚动偏移：第一轮按最大偏移差值估算，第二轮按锚点实测。
   ///
   /// 在 `applyContentDimensions` 期间调用，视口会在同一帧内按新偏移重排，
   /// 不会把错误帧画到屏幕上。
+  ///
+  /// EN
+  /// Correct scroll offset after loading more: first by max-extent delta, then by measured anchor.
+  ///
+  /// Called in `applyContentDimensions`; the viewport re-lays out with the new
+  /// offset in that frame, so a wrong frame is never painted on screen.
   double? _correctForNewMessages(double maxScrollExtent, double pixels) {
     if (_correctionPhase == 1) {
       _correctionPhase = 2;
@@ -161,14 +242,22 @@ class _ChatMessageListState extends State<ChatMessageList> {
       _correctionPhase = 0;
       final layoutOffset = _anchorLayoutOffset();
       if (layoutOffset == null) return null;
+      // ZH
       // 锚点回到补前位置所需的新偏移：内容偏移 + 补前偏移 - 当前偏移。
+      //
+      // EN
+      // New offset to return the anchor to its pre-load position: layout offset + prior offset - pixels.
       final delta = layoutOffset + _pixelsBeforeExpand - pixels;
       return delta.abs() > 0.5 ? delta : null;
     }
     return null;
   }
 
+  /// ZH
   /// 锚点条目在列表内容坐标系中的起点；未建成时返回 null。
+  ///
+  /// EN
+  /// Start of the anchor item in list content coordinates; null when not laid out yet.
   double? _anchorLayoutOffset() {
     RenderObject? object = _anchorKey.currentContext?.findRenderObject();
     while (object != null &&
@@ -179,7 +268,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
         ?.layoutOffset;
   }
 
+  /// ZH
   /// 顶部补 40 条；补前记下滚动位置，补后按锚点补回。
+  ///
+  /// EN
+  /// Prepend 40 messages; record the scroll position before and restore it via the anchor after.
   void _expandWindow() {
     if (_windowStart == 0 || _correctionPhase != 0) return;
     _anchorId = widget.messages[_windowStart].id;
@@ -204,8 +297,14 @@ class _ChatMessageListState extends State<ChatMessageList> {
   void _onScroll() {
     final position = _controller.position;
     final offset = position.pixels;
+    // ZH
     // `maxScrollExtent` 已扣除视口高度；再减 viewportDimension 会让判断
     // 恒为真，用户一旦上滑也会被流式更新拉回底部。
+    //
+    // EN
+    // The `maxScrollExtent` value already excludes viewport height. Subtracting
+    // viewportDimension makes the check always true, so streaming pulls users back
+    // down after they scroll up.
     if (position.maxScrollExtent - offset < _stickyThreshold) {
       _setSticky(true);
     } else if (offset < _lastOffset) {
@@ -215,7 +314,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
     if (offset <= _loadMoreDistance) _expandWindow();
   }
 
+  /// ZH
   /// 跟随状态变化只影响悬浮按钮，延迟到帧末刷新，避开布局阶段的滚动通知。
+  ///
+  /// EN
+  /// Following changes affect only the floating button; refresh at frame end to avoid scroll events.
   void _setSticky(bool sticky) {
     if (_sticky == sticky) return;
     _sticky = sticky;
@@ -224,15 +327,24 @@ class _ChatMessageListState extends State<ChatMessageList> {
     });
   }
 
+  /// ZH
   /// 回到底部：瞬时定位，流式内容增长时继续跟随。
+  ///
+  /// EN
+  /// Back to bottom: jump instantly, then keep following as streaming content grows.
   void _jumpToBottom() {
     if (!_controller.hasClients) return;
     _setSticky(true);
     _controller.jumpTo(_controller.position.maxScrollExtent);
   }
 
+  /// ZH
   /// 布局后若仍在跟随状态就跳到最新内容。懒加载下列表的
   /// `maxScrollExtent` 可能仍是估算值，跳转后继续调度直到稳定。
+  ///
+  /// EN
+  /// Jump to latest content after layout while still following. With lazy loading,
+  /// `maxScrollExtent` may be an estimate; schedule again after jumping until stable.
   void _scheduleFollow() {
     if (_followScheduled) return;
     _followScheduled = true;
@@ -247,7 +359,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
     });
   }
 
+  /// ZH
   /// 消息 id → 绝对下标；消息变化（追加、编辑、切版本）时重建。
+  ///
+  /// EN
+  /// Message id → absolute index; rebuilt when messages change (append, edit, version switch).
   int? _indexFor(Key key) {
     if (key is! ValueKey<String>) return null;
     final messages = widget.messages;
@@ -262,7 +378,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
       }
     }
     final absolute = _indexById[key.value];
+    // ZH
     // 索引表可能滞后：对不上就当未知键处理，让框架按位置重建。
+    //
+    // EN
+    // The index map may lag; treat a mismatch as unknown and let the framework rebuild by position.
     if (absolute == null || messages[absolute].id != key.value) return null;
     final index = absolute - _windowStart;
     return index < 0 ? null : index;
@@ -277,7 +397,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
     return Stack(
       children: [
         NotificationListener<ScrollMetricsNotification>(
+          // ZH
           // 流式渲染会逐帧撑高内容；尺寸变化也要重新贴底，不能只靠消息更新。
+          //
+          // EN
+          // Streaming grows content per frame; size changes must also re-stick to bottom, not just messages.
           onNotification: (_) {
             if (_sticky) _scheduleFollow();
             return false;
@@ -310,7 +434,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
                   onRetryUpload: widget.onRetryUpload,
                 );
                 final item = Padding(
+                  // ZH
                   // 顶部留白只加在第一条消息之前，其余消息间距 16。
+                  //
+                  // EN
+                  // Top spacing only before the first message; other messages use 16 spacing.
                   padding: EdgeInsets.only(top: position == 0 ? 0 : 16),
                   child: Align(
                     alignment: Alignment.topCenter,
@@ -321,9 +449,17 @@ class _ChatMessageListState extends State<ChatMessageList> {
                   ),
                 );
                 return KeyedSubtree(
+                  // ZH
                   // 消息 key 供前插历史时按 id 复用子项。
+                  //
+                  // EN
+                  // Message key lets prepended history reuse children by id.
                   key: ValueKey(message.id),
+                  // ZH
                   // 锚点包住整条消息，量到的是条目顶端而非正文顶端。
+                  //
+                  // EN
+                  // The anchor wraps the whole message, measuring item top rather than body top.
                   child: anchorKey != null && message.id == _anchorKeyId
                       ? KeyedSubtree(key: anchorKey, child: item)
                       : item,
@@ -356,7 +492,11 @@ class _ChatMessageListState extends State<ChatMessageList> {
   }
 }
 
+/// ZH
 /// 回到底部悬浮按钮：内容区右下角，用户离开底部时出现。
+///
+/// EN
+/// Scroll-to-bottom button: bottom-right of the content area, shown when the user leaves the bottom.
 class _ScrollToBottomButton extends StatelessWidget {
   const _ScrollToBottomButton({required this.onPressed});
 
@@ -397,7 +537,11 @@ class _ScrollToBottomButton extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 顶部补历史后需要按插入高度修正偏移；默认控制器做不到，这里补一个钩子。
+///
+/// EN
+/// Prepending history needs an offset fix by inserted height; add a hook the default controller lacks.
 class _WindowScrollController extends ScrollController {
   _WindowScrollController({required this.correction});
 
@@ -419,7 +563,11 @@ class _WindowScrollController extends ScrollController {
   );
 }
 
+/// ZH
 /// 返回 null 表示不修正；返回数值会在同一帧内重排。
+///
+/// EN
+/// Returning null means no correction; returning a value re-lays out in the same frame.
 typedef _ScrollCorrection = double? Function(
   double maxScrollExtent,
   double pixels,
@@ -503,7 +651,11 @@ class _MessageView extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 用户提问：右对齐灰色气泡、附件、编辑入口与版本切换（§5.5）。
+///
+/// EN
+/// User question: right-aligned gray bubble, attachments, edit entry and version switcher (§5.5).
 class _UserMessageView extends StatefulWidget {
   const _UserMessageView({
     required this.message,
@@ -583,11 +735,19 @@ class _UserMessageViewState extends State<_UserMessageView> {
                   vertical: 8,
                 ),
                 decoration: BoxDecoration(
+                  // ZH
                   // 气泡色不参与 shadcn 语义色表，直接取 chat-demo bubble 令牌。
+                  //
+                  // EN
+                  // Bubble color is outside the shadcn semantic palette; use the chat-demo bubble token directly.
                   color: Theme.of(context).colorScheme.surfaceContainer,
                   borderRadius: BorderRadius.circular(20),
                 ),
+                // ZH
                 // 识别器放在 SelectionArea 内层：Android 的文本选择会抢横向拖拽。
+                //
+                // EN
+                // Place the detector inside SelectionArea: Android text selection would steal horizontal drags.
                 child: SelectionArea(
                   child: PushMenuSwipeDetector(
                     child: Text(
@@ -699,7 +859,11 @@ class _EditBox extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 兄弟版本切换：`当前 / 总数`，左右各切一条（§5.5）。
+///
+/// EN
+/// Sibling version switcher: `current / total`, one step each side (§5.5).
 class _VersionSwitcher extends StatelessWidget {
   const _VersionSwitcher({required this.versions, required this.onSelect});
 
@@ -751,7 +915,11 @@ class _VersionSwitcher extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 操作条与切换器共用的图标按钮：视觉 36，点击区 44（§6.1）。
+///
+/// EN
+/// Icon button shared by action bar and switcher: visual 36, hit area 44 (§6.1).
 class _IconAction extends StatelessWidget {
   const _IconAction({
     super.key,
@@ -785,7 +953,11 @@ class _IconAction extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 助手回复：思考 / 工具时间线、正文、来源胶囊与操作条（§5.3–§5.6）。
+///
+/// EN
+/// Assistant reply: thinking / tool timeline, body, source pill and action bar (§5.3–§5.6).
 class _AssistantMessageView extends StatelessWidget {
   const _AssistantMessageView({
     required this.reply,
@@ -823,7 +995,11 @@ class _AssistantMessageView extends StatelessWidget {
     final canCopy =
         copyText.isNotEmpty && reply.status != ReplyStatus.streaming;
     final continuing = canContinueReply(reply) && isLast;
+    // ZH
     // 等待首包：还没有思考、工具行或正文时显示三点呼吸（同 chat-demo）。
+    //
+    // EN
+    // Waiting for first chunk: show breathing dots when no thinking, tool row or body yet (as chat-demo).
     final waiting =
         reply.isInFlight &&
         !refused &&
@@ -924,12 +1100,20 @@ class _ActionBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
+    // ZH
     // 生成中不显示操作条；停止入口只在输入区（与 chat-demo 一致，§5.3）。
+    //
+    // EN
+    // Hide the action bar while generating; stop lives only in the composer (same as chat-demo, §5.3).
     if (reply.isInFlight) return const SizedBox.shrink();
     return Semantics(
       label: strings.messageActions,
       container: true,
+      // ZH
       // 图标操作靠左，继续生成靠右（同 chat-demo）；窄屏或放大字号时图标换行。
+      //
+      // EN
+      // Icon actions left, Continue right (as chat-demo); icons wrap on narrow screens or large text.
       child: Row(
         children: [
           Expanded(
@@ -979,7 +1163,11 @@ class _ActionBar extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 「继续生成」描边按钮；停止提示与操作条共用（§5.3、§5.5）。
+///
+/// EN
+/// Outlined Continue button; shared by stop notice and action bar (§5.3, §5.5).
 class _ContinueButton extends StatelessWidget {
   const _ContinueButton({required this.onPressed});
 
@@ -989,7 +1177,11 @@ class _ContinueButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final strings = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
+    // ZH
     // chat-demo outlined：透明底、前景随正文（深色白 / 浅色黑）、常规字重。
+    //
+    // EN
+    // Match chat-demo outlined: no fill, body-colored text (white/dark, black/light), regular weight.
     return ShadButton.outline(
       key: const Key('continue-reply'),
       onPressed: onPressed,
@@ -1027,7 +1219,11 @@ class _ReplyError extends StatelessWidget {
         reply.error?.kind == ApiErrorKind.upload &&
         reply.error?.retryable == true &&
         onRetryUpload != null;
+    // ZH
     // 对齐 chat-demo 的 notice：14/22 红字行，图标与首行顶端对齐。
+    //
+    // EN
+    // Match chat-demo notice: 14/22 red text line, icon aligned to the first line top.
     return Padding(
       padding: const EdgeInsets.only(top: 8),
       child: Row(
@@ -1054,8 +1250,13 @@ class _ReplyError extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 等待首包：3 个 6 px 圆点，900 ms 循环、透明度 0.3→1、
 /// 相邻相位错开 100 ms；减少动画时静止（同 chat-demo）。
+///
+/// EN
+/// Waiting for first chunk: three 6 px dots, 900 ms cycle, opacity 0.3→1.
+/// Adjacent phases are offset by 100 ms; static with reduced motion (as chat-demo).
 class _WaitingDots extends StatefulWidget {
   const _WaitingDots();
 
@@ -1091,7 +1292,11 @@ class _WaitingDotsState extends State<_WaitingDots>
     super.dispose();
   }
 
+  /// ZH
   /// chat-demo 的关键帧：0%/100% 为 0.3，33%–66% 为 1。
+  ///
+  /// EN
+  /// Match chat-demo keyframes: 0%/100% at 0.3, 33%–66% at 1.
   double _opacityAt(double phase) {
     if (phase < 0.33) return 0.3 + 0.7 * (phase / 0.33);
     if (phase < 0.66) return 1;
@@ -1135,7 +1340,11 @@ class _WaitingDotsState extends State<_WaitingDots>
   }
 }
 
+/// ZH
 /// 思考与工具步骤的时间线；开启深度思考时带可折叠标题（§5.4）。
+///
+/// EN
+/// Timeline of thinking and tool steps; collapsible header when Deep Search is on (§5.4).
 class _ThinkingArea extends StatefulWidget {
   const _ThinkingArea({required this.reply, required this.view});
 
@@ -1168,7 +1377,11 @@ class _ThinkingAreaState extends State<_ThinkingArea> {
     super.dispose();
   }
 
+  /// ZH
   /// 标题与思考用时每秒刷新；有正文后不再计时。
+  ///
+  /// EN
+  /// Header and thinking time refresh every second; stop timing once the body appears.
   void _syncTicker() {
     final active = widget.reply.isInFlight && widget.view.answer == null;
     if (active && _ticker == null) {
@@ -1282,7 +1495,11 @@ class _ThinkingAreaState extends State<_ThinkingArea> {
     return seconds == null ? l10n.thinking : l10n.thinkingForSeconds(seconds);
   }
 
+  /// ZH
   /// 流式期间思考块的累计用时；没有计时数据时返回 null。
+  ///
+  /// EN
+  /// Accumulated thinking block time while streaming; null when no timing data.
   int? _streamingSeconds() {
     final now = DateTime.now().millisecondsSinceEpoch;
     var millis = 0;
@@ -1441,7 +1658,11 @@ class _SearchRowState extends State<_SearchRow> {
     super.dispose();
   }
 
+  /// ZH
   /// 进行中且有多条查询词时每 2 秒轮播一条。
+  ///
+  /// EN
+  /// Rotate one query every 2 seconds while in progress with multiple queries.
   void _syncTicker() {
     final active =
         widget.step.status == ToolStatus.wip && widget.step.queries.length > 1;
@@ -1675,7 +1896,11 @@ class _FindChip extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 「N 个网页」胶囊：站点图标叠加 + 数量，点击打开来源抽屉（§5.6）。
+///
+/// EN
+/// The 'N pages' pill: stacked site icons + count; tap opens the source drawer (§5.6).
 class _SourcePill extends StatelessWidget {
   const _SourcePill({required this.sources});
 
@@ -1727,7 +1952,11 @@ class _SourcePill extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 站点图标叠加；最多 4 个，缺图用 `link` 占位（§5.6）。
+///
+/// EN
+/// Stacked site icons; up to 4, missing uses a `link` placeholder (§5.6).
 class _SiteIcons extends StatelessWidget {
   const _SiteIcons({
     required this.sources,
@@ -1833,7 +2062,11 @@ Future<void> _showSourcesSheet(BuildContext context, List<Source> sources) {
   );
 }
 
+/// ZH
 /// 来源卡片：序号、站点、日期、标题、摘要与 URL（§8.3）。
+///
+/// EN
+/// Source card: index, site, date, title, snippet and URL (§8.3).
 class _SourceCard extends StatelessWidget {
   const _SourceCard({required this.source});
 

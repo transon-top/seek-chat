@@ -12,7 +12,11 @@ import 'history_files.dart';
 import 'history_service.dart';
 import 'history_zip.dart';
 
+/// ZH
 /// 设置页的「数据管理」：导入会覆盖全部本地对话与附件（`history.md` §8）。
+///
+/// EN
+/// Settings "Data Management": import replaces all local chats and attachments (`history.md` §8).
 class HistorySection extends ConsumerStatefulWidget {
   const HistorySection({
     super.key,
@@ -20,10 +24,18 @@ class HistorySection extends ConsumerStatefulWidget {
     this.onImported,
   });
 
+  /// ZH
   /// 导入校验通过后、写库之前停止全部活动会话的生成。
+  ///
+  /// EN
+  /// Stop generation in all active sessions after validation passes and before writing.
   final void Function() stopGeneration;
 
+  /// ZH
   /// 导入成功、数据库已替换后调用；宿主据此清空旧页面状态。
+  ///
+  /// EN
+  /// Called after a successful import and DB swap; the host clears old page state.
   final VoidCallback? onImported;
 
   @override
@@ -120,7 +132,11 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     }
   }
 
+  /// ZH
   /// 错误与拒答回复在导出时写入导出语言的模板文案（`history.md` §3.1）。
+  ///
+  /// EN
+  /// Error and refusal replies get template text in the export language (`history.md` §3.1).
   String? _notice(AppLocalizations l10n, AssistantMessage reply) {
     if (reply.stopReason == StopReason.refusal) return l10n.replyRefused;
     if (reply.status == ReplyStatus.error && reply.error != null) {

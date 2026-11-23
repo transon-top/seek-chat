@@ -140,7 +140,11 @@ void main() {
     await gesture.moveBy(const Offset(120, 0));
     await tester.pump();
     expect(tester.takeException(), isNull);
+    // ZH
     // 侧栏内容随进度整屏从左侧滑入：部分打开时大部分仍在屏幕外。
+    //
+    // EN
+    // The sidebar slides in from the left as it opens; when partly open, most stays off-screen.
     expect(
       tester.getTopLeft(find.byKey(const Key('drawer-search'))).dx,
       lessThan(-300),
@@ -197,7 +201,11 @@ void main() {
         await tester.tap(
           find.byKey(ValueKey('session-menu-rename-${session.id}')),
         );
+        // ZH
         // 输入框自动聚焦后光标定时闪烁，pumpAndSettle 永不结束。
+        //
+        // EN
+        // The field autofocuses and its cursor blinks forever, so pumpAndSettle never settles.
         await tester.pump();
         await tester.pump(const Duration(milliseconds: 100));
       }
@@ -226,7 +234,11 @@ void main() {
       await tester.pump(const Duration(milliseconds: 100));
       expect(await storedTitle(), 'abc');
 
+      // ZH
       // 在测试体内关库（探针验证：放进 addTearDown 或先卸载都会让 close 一直等）。
+      //
+      // EN
+      // Close the DB inside the test (verified: addTearDown or unmounting first makes close hang).
       await db.close();
     },
   );
@@ -389,7 +401,11 @@ void main() {
     final button = tester.getCenter(find.byKey(const Key('drawer-select')));
     final label = tester.getCenter(find.text('今天'));
     expect((button.dy - label.dy).abs(), lessThan(4));
+    // ZH
     // 入口叠在列表上，不再单独占一行。
+    //
+    // EN
+    // The entry overlays the list instead of taking its own row.
     expect(
       tester.getTopLeft(find.byKey(const Key('drawer-select'))).dy,
       lessThan(
@@ -432,12 +448,21 @@ void main() {
     );
     await tester.pumpAndSettle();
 
+    // ZH
     // 吸顶标签始终只渲染一份，首组的列表标题只占高度。
+    //
+    // EN
+    // The pinned label always renders once; the first group's list header only reserves height.
     expect(find.text('今天'), findsOneWidget);
     final before = tester.getTopLeft(find.text('今天'));
 
+    // ZH
     // 首组 3 行：标题 29 + 行 3×44 + 组间 20，昨天标题起点 181。
     // 滚到昨天标题还差 10 就贴顶，此时今天的标签应被顶出 19。
+    //
+    // EN
+    // First group has 3 rows: header 29 + rows 3×44 + group gap 20 puts yesterday's header at 181.
+    // With yesterday's header 10 short of the top, today's label should be pushed out by 19.
     final scrollable = find.descendant(
       of: find.byType(CustomScrollView),
       matching: find.byType(Scrollable),
@@ -501,12 +526,20 @@ void main() {
     await tester.pump();
     expect(find.byKey(const Key('search-field')), findsOneWidget);
 
+    // ZH
     // 展开起点：搜索框与侧栏胶囊重合（左 14、右 0.8×800-14）。
+    //
+    // EN
+    // Expansion start: the search field aligns with the sidebar pill (left 14, right 0.8×800-14).
     final start = tester.getRect(find.byKey(const Key('search-field')));
     expect(start.left, closeTo(14, 0.5));
     expect(start.right, closeTo(626, 0.5));
 
+    // ZH
     // 对话层在展开过程中持续右移，搜索框随之露出。
+    //
+    // EN
+    // The conversation layer keeps moving right as it expands, revealing the search field.
     await tester.pump(const Duration(milliseconds: 130));
     expect(tester.getTopLeft(find.text('CHAT')).dx, greaterThan(chatBefore));
 
@@ -517,7 +550,11 @@ void main() {
       closeTo(784, 0.5),
     );
 
+    // ZH
     // 系统返回先收键盘，再收回搜索；抽屉保持打开。
+    //
+    // EN
+    // System back first hides the keyboard, then dismisses search; the drawer stays open.
     await tester.binding.handlePopRoute();
     await tester.pump();
     await tester.binding.handlePopRoute();
@@ -576,7 +613,11 @@ void main() {
     await tester.tap(find.byKey(const Key('drawer-select')));
     await tester.pump();
     expect(find.text('选择对话'), findsOneWidget);
+    // ZH
     // 切换多选时列表不上下跳，标题与日期标签左对齐。
+    //
+    // EN
+    // Toggling Selection Mode does not make the list jump; title and date labels stay left-aligned.
     expect(
       tester.getTopLeft(find.byKey(ValueKey('session-row-${first.id}'))).dy,
       rowTop,

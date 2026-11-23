@@ -8,18 +8,30 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
 
+/// ZH
 /// 取消阈值：以按下瞬间的全局 Y 为基准，上滑 ≥80dp 进入取消态
 /// （`speech.md` §3.2）。纯函数，便于单测。
+///
+/// EN
+/// Cancel threshold: global Y at press time is the baseline; slide up ≥80dp to enter
+/// the cancel state (`speech.md` §3.2). Pure function, easy to unit test.
 bool shouldCancelVoice({
   required double startY,
   required double currentY,
   double threshold = 80,
 }) => startY - currentY >= threshold;
 
+/// ZH
 /// 输入区的语音按钮：`Listener` 按住说话 + 语义 tap 切换与「取消录音」动作
 /// （`speech.md` §2.1、§3.2；ui.md §5.8）。
 ///
 /// 录音与识别期间按钮被浮层覆盖，但保留在语义树里，读屏用户可结束或取消。
+///
+/// EN
+/// Composer voice button: `Listener` hold-to-talk, semantic tap toggle, and "cancel
+/// recording" action (`speech.md` §2.1, §3.2; ui.md §5.8).
+///
+/// Covered by the overlay while recording; it stays in semantics so screen readers can end or cancel.
 class VoiceButton extends StatefulWidget {
   const VoiceButton({
     super.key,
@@ -135,7 +147,11 @@ class _VoiceButtonState extends State<VoiceButton> {
           onPointerMove: _handleMove,
           onPointerUp: _handleUp,
           onPointerCancel: _handleCancel,
+          // ZH
           // 视觉 20 描边圆，点击区保持 40（参照官方 app）。
+          //
+          // EN
+          // 20dp outline circle visually, 40dp tap target (matching the official app).
           child: SizedBox(
             width: 40,
             height: 40,
@@ -163,7 +179,11 @@ class _VoiceButtonState extends State<VoiceButton> {
   }
 }
 
+/// ZH
 /// 官方 app 的语音图标：左侧圆点 + 右侧两道声波弧。
+///
+/// EN
+/// Official app voice icon: a dot on the left plus two sound-wave arcs on the right.
 class _VoiceWaveIcon extends StatelessWidget {
   const _VoiceWaveIcon({required this.color});
 

@@ -110,7 +110,11 @@ void main() {
 
     expect(store.value, 'sk-good');
     expect(find.text('API Key 无效'), findsNothing);
+    // ZH
     // 保存后只显示掩码，点编辑按钮才能重新输入
+    //
+    // EN
+    // After saving only the mask shows; tapping edit enables input again.
     expect(find.byKey(const Key('settings-edit-key')), findsOneWidget);
     expect(find.byKey(const Key('settings-api-key-input')), findsNothing);
   });

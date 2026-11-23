@@ -167,7 +167,11 @@ void main() {
       expect(byTitle.single.session.id, percent.id);
       expect(byTitle.single.snippet, 'nothing to see here');
 
+      // ZH
       // % 与 _ 按字面匹配，不能当通配符。
+      //
+      // EN
+      // % and _ match literally and cannot act as wildcards.
       expect(
         (await repository.searchSessions('%')).single.session.id,
         percent.id,
@@ -185,7 +189,11 @@ void main() {
       expect(hit.snippet, endsWith('…'));
       expect(hit.snippet, contains('keyword'));
 
+      // ZH
       // assistant 正文只在 blocks；思考块不参与匹配。
+      //
+      // EN
+      // Assistant body lives only in blocks; thinking blocks do not participate in matching.
       final assistant = await repository.createSession();
       final question = await repository.addUserMessage(
         sessionId: assistant.id,
@@ -323,7 +331,11 @@ void main() {
         search: false,
       );
 
+      // ZH
       // 编辑后可见路径是新的 user 版本；根版本的兄弟仍可查询。
+      //
+      // EN
+      // After editing, the visible path holds the new user version; root siblings still query.
       var view = await repository.loadConversation(session.id);
       expect(view.messages.map((m) => m.id), [edited.id, editedReply.id]);
       expect(view.versions[user.id]?.ids, [user.id, edited.id]);

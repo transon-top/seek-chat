@@ -7,6 +7,7 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
 
+/// ZH
 /// 录音浮层（GLOSSARY: Recording Overlay）：贴底渐变 + 文案 + 波形。
 ///
 /// 参照 DeepSeek 官方输入区：蓝色渐变自屏高约 62% 起淡入、底部为主色；
@@ -14,12 +15,25 @@ import 'speech_controller.dart';
 /// （`ui.md` §5.8、`speech.md` §7）。
 ///
 /// 不响应点击，文案为 liveRegion，只播报开始、取消与识别（`speech.md` §8）。
+///
+/// EN
+/// Recording overlay (GLOSSARY: Recording Overlay): bottom gradient + copy + waveform.
+///
+/// Official DeepSeek composer: blue gradient fades in around 62% height, primary at the bottom.
+/// Cancelling turns it red, copy and waveform included; 32 → 40 thin bars follow the level.
+/// (`ui.md` §5.8, `speech.md` §7).
+///
+/// Ignores taps; liveRegion copy announces only start, cancel and recognition (`speech.md` §8).
 class RecordingOverlay extends StatefulWidget {
   const RecordingOverlay({super.key, required this.phase, this.level = 0});
 
   final SpeechPhase phase;
 
+  /// ZH
   /// 最近一次电平 0..1；浮层内按约 30fps 平滑。
+  ///
+  /// EN
+  /// Latest level 0..1, smoothed inside the overlay at about 30fps.
   final double level;
 
   @override
@@ -50,7 +64,11 @@ class _RecordingOverlayState extends State<RecordingOverlay>
     if (reduced) {
       _ticker.stop();
     } else {
+      // ZH
       // 重启后 Ticker 的 elapsed 归零，帧闸门也随之重置。
+      //
+      // EN
+      // After a restart Ticker elapsed resets to zero, so the frame gate resets too.
       _lastFrame = 0;
       _ticker.start();
     }
@@ -64,7 +82,11 @@ class _RecordingOverlayState extends State<RecordingOverlay>
 
   void _onTick(Duration elapsed) {
     final seconds = elapsed.inMicroseconds / Duration.microsecondsPerSecond;
+    // ZH
     // 约 30fps 刷新；阈值略小于 1/30，避免 60Hz 下隔帧被浮点误差吞掉。
+    //
+    // EN
+    // Refresh near 30fps; the threshold sits just under 1/30 to avoid 60Hz float-error drops.
     if (seconds - _lastFrame < 0.03) return;
     _lastFrame = seconds;
     setState(() {
@@ -73,7 +95,11 @@ class _RecordingOverlayState extends State<RecordingOverlay>
     });
   }
 
+  /// ZH
   /// 启动与识别中没有电平输入，波形退回低幅骨架。
+  ///
+  /// EN
+  /// No level arrives while starting or transcribing, so the waveform falls back to a low skeleton.
   bool get _skeleton =>
       widget.phase == SpeechPhase.starting ||
       widget.phase == SpeechPhase.transcribing;
@@ -108,14 +134,26 @@ class _RecordingOverlayState extends State<RecordingOverlay>
 
     final reduced = MediaQuery.of(context).disableAnimations;
     final seconds = reduced ? 0.0 : _seconds;
+    // ZH
     // 减少动画时冻结为有代表性的静态帧。
+    //
+    // EN
+    // With animations reduced, freeze on a representative static frame.
     final level = reduced ? (_skeleton ? 0.16 : 0.4) : _shownLevel;
+    // ZH
     // 录音尚未开始时骨架不随 ticker 起伏。
+    //
+    // EN
+    // The skeleton does not move with the ticker before recording starts.
     final waveSeconds = widget.phase == SpeechPhase.starting ? 0.0 : seconds;
     final colors = ShadTheme.of(context).colorScheme;
     final cancelling = widget.phase == SpeechPhase.cancelling;
     final base = cancelling ? colors.destructive : colors.primary;
+    // ZH
     // 官方取消态文案为珊瑚红；把错误色提亮，深浅主题都保持可读。
+    //
+    // EN
+    // The official cancelling copy is coral; lighten the error color for both themes.
     final foreground = cancelling
         ? Color.lerp(colors.destructive, Colors.white, 0.35)!
         : colors.primaryForeground;
@@ -169,9 +207,15 @@ class _RecordingOverlayState extends State<RecordingOverlay>
   }
 }
 
+/// ZH
 /// 官方同款贴底渐变：顶部全透明，平滑过渡到底部主色 / 取消红。
 ///
 /// 浮层槽高约 60% 屏高，stops 以槽高为分母；取消态透明度约为录音态一半。
+///
+/// EN
+/// Official bottom gradient: transparent at top, blending smoothly to primary / cancel red at bottom.
+///
+/// The slot is about 60% screen height and stops divide by it; cancel alpha is about half of recording.
 class _OverlayGradientPainter extends CustomPainter {
   const _OverlayGradientPainter({
     required this.base,
@@ -204,7 +248,11 @@ class _OverlayGradientPainter extends CustomPainter {
       oldDelegate.base != base || oldDelegate.cancelling != cancelling;
 }
 
+/// ZH
 /// 40 根波形条：高 28、宽 2、左右各留 1.8；骨架态为低幅，冻结时不再起伏。
+///
+/// EN
+/// 40 waveform bars: 28 high, 2 wide, 1.8 padding each side; low skeleton, still when frozen.
 class _Waveform extends StatelessWidget {
   const _Waveform({
     required this.seconds,

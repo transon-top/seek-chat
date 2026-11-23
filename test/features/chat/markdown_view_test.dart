@@ -111,7 +111,11 @@ void main() {
     await pumpMarkdown(tester, '- [x] 已完成任务\n- [ ] 未完成任务');
 
     expect(find.byType(Checkbox), findsNothing);
+    // ZH
     // 选中态自绘（☑ 在 Android 会变成彩色 emoji），未选中用 □ 字形。
+    //
+    // EN
+    // Draw checks by hand (☑ becomes color emoji on Android); unchecked uses the □ glyph.
     expect(find.text('□'), findsOneWidget);
     expect(
       find.byWidgetPredicate(
@@ -340,7 +344,11 @@ graph TD
   ) async {
     await tester.pumpWidget(app('a', streaming: true));
     await tester.pumpWidget(app('ab', streaming: true));
+    // ZH
     // 逐字淡入会把新追加的字符推迟到后续帧。
+    //
+    // EN
+    // Per-character fade delays newly appended characters to later frames.
     await tester.pump(const Duration(milliseconds: 120));
     expect(find.textContaining('ab', findRichText: true), findsWidgets);
 

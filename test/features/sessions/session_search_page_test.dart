@@ -47,7 +47,11 @@ void main() {
         ),
       ),
     );
+    // ZH
     // 本地化解析是异步的；解析完成前 home 是 SizedBox.shrink。
+    //
+    // EN
+    // Localization resolves asynchronously; until then home is SizedBox.shrink.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     return (db, repository);

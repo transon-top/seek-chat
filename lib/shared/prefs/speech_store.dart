@@ -3,13 +3,24 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'preferences_provider.dart';
 
+/// ZH
 /// 朗读音色（`speech.md` §9）；非法存储值回退默认女声。
+///
+/// EN
+/// Read-aloud voice (`speech.md` §9); invalid stored values fall back to the default female voice.
 enum TtsVoice { stella, tide }
 
+/// ZH
 /// 语音偏好：朗读音色与「是否请求过麦克风权限」。
 ///
 /// `permission_handler` 不暴露「未请求」状态，用 [micRequested] 区分
 /// 未请求与已拒绝（`speech.md` §5.1）。
+///
+/// EN
+/// Speech preferences: read-aloud voice and whether microphone permission was requested.
+///
+/// `permission_handler` does not expose a "not requested" state, so [micRequested]
+/// distinguishes not requested from denied (`speech.md` §5.1).
 class SpeechStore {
   SpeechStore(this._preferences);
 

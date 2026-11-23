@@ -3,25 +3,45 @@ import 'dart:typed_data';
 
 import 'package:flutter_soloud/flutter_soloud.dart';
 
+/// ZH
 /// 播放器抽象：一次朗读一条 PCM 流。
+///
+/// EN
+/// Player abstraction: one read-aloud plays one PCM stream.
 abstract interface class SpeechPlayer {
   Future<PlaybackSession> start();
 }
 
 abstract interface class PlaybackSession {
+  /// ZH
   /// 追加 PCM 数据块；奇数字节留到下一块拼接（`speech.md` §4.2）。
+  ///
+  /// EN
+  /// Append a PCM chunk; an odd byte is carried over to the next chunk (`speech.md` §4.2).
   void add(Uint8List chunk);
 
+  /// ZH
   /// 标记传输结束，播放器排空后触发 [completed]。
+  ///
+  /// EN
+  /// Mark the stream ended; [completed] fires after the player drains.
   Future<void> end();
 
   Stream<void> get completed;
 
+  /// ZH
   /// 停止并释放音频源；重复调用无副作用。
+  ///
+  /// EN
+  /// Stop and release the audio source; repeated calls are no-ops.
   Future<void> stop();
 }
 
+/// ZH
 /// `flutter_soloud` 封装：裸 PCM（s16le、24 kHz、单声道），首帧 100 ms 缓冲。
+///
+/// EN
+/// `flutter_soloud` wrapper: raw PCM (s16le, 24 kHz, mono) with a 100 ms first-frame buffer.
 class SoLoudSpeechPlayer implements SpeechPlayer {
   @override
   Future<PlaybackSession> start() async {
@@ -94,7 +114,11 @@ class _SoLoudPlayback implements PlaybackSession {
       if (handle != null) await SoLoud.instance.stop(handle);
       await SoLoud.instance.disposeSource(_source);
     } on Object {
+      // ZH
       // 引擎关闭或音频已结束时释放失败无需上抛。
+      //
+      // EN
+      // Do not rethrow release failures when the engine is closed or audio has ended.
     }
     await _completed.close();
   }

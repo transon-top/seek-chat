@@ -5,9 +5,15 @@ import 'package:archive/archive.dart';
 
 import '../../shared/models/types.dart';
 
+/// ZH
 /// 历史归档（`history.md`）：chat-demo `export_format_version = 3` 的 ZIP。
 ///
 /// 本文件只管格式、校验与领域对象转换，不做文件选择或数据库读写。
+///
+/// EN
+/// History Archive (`history.md`): a ZIP matching chat-demo `export_format_version = 3`.
+///
+/// This file handles format, validation and domain conversion only, no file or DB access.
 const int historyExportFormatVersion = 3;
 
 const String historyManifestPath = 'manifest.json';
@@ -19,7 +25,11 @@ const int historyJsonEntryLimitBytes = 32 * 1024 * 1024;
 const int historyImageEntryLimitBytes = 64 * 1024 * 1024;
 const int historyUncompressedLimitBytes = 512 * 1024 * 1024;
 
+/// ZH
 /// 导入导出失败的原因；界面按此显示文案。
+///
+/// EN
+/// Import/export failure causes; the UI maps them to localized text.
 enum HistoryError {
   tooLarge,
   unrecognized,
@@ -49,7 +59,11 @@ final class HistoryImage {
   final String mimeType;
 }
 
+/// ZH
 /// 解码后的归档：本地领域对象与按附件 id 去重的图片原件。
+///
+/// EN
+/// Decoded archive: local domain objects plus image originals deduped by attachment id.
 final class DecodedHistory {
   const DecodedHistory({required this.sessions, required this.images});
 
@@ -67,7 +81,11 @@ String? historyParseSessionPath(String path) {
   return match?.group(1);
 }
 
+/// ZH
 /// 安全路径片段：分隔符换下划线，空值、`.`、`..` 换 unnamed。
+///
+/// EN
+/// Safe path segment: separators become underscores; empty, `.` and `..` become unnamed.
 String historySafeName(String name) {
   final safe = name.replaceAll(RegExp(r'[/\\]'), '_');
   return safe.isEmpty || safe == '.' || safe == '..' ? 'unnamed' : safe;
@@ -77,8 +95,14 @@ String historyImagePath(String sessionId, String fileId, String fileName) =>
     '${historySessionFilesDir(sessionId)}'
     '${historySafeName(fileId)}_${historySafeName(fileName)}';
 
+/// ZH
 /// 生成归档 ZIP。图片条目按会话各写一份；[imageBytes] 按附件 id 提供原件，
 /// 缺失或非图片时只写元数据。[notice] 为错误 / 拒答回复补写导出时的模板文案。
+///
+/// EN
+/// Build the archive ZIP. Image entries are written per session; [imageBytes] supplies
+/// originals by id, and missing or non-image entries keep metadata only. [notice] adds the
+/// template text for error and refusal replies at export time.
 Uint8List encodeHistoryZip(
   List<SessionHistory> sessions, {
   Map<String, Uint8List> imageBytes = const {},
@@ -466,7 +490,11 @@ int _contextTokens(AssistantMessage message) {
 
 String _iso(DateTime value) => value.toUtc().toIso8601String();
 
+/// ZH
 /// 解码并校验归档。消息 id 是会话内整数，这里统一换成 [newId] 生成的本地 id。
+///
+/// EN
+/// Decode and validate an archive. Per-session int message ids become ids from [newId].
 DecodedHistory decodeHistoryZip(
   Uint8List bytes, {
   required String Function() newId,
@@ -561,7 +589,11 @@ DecodedHistory decodeHistoryZip(
   return DecodedHistory(sessions: sessions, images: images);
 }
 
+/// ZH
 /// 只读中央目录，先按声明的大小拒绝超大条目与加密包，避免整包解压后才检查。
+///
+/// EN
+/// Read only the central directory to reject oversized or encrypted archives before extraction.
 void _checkUncompressedSizes(Uint8List bytes) {
   final ZipDirectory directory;
   try {
@@ -571,7 +603,11 @@ void _checkUncompressedSizes(Uint8List bytes) {
   }
   var total = 0;
   for (final header in directory.fileHeaders) {
+    // ZH
     // 加密条目不属于导出格式。
+    //
+    // EN
+    // Encrypted entries are not part of the export format.
     if ((header.generalPurposeBitFlag & 1) != 0) {
       historyFail(HistoryError.unrecognized);
     }
@@ -619,7 +655,11 @@ Map<String, HistoryImage> _resolveImages(
   for (final message in session.messages) {
     for (final fragment in message.fragments.whereType<_RawFile>()) {
       for (final file in fragment.files) {
+        // ZH
         // 图片身份来自归档；没有原件的图片只保留元数据。
+        //
+        // EN
+        // Image identity comes from the archive; images without originals keep metadata only.
         if (!file.isImage) continue;
         final path = file.exportPath;
         if (path == null) continue;
@@ -784,7 +824,11 @@ SessionHistory _decodeSession(
       selected[parent.id] = current.id;
       current = parent;
     }
+    // ZH
     // 当前停留的消息不再展开；它后面的节点也不在当前分支上。
+    //
+    // EN
+    // The current message is not expanded again; nodes after it are off the current branch.
     selected.remove(currentRawId);
   }
 
@@ -1253,7 +1297,11 @@ _RawFragment? _tryFragment(Object? value) {
       _ => null,
     };
   } on HistoryException catch (error) {
+    // ZH
     // 附件 id 会进入本地文件路径，不安全时整包失败，不能当作可丢弃片段。
+    //
+    // EN
+    // Attachment ids become local paths; unsafe ids fail the archive, not just the fragment.
     if (error.code == HistoryError.invalidFiles) rethrow;
     return null;
   }
@@ -1319,7 +1367,11 @@ _RawFileEntry _parseFileEntry(Map<String, dynamic> json) {
   );
 }
 
+// ZH
 // ---------------------------------------------------------------- 校验助手
+//
+// EN
+// ---------------------------------------------------------------- Validation helpers
 
 Map<String, dynamic> _record(Object? value) {
   if (value is Map<String, dynamic>) return value;

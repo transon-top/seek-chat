@@ -8,9 +8,15 @@ import '../models/json.dart';
 import '../models/types.dart';
 import 'database.dart';
 
+/// ZH
 /// 会话、消息、分支与附件的持久化（`data-model.md`）。
 ///
 /// 流式回复只在内存中合并，仅在状态迁移时落盘；本类在流式期间不写库。
+///
+/// EN
+/// Persistence for sessions, messages, branches, and attachments (`data-model.md`).
+///
+/// Streaming replies merge in memory and persist only on status transitions, never mid-stream.
 class ChatRepository {
   ChatRepository(this._db, {String Function()? newId, int Function()? clock})
       : _newId = newId ?? (() => const Uuid().v4()),
@@ -20,19 +26,37 @@ class ChatRepository {
   final String Function() _newId;
   final int Function() _clock;
 
+  // ZH
   // ---------------------------------------------------------------- 会话
+  //
+  // EN
+  // ---------------------------------------------------------------- Sessions
 
+  /// ZH
   /// [includeEmpty] 为 true 时包含尚无消息的会话，供导出使用：
   /// 官方归档可含空会话，导出遗漏会让往返丢失（`history.md` §3）。
+  ///
+  /// EN
+  /// When [includeEmpty] is true, include sessions without messages for export.
+  /// Official archives may hold empty sessions; omitting them breaks round-trips (`history.md` §3).
   Future<List<SessionSummary>> listSessions({bool includeEmpty = false}) async =>
       _toSummaries(await _sessionsQuery(includeEmpty: includeEmpty).get());
 
+  /// ZH
   /// 会话列表的响应式来源；drift 在会话增删改后推送新列表。
+  ///
+  /// EN
+  /// Reactive source for the session list; drift pushes a new list after session changes.
   Stream<List<SessionSummary>> watchSessions() =>
       _sessionsQuery().watch().map(_toSummaries);
 
+  /// ZH
   /// 历史列表只含已有消息的会话；新建的草稿会话（尚未发出消息）不展示
   /// （chat-demo 同款）。消息写入后 drift 会重新推送同一查询。
+  ///
+  /// EN
+  /// History lists only sessions with messages. Draft sessions with no message stay hidden.
+  /// This matches chat-demo. After a message is written, drift re-pushes the same query.
   Selectable<SessionRow> _sessionsQuery({bool includeEmpty = false}) {
     final query = _db.select(_db.sessions);
     if (!includeEmpty) {
@@ -65,13 +89,21 @@ class ChatRepository {
     return Session(id: id, title: '', createdAt: _date(now), updatedAt: _date(now));
   }
 
+  /// ZH
   /// 重命名不算活动：会话在列表中的位置不变。
+  ///
+  /// EN
+  /// Renaming is not activity: the session keeps its list position.
   Future<void> renameSession(String sessionId, String title) async {
     await (_db.update(_db.sessions)..where((t) => t.id.equals(sessionId)))
         .write(SessionsCompanion(title: Value(title)));
   }
 
+  /// ZH
   /// 置顶不算活动：不修改 `updatedAt`，只改变分组归属。
+  ///
+  /// EN
+  /// Pinning is not activity: `updatedAt` is untouched; only the grouping changes.
   Future<void> setSessionsPinned(Iterable<String> ids, bool pinned) async {
     final list = ids.toList();
     if (list.isEmpty) return;
@@ -79,11 +111,19 @@ class ChatRepository {
         .write(SessionsCompanion(pinned: Value(pinned)));
   }
 
+  /// ZH
   /// 按标题与消息正文搜索会话，返回会话摘要与命中消息片段。
   ///
   /// 用户正文存在 `messages.text`；assistant 正文只在 `blocks` JSON 里，
   /// SQL 先按原文粗筛，再解析文本块校验，排除思考块与工具块。
   /// 每个会话取第一条命中消息作片段；标题命中而正文未命中时退到最新消息。
+  ///
+  /// EN
+  /// Search sessions by title and message text, returning session summaries and matching snippets.
+  ///
+  /// User text lives in `messages.text`; assistant text lives only in the `blocks` JSON.
+  /// SQL coarse-filters raw text, then parses text blocks to exclude thinking and tool blocks.
+  /// Each session's first hit is the snippet; title-only hits fall back to the newest message.
   Future<List<SessionSearchHit>> searchSessions(String query) async {
     final trimmed = query.trim();
     if (trimmed.isEmpty) return const [];
@@ -141,7 +181,11 @@ class ChatRepository {
     ];
   }
 
+  /// ZH
   /// 命中消息的片段：先认 `text`，再把 assistant 的文本块拼起来校验。
+  ///
+  /// EN
+  /// Matching-message snippet: check `text` first, then joined assistant text blocks.
   Future<Map<String, String>> _matchingSnippets(
     List<String> sessionIds,
     String pattern,
@@ -183,7 +227,11 @@ class ChatRepository {
     return snippets;
   }
 
+  /// ZH
   /// 标题命中但没有正文命中时，用该会话最新一条消息兜底。
+  ///
+  /// EN
+  /// On a title-only hit with no body hit, fall back to the session's newest message.
   Future<void> _fallbackSnippets(
     List<String> sessionIds,
     Map<String, String> snippets,
@@ -212,7 +260,11 @@ class ChatRepository {
     }
   }
 
+  /// ZH
   /// SQLite 的变量上限因版本而异，按会话 id 分批查询。
+  ///
+  /// EN
+  /// SQLite variable limits vary by version, so query session ids in batches.
   static const _searchBatch = 400;
 
   Iterable<List<String>> _chunks(List<String> ids) sync* {
@@ -239,7 +291,11 @@ class ChatRepository {
     return '%$escaped%';
   }
 
+  /// ZH
   /// 片段窗口：命中位置前约 18 字、后约 60 字；截断侧补「…」。
+  ///
+  /// EN
+  /// Snippet window: ~18 chars before and ~60 after the hit; truncated sides get "...".
   String _searchSnippet(String text, String query) {
     final collapsed = text.replaceAll(RegExp(r'\s+'), ' ').trim();
     if (collapsed.isEmpty) return '';
@@ -253,12 +309,21 @@ class ChatRepository {
     return '$prefix${collapsed.substring(start, end)}$suffix';
   }
 
+  /// ZH
   /// 删除会话及其全部消息，再清理本会话引用过、且不再被引用的附件行。
   /// 返回被移除的附件，供调用方在事务提交后删除本地文件。
+  ///
+  /// EN
+  /// Delete a session and its messages, then clean its referenced attachment rows now unused.
+  /// Returns removed attachments; delete local files after the transaction commits.
   Future<List<Attachment>> deleteSession(String sessionId) async {
     var orphans = const <Attachment>[];
     await _db.transaction(() async {
+      // ZH
       // Q7：先取出本会话引用过的附件，删除范围不波及其他会话的孤儿行。
+      //
+      // EN
+      // Q7: collect this session's referenced attachments first, so other orphans stay untouched.
       final candidateIds = await _attachmentIdsForSession(sessionId);
       await (_db.delete(_db.sessions)..where((t) => t.id.equals(sessionId)))
           .go();
@@ -287,9 +352,17 @@ class ChatRepository {
     return orphans;
   }
 
+  // ZH
   // ---------------------------------------------------------------- 消息
+  //
+  // EN
+  // ---------------------------------------------------------------- Messages
 
+  /// ZH
   /// 会话的全部消息，含所有分支，按模型规定的顺序排列。
+  ///
+  /// EN
+  /// All messages in a session, across all branches, in model-defined order.
   Future<List<Message>> loadMessages(String sessionId) async {
     final rows = await (_db.select(_db.messages)
           ..where((t) => t.sessionId.equals(sessionId))
@@ -301,8 +374,13 @@ class ChatRepository {
     return _enrich(rows);
   }
 
+  /// ZH
   /// 打开会话时的读取：残留的 `pending`/`streaming` 回复在返回结果中按
   /// `stopped` 处理并收尾思考块，不写库。
+  ///
+  /// EN
+  /// Read for opening a session: leftover `pending`/`streaming` replies display as `stopped`.
+  /// Thinking blocks are settled in the result, and nothing is written to the database.
   Future<List<Message>> loadMessagesForDisplay(String sessionId) async {
     final session = await getSession(sessionId);
     final messages = await loadMessages(sessionId);
@@ -313,14 +391,25 @@ class ChatRepository {
     ];
   }
 
+  /// ZH
   /// 选中分支：从 `rootMessageId` 沿每行 `selected_child_id` 走出的路径。
+  ///
+  /// EN
+  /// Selected branch: the path from `rootMessageId` following each row's `selected_child_id`.
   Future<List<Message>> visiblePath(String sessionId) async =>
       (await loadConversation(sessionId)).messages;
 
+  /// ZH
   /// 选中分支与每条消息的兄弟版本；聊天页一次读取即可渲染路径和切换器。
   ///
   /// [settleInterrupted] 为真时，残留的 `pending`/`streaming` 回复在返回结果
   /// 中按 `stopped` 显示（不写库），供打开会话时使用。
+  ///
+  /// EN
+  /// Selected branch plus each message's sibling versions; one read renders path and switcher.
+  ///
+  /// When [settleInterrupted] is true, leftover `pending`/`streaming` replies display
+  /// as `stopped` in the result (no database write); used when opening a session.
   Future<({List<Message> messages, Map<String, MessageVersions> versions})>
   loadConversation(
     String sessionId, {
@@ -351,7 +440,11 @@ class ChatRepository {
     );
   }
 
+  /// ZH
   /// [parentId] 下的兄弟版本；parentId 为 null 时返回根版本。
+  ///
+  /// EN
+  /// Sibling versions under [parentId]; a null parentId returns the root versions.
   Future<List<Message>> siblings(String sessionId, String? parentId) async {
     final rows = await (_db.select(_db.messages)
           ..where((t) =>
@@ -365,7 +458,11 @@ class ChatRepository {
     return _enrich(rows);
   }
 
+  /// ZH
   /// 把提问追加到选中分支末尾并选中它。
+  ///
+  /// EN
+  /// Append the question to the end of the selected branch and select it.
   Future<UserMessage> addUserMessage({
     required String sessionId,
     required String text,
@@ -413,9 +510,15 @@ class ChatRepository {
     return message;
   }
 
+  /// ZH
   /// 在 [userMessageId] 下创建 `pending` 回复并选中。
   ///
   /// 重新生成是同一操作：旧回复及其子树保持不变。
+  ///
+  /// EN
+  /// Create and select a `pending` reply under [userMessageId].
+  ///
+  /// Regeneration is the same operation: the old reply and its subtree stay unchanged.
   Future<AssistantMessage> createReply({
     required String sessionId,
     required String userMessageId,
@@ -469,8 +572,13 @@ class ChatRepository {
     return message;
   }
 
+  /// ZH
   /// 在终态迁移（`done`、`stopped`、`error`）写入回复状态。可空列直接替换，
   /// 不与旧值合并。
+  ///
+  /// EN
+  /// Write reply status on terminal transitions (`done`, `stopped`, `error`).
+  /// Nullable columns are replaced, not merged with old values.
   Future<void> updateReply({
     required String messageId,
     required ReplyStatus status,
@@ -495,13 +603,21 @@ class ChatRepository {
     ));
   }
 
+  /// ZH
   /// 请求发出前写入本轮系统信息快照，时机为附件补齐之后。
+  ///
+  /// EN
+  /// Persist this turn's system-info snapshot before the request, after attachments are complete.
   Future<void> setLatestReminder(String messageId, String latestReminder) async {
     await (_db.update(_db.messages)..where((t) => t.id.equals(messageId)))
         .write(MessagesCompanion(latestReminder: Value(latestReminder)));
   }
 
+  /// ZH
   /// 续写复用同一条 assistant 行及其请求快照。
+  ///
+  /// EN
+  /// Continuation reuses the same assistant row and its request snapshot.
   Future<void> beginContinuation(String messageId) async {
     await _db.transaction(() async {
       final row = await _messageRow(messageId);
@@ -517,8 +633,13 @@ class ChatRepository {
     });
   }
 
+  /// ZH
   /// 在原提问的父节点下新建 user 版本，复制其附件引用，并插入新的
   /// pending 回复。
+  ///
+  /// EN
+  /// Create a new user version under the original question's parent and copy its
+  /// attachment links. Insert a new pending reply under that version.
   Future<(UserMessage, AssistantMessage)> editUserMessage({
     required String sessionId,
     required String originalMessageId,
@@ -618,7 +739,11 @@ class ChatRepository {
     return (user, reply);
   }
 
+  /// ZH
   /// 在兄弟版本中选中 [messageId]，不写 `updated_at`。
+  ///
+  /// EN
+  /// Select [messageId] among sibling versions without writing `updated_at`.
   Future<void> selectVersion({
     required String sessionId,
     required String messageId,
@@ -636,17 +761,30 @@ class ChatRepository {
     });
   }
 
+  /// ZH
   /// 启动兜底：残留的 `pending`/`streaming` 回复置为 `stopped`。返回受影响
   /// 的行数。
+  ///
+  /// EN
+  /// Startup fallback: mark leftover `pending`/`streaming` replies as `stopped`.
+  /// Returns the number of affected rows.
   Future<int> resetInterruptedReplies() {
     return (_db.update(_db.messages)
           ..where((t) => t.status.isIn(['pending', 'streaming'])))
         .write(const MessagesCompanion(status: Value('stopped')));
   }
 
+  // ZH
   // ------------------------------------------------------------- 导入导出
+  //
+  // EN
+  // ------------------------------------------------------------- Import/Export
 
+  /// ZH
   /// 删除全部会话、消息与附件；返回被移除的附件供调用方清理本地原件。
+  ///
+  /// EN
+  /// Delete all sessions, messages, and attachments; return removed attachments for cleanup.
   Future<List<Attachment>> deleteAllHistory() async {
     var previous = const <Attachment>[];
     await _db.transaction(() async {
@@ -660,10 +798,17 @@ class ChatRepository {
     return previous;
   }
 
+  /// ZH
   /// 用归档内容整体替换全部会话、消息与附件（`history.md` §5）。
   ///
   /// 单事务完成：失败时旧数据保留。返回被移除的附件，供调用方在事务提交后
   /// 删除本地原件。
+  ///
+  /// EN
+  /// Replace all sessions, messages, and attachments with archive contents (`history.md` §5).
+  ///
+  /// Runs in one transaction, so old data survives a failure. Returns removed attachments;
+  /// the caller deletes local files after the transaction commits.
   Future<List<Attachment>> replaceAllHistory(
     List<SessionHistory> history,
   ) async {
@@ -770,16 +915,28 @@ class ChatRepository {
     return previous;
   }
 
+  // ZH
   // ------------------------------------------------------------- 附件
+  //
+  // EN
+  // ------------------------------------------------------------- Attachments
 
+  /// ZH
   /// `server_id` 由引用同一附件的所有消息共享。
+  ///
+  /// EN
+  /// `server_id` is shared by all messages referencing the same attachment.
   Future<void> setAttachmentServerId(String attachmentId, String? serverId) async {
     await (_db.update(_db.attachments)
           ..where((t) => t.id.equals(attachmentId)))
         .write(AttachmentsCompanion(serverId: Value(serverId)));
   }
 
+  /// ZH
   /// 数据库登记的全部原件相对路径，供启动时清理没有数据库记录的文件。
+  ///
+  /// EN
+  /// All original-file relative paths registered in the database, for startup orphan cleanup.
   Future<Set<String>> attachmentLocalPaths() async {
     final rows = await _db.select(_db.attachments).get();
     return {
@@ -788,7 +945,11 @@ class ChatRepository {
     };
   }
 
+  // ZH
   // ------------------------------------------------------------------ 私有
+  //
+  // EN
+  // ------------------------------------------------------------------ Private
 
   Future<void> _writeAttachments(
     String messageId,
@@ -919,7 +1080,11 @@ class ChatRepository {
     return row.createdAt;
   }
 
+  /// ZH
   /// 保证 `ORDER BY created_at` 与父子顺序、版本顺序一致。
+  ///
+  /// EN
+  /// Keep `ORDER BY created_at` consistent with parent-child and version order.
   Future<int> _nextTimestamp(
     String sessionId,
     String? parentId, {
@@ -990,7 +1155,11 @@ class ChatRepository {
     return [for (final row in rows) row.read<String>('id')];
   }
 
+  /// ZH
   /// 打开会话时把残留的生成状态视为已停止，并给未结束的思考块补结束时间。
+  ///
+  /// EN
+  /// On session open, treat leftover in-flight state as stopped and close open thinking blocks.
   Message _settleInterrupted(Message message, DateTime at) {
     if (message is! AssistantMessage || !message.isInFlight) {
       return message;

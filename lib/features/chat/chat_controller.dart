@@ -18,20 +18,37 @@ import '../../shared/prefs/user_metadata_store.dart';
 import '../../shared/security/api_key_store.dart';
 import 'upload_tasks.dart';
 
+/// ZH
 /// 一个会话的可见路径与流式回复状态（`api.md` §6）。
 ///
 /// 流式期间只在内存里合并，终态才写库；同一会话同时只有一个请求。
 /// 流式期间持有 keepAlive：离开聊天页不会取消请求，回到同一会话拿到同一个
 /// 控制器与内存中的最新回复；结束后释放（architecture.md §2、§3）。
+///
+/// EN
+/// The visible path and streaming reply status of one Session (`api.md` §6).
+///
+/// Merge in memory while streaming, persist only at the end; one request per
+/// Session at a time. Hold keepAlive while streaming: leaving the chat page does
+/// not cancel the request; the same Session returns the same controller and live
+/// reply; freed after finish (architecture.md §2, §3).
 final chatControllerProvider = NotifierProvider.autoDispose
     .family<ChatController, ChatState, String>(ChatController.new);
 
+/// ZH
 /// 存活中的会话控制器；App 进入后台时逐个补写流式回复（architecture.md §3）。
+///
+/// EN
+/// Live Session controllers; flush each streaming reply on App background (architecture.md §3).
 final activeChatControllersProvider = Provider<Set<ChatController>>(
   (ref) => <ChatController>{},
 );
 
+/// ZH
 /// 聊天页的可见状态：选中分支的消息、标题、请求闸门与本地错误。
+///
+/// EN
+/// Visible state of the chat page: selected branch messages, title, request gate and local error.
 class ChatState {
   const ChatState({
     this.messages = const [],
@@ -43,18 +60,34 @@ class ChatState {
 
   static const Object _keepError = Object();
 
+  /// ZH
   /// 选中分支的可见消息；流式回复以内存中的最新状态出现在原位。
+  ///
+  /// EN
+  /// Visible messages of the selected branch; a streaming reply shows in place with its latest state.
   final List<Message> messages;
 
+  /// ZH
   /// 每条消息的兄弟版本；切换器据此显示「第几条 / 共几条」。
+  ///
+  /// EN
+  /// Sibling versions per message; the switcher shows 'n of m' from this.
   final Map<String, MessageVersions> versions;
 
   final String title;
 
+  /// ZH
   /// 请求进行中（含创建回复与等待首字节）。
+  ///
+  /// EN
+  /// Request in progress (including creating the reply and awaiting the first byte).
   final bool busy;
 
+  /// ZH
   /// 请求未发出或请求前的本地错误；回复级错误在回复的 `error` 字段。
+  ///
+  /// EN
+  /// Local error before or at request start; reply-level errors live in the reply's `error` field.
   final LocalMessage? error;
 
   ChatState copyWith({
@@ -77,7 +110,11 @@ class ChatController extends Notifier<ChatState> {
 
   final String sessionId;
 
+  /// ZH
   /// 服务端判定 file_id 失效后的自动重传次数（chat-demo 同值）。
+  ///
+  /// EN
+  /// Automatic re-upload attempts after the server reports a stale file_id (same value as chat-demo).
   static const int _fileRetryLimit = 2;
   static const int _fileRetryBaseDelayMs = 1000;
 
@@ -86,7 +123,11 @@ class ChatController extends Notifier<ChatState> {
   late final ApiKeyStore _apiKeyStore;
   late final AttachmentStore _attachmentStore;
 
+  /// ZH
   /// `KeepAliveLink` 未导出，只保存释放回调。
+  ///
+  /// EN
+  /// `KeepAliveLink` is not exported, so only the release callback is kept.
   void Function()? _releaseKeepAlive;
   Completer<void>? _abort;
   bool _stopRequested = false;
@@ -112,7 +153,11 @@ class ChatController extends Notifier<ChatState> {
       sessionId,
       settleInterrupted: true,
     );
+    // ZH
     // 页面可能在读取期间销毁；首次读取也可能晚于请求发出，不覆盖内存状态。
+    //
+    // EN
+    // The page may be disposed during the read; a late first read must not overwrite in-memory state.
     if (!ref.mounted || state.busy) return;
     state = state.copyWith(
       title: session?.title ?? '',
@@ -121,8 +166,14 @@ class ChatController extends Notifier<ChatState> {
     );
   }
 
+  /// ZH
   /// 追加提问并流式生成回复。附件原件在写入数据库前复制到应用支持目录；
   /// 返回是否已创建提问与回复（界面据此清空输入区）。
+  ///
+  /// EN
+  /// Append a question and stream a reply; copy attachment originals to app
+  /// support before persisting; returns whether the question and reply were
+  /// created (the UI clears the composer based on this).
   Future<bool> send({
     required String text,
     required bool thinking,
@@ -174,7 +225,11 @@ class ChatController extends Notifier<ChatState> {
         versions: view.versions,
       );
       submitted = true;
+      // ZH
       // 已完成的上传任务只在发送前有用；serverId 已随消息落库。
+      //
+      // EN
+      // Finished upload tasks only matter before send; the serverId is already persisted with the message.
       for (final attachment in stored) {
         ref.read(uploadTasksProvider.notifier).remove(attachment.id);
       }
@@ -196,7 +251,11 @@ class ChatController extends Notifier<ChatState> {
     return submitted;
   }
 
+  /// ZH
   /// 在提问下新增回复版本并流式生成，旧回复保留。
+  ///
+  /// EN
+  /// Add a new reply version under the question and stream it; the old reply is kept.
   Future<void> regenerate(
     AssistantMessage reply, {
     required bool thinking,
@@ -241,8 +300,14 @@ class ChatController extends Notifier<ChatState> {
     }
   }
 
+  /// ZH
   /// 编辑可见路径上的提问：新建同父 user 版本并流式生成回复，旧分支保留。
   /// 文本为空时沿用原附件；两者皆空则不提交。
+  ///
+  /// EN
+  /// Edit a visible-path question: create a sibling user version and stream the
+  /// reply; keep the old branch. Reuse the original attachments when text is
+  /// empty; when both are empty, submit nothing.
   Future<bool> editMessage(
     UserMessage message, {
     required String text,
@@ -293,8 +358,14 @@ class ChatController extends Notifier<ChatState> {
     return submitted;
   }
 
+  /// ZH
   /// 切换到兄弟版本；下游每条分支保留自己的选择（`data-model.md` §3）。
   /// 新分支可能来自上次中断的会话，读取时按 `stopped` 收尾展示。
+  ///
+  /// EN
+  /// Switch to a sibling version; each downstream branch keeps its own selection
+  /// (`data-model.md` §3). The new branch may come from an interrupted Session;
+  /// show it settled as `stopped` on load.
   Future<void> selectVersion(String messageId) async {
     if (state.busy || !state.versions.containsKey(messageId)) return;
     await _repository.selectVersion(
@@ -310,8 +381,14 @@ class ChatController extends Notifier<ChatState> {
     state = state.copyWith(messages: view.messages, versions: view.versions);
   }
 
+  /// ZH
   /// 续写可见路径末尾的回复；新块追加在原回复之后。缺快照时回退到当前
   /// 开关（`api.md` §2）。
+  ///
+  /// EN
+  /// Continue the reply at the end of the visible path; new blocks append after
+  /// that reply. Fall back to the current toggles when the snapshot is missing
+  /// (`api.md` §2).
   Future<void> continueReply(
     AssistantMessage reply, {
     required bool thinking,
@@ -354,7 +431,11 @@ class ChatController extends Notifier<ChatState> {
     }
   }
 
+  /// ZH
   /// 附件补传失败后重试：保留原回复位置，重新补传并请求（`attachments.md` §5）。
+  ///
+  /// EN
+  /// Retry attachment upload failure: keep the reply position, re-upload then request (`attachments.md` §5).
   Future<void> retryUpload(
     AssistantMessage reply, {
     required bool thinking,
@@ -395,14 +476,23 @@ class ChatController extends Notifier<ChatState> {
     }
   }
 
+  /// ZH
   /// 用户停止：保留已收到的块，按 `stopped` 收尾。密钥读取、建行阶段同样
   /// 生效（`api.md` §9.1 的统一取消入口）。
+  ///
+  /// EN
+  /// User stop: keep received blocks and settle as `stopped`. Also applies while
+  /// reading the key or creating rows (the unified cancel entry in `api.md` §9.1).
   void stop() {
     final abort = _abort;
     if (abort != null && !abort.isCompleted) abort.complete();
   }
 
+  /// ZH
   /// 应用进入后台时把内存中的流式回复补写一次（`data-model.md` §4）。
+  ///
+  /// EN
+  /// Flush the in-memory streaming reply once when the App enters background (`data-model.md` §4).
   Future<void> flush() async {
     if (!ref.mounted) return;
     final id = _activeReplyId;
@@ -424,7 +514,11 @@ class ChatController extends Notifier<ChatState> {
         prefix: live.prefix,
       );
     } on Object catch (error) {
+      // ZH
       // 补写失败不阻塞；启动兜底仍会把残留状态置为 stopped。
+      //
+      // EN
+      // A failed flush is non-blocking; the startup fallback still settles leftovers as stopped.
       debugLog('reply flush failed', error);
     }
   }
@@ -434,7 +528,11 @@ class ChatController extends Notifier<ChatState> {
     state = state.copyWith(error: null);
   }
 
+  // ZH
   // ------------------------------------------------------------------ 流
+  //
+  // EN
+  // ------------------------------------------------------------------ Stream
 
   Future<void> _stream({
     required AssistantMessage reply,
@@ -496,7 +594,11 @@ class ChatController extends Notifier<ChatState> {
         break;
       } on Object catch (error) {
         if (_stopRequested || abort.isCompleted) break;
+        // ZH
         // 附件失效：清掉 serverId、重新补传后重发。收到过内容块后不自动重发。
+        //
+        // EN
+        // Stale attachment: clear serverId, re-upload, resend. No auto resend once content blocks arrived.
         final canRetry =
             attempt < _fileRetryLimit &&
             !receivedContent &&
@@ -531,9 +633,17 @@ class ChatController extends Notifier<ChatState> {
     await _finish(reply, accumulator, status, replyError);
   }
 
+  /// ZH
   /// 建立请求前补齐本轮与历史上下文的 serverId（`attachments.md` §5），
   /// 再用数据库里的最新消息构造请求。新回复在附件补齐后生成并落库本轮
   /// 元信息快照；续写沿用原快照（`user-metadata.md` §4）。
+  ///
+  /// EN
+  /// Fill in serverIds for this round and history context before building the
+  /// request (`attachments.md` §5), then build the request from the latest
+  /// database messages. New replies generate and persist this round's Latest
+  /// Reminder after uploads complete; continuation reuses the prior snapshot
+  /// (`user-metadata.md` §4).
   Future<({CreateMessageRequest request, String? latestReminder})>
   _prepareRequest({
     required String replyId,
@@ -580,8 +690,14 @@ class ChatController extends Notifier<ChatState> {
     );
   }
 
+  /// ZH
   /// 本轮附件并行补传，任一失败则整体失败；历史轮次从新到旧逐张补传，
   /// 失败静默跳过，该附件不进入本次请求。
+  ///
+  /// EN
+  /// Upload this round's attachments in parallel; any failure fails the round.
+  /// Upload history rounds newest to oldest, skipping failures silently; those
+  /// attachments stay out of this request.
   Future<void> _ensureAttachments({
     required String questionId,
     required String apiKey,
@@ -617,14 +733,24 @@ class ChatController extends Notifier<ChatState> {
           final serverId = await _ensureServerId(attachment);
           if (serverId != null) await _saveServerId(attachment.id, serverId);
         } on Object {
+          // ZH
           // 历史附件补传失败：静默跳过，下次发送再试。
+          //
+          // EN
+          // History attachment re-upload failed: skip silently and retry on the next send.
         }
       }
     }
   }
 
+  /// ZH
   /// 已有 serverId 直接复用；正在上传的等待同一任务；否则按本地原件补传。
   /// 本地也没有原件时返回 null，该附件只展示、不进入请求。
+  ///
+  /// EN
+  /// Reuse an existing serverId; await the same in-flight task; otherwise
+  /// re-upload from the local original. Return null when no local original
+  /// exists; the attachment is shown but kept out of the request.
   Future<String?> _ensureServerId(Attachment attachment) async {
     final task = ref.read(uploadTasksProvider)[attachment.id];
     if (task != null &&
@@ -644,14 +770,24 @@ class ChatController extends Notifier<ChatState> {
         );
   }
 
+  /// ZH
   /// 把补传得到的 serverId 写回附件行与内存中的全部引用。
+  ///
+  /// EN
+  /// Write the re-uploaded serverId back to the attachment row and all in-memory references.
   Future<void> _saveServerId(String attachmentId, String serverId) async {
     await _repository.setAttachmentServerId(attachmentId, serverId);
     _setAttachmentServerId(attachmentId, serverId);
   }
 
+  /// ZH
   /// 服务端判定 file_id 失效时清掉对应附件并丢弃旧任务，下一次补齐会重传。
   /// 报错没点名 file_id 时只重置本次请求用到的附件（提问 + 进入上下文的历史轮次）。
+  ///
+  /// EN
+  /// On a server-side stale file_id, clear those attachments and drop old tasks;
+  /// the next fill re-uploads. If no file_id is named, reset only attachments
+  /// used here (question and in-context history rounds).
   Future<bool> _reuploadInvalidatedFiles(
     Object error,
     String questionId,
@@ -702,7 +838,11 @@ class ChatController extends Notifier<ChatState> {
     ]);
   }
 
+  /// ZH
   /// 消费一次流：增量只在内存合并，事件到达时刷新界面。
+  ///
+  /// EN
+  /// Consume one stream: merge deltas in memory only and refresh the UI as events arrive.
   Future<void> _consume({
     required CreateMessageRequest request,
     required AssistantMessage reply,
@@ -743,8 +883,14 @@ class ChatController extends Notifier<ChatState> {
           cancelOnError: true,
         );
 
+    // ZH
     // 本地取消不主动取消订阅：transport 的 abortTrigger 会结束底层流；
     // 提前 cancel 会让生成器在收尾检查里误报 interrupted。
+    //
+    // EN
+    // Local cancel does not cancel the subscription: the transport abortTrigger
+    // ends the underlying stream; cancelling early makes the generator falsely
+    // report interrupted in its final check.
     unawaited(
       abort.future.then((_) {
         _stopRequested = true;
@@ -755,7 +901,11 @@ class ChatController extends Notifier<ChatState> {
     await done.future;
   }
 
+  /// ZH
   /// 收尾并落盘；后台补写与终态写入共用。
+  ///
+  /// EN
+  /// Settle and persist; shared by the background flush and terminal writes.
   Future<void> _finish(
     AssistantMessage reply,
     ReplyAccumulator accumulator,
@@ -839,7 +989,11 @@ class ChatController extends Notifier<ChatState> {
     error: clearError ? null : base.error,
   );
 
+  /// ZH
   /// 复制草稿原件到应用支持目录；数据库只存相对路径。
+  ///
+  /// EN
+  /// Copy draft originals to the app support directory; the database stores only relative paths.
   Future<List<Attachment>> _storeAttachments(
     List<DraftAttachment> drafts,
   ) async {
@@ -861,7 +1015,11 @@ class ChatController extends Notifier<ChatState> {
     return stored;
   }
 
+  /// ZH
   /// 同步内存中引用该附件的消息；传 null 表示 serverId 已失效。
+  ///
+  /// EN
+  /// Sync in-memory messages referencing this attachment; null means the serverId is stale.
   void _setAttachmentServerId(String attachmentId, String? serverId) {
     state = state.copyWith(
       messages: [
@@ -878,10 +1036,19 @@ class ChatController extends Notifier<ChatState> {
     );
   }
 
+  // ZH
   // ---------------------------------------------------------------- 辅助
+  //
+  // EN
+  // ---------------------------------------------------------------- Helpers
 
+  /// ZH
   /// 自动标题只在标题仍为空、请求未取消且结束原因正常时采纳
   /// （`api.md` §7）。
+  ///
+  /// EN
+  /// Adopt the auto title only when the title is still empty, the request was not
+  /// cancelled and the stop reason is normal (`api.md` §7).
   void _adoptTitle(ReplyAccumulator accumulator) {
     if (_stopRequested || _cancelled) return;
     final title = accumulator.title?.trim();
@@ -896,7 +1063,11 @@ class ChatController extends Notifier<ChatState> {
           await _repository.renameSession(sessionId, title);
         }
       } on Object catch (error) {
+        // ZH
         // 标题写库失败不影响本轮回复。
+        //
+        // EN
+        // A failed title write does not affect this reply.
         debugLog('saving title failed', error);
       }
     }());
@@ -976,7 +1147,11 @@ class ChatController extends Notifier<ChatState> {
   }
 }
 
+/// ZH
 /// 请求发出前补传附件失败；请求没有发出（`api.md` §5）。
+///
+/// EN
+/// Attachment re-upload failed before the request went out; no request was sent (`api.md` §5).
 final class _UploadFailure implements Exception {
   const _UploadFailure(this.cause);
 

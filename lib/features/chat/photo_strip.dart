@@ -11,7 +11,11 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'photo_import.dart';
 
+/// ZH
 /// 构建开关只关闭 Android 横条；iOS 不受影响（`attachments.md` §9.1）。
+///
+/// EN
+/// Build flag disables the Device Photo Strip on Android only; iOS is unaffected (`attachments.md` §9.1).
 const bool _photoStripBuildEnabled = bool.fromEnvironment(
   'OPEN_CHAT_PHOTO_STRIP',
   defaultValue: true,
@@ -22,7 +26,11 @@ bool photoStripEnabledFor(TargetPlatform platform) =>
 
 enum PhotoAccessStatus { authorized, limited, denied, notDetermined }
 
+/// ZH
 /// 照片权限、最近图片与系统「管理」入口；测试注入 fake。
+///
+/// EN
+/// Photo Access, recent images and the system 'manage' entry; tests inject a fake.
 abstract interface class PhotoLibrary {
   Future<PhotoAccessStatus> access({required bool request});
 
@@ -61,7 +69,11 @@ class PhotoManagerLibrary implements PhotoLibrary {
     };
   }
 
+  /// ZH
   /// 每次展开只取第一页 30 张，显式按 `createDate` 倒序（`attachments.md` §9.1）。
+  ///
+  /// EN
+  /// Each expand loads only first 30, explicitly sorted by `createDate` descending (`attachments.md` §9.1).
   @override
   Future<List<PhotoAsset>> recentImages({int limit = 30}) async {
     final paths = await PhotoManager.getAssetPathList(
@@ -99,7 +111,11 @@ class _ManagerPhotoAsset implements PhotoAsset {
   @override
   Future<File?> originalFile() => _entity.file;
 
+  /// ZH
   /// iOS 用 `ThumbnailOption.ios` 的 fit 模式，默认的 AspectFill 会裁成方图。
+  ///
+  /// EN
+  /// iOS uses `ThumbnailOption.ios` fit mode; the default AspectFill crops to a square.
   @override
   Future<Uint8List?> transcodedJpeg() {
     const size = ThumbnailSize.square(2560);
@@ -117,10 +133,17 @@ const double _stripHeight = 96;
 
 enum _StripStatus { loading, ready, denied, empty, failed }
 
+/// ZH
 /// 面板顶部照片横条：最近 30 张、勾选与四种权限 / 数据降级（`attachments.md` §9）。
 ///
 /// 每次插入树（面板展开）重新查询；展开期间不自动刷新，回到前台或「管理」
 /// 返回时才重载。
+///
+/// EN
+/// Top Device Photo Strip: latest 30, selection, four Photo Access / data fallbacks (`attachments.md` §9).
+///
+/// Re-query on each tree insert (panel expand); no auto refresh while open, reload only
+/// on resume or return from 'manage'.
 class PhotoStrip extends StatefulWidget {
   const PhotoStrip({
     super.key,
@@ -134,13 +157,21 @@ class PhotoStrip extends StatefulWidget {
 
   final PhotoLibrary library;
 
+  /// ZH
   /// 选中态由草稿附件的 `sourceAssetId` 派生。
+  ///
+  /// EN
+  /// Selection derives from draft attachments' `sourceAssetId`.
   final Set<String> selectedAssetIds;
   final bool full;
   final ValueChanged<PhotoAsset> onToggle;
   final VoidCallback onLimitReached;
 
+  /// ZH
   /// 相机 / 相册 / 文件选择器返回时页面保持展开且横条不刷新（ui.md §5.7）。
+  ///
+  /// EN
+  /// Keep the panel open and skip strip refresh when the camera, photo or file picker returns (ui.md §5.7).
   final bool reloadOnResume;
 
   @override
@@ -166,7 +197,11 @@ class _PhotoStripState extends State<PhotoStrip> with WidgetsBindingObserver {
     super.dispose();
   }
 
+  /// ZH
   /// 从后台、系统设置或「管理」返回时重新检查并重载；系统选择器返回除外。
+  ///
+  /// EN
+  /// Re-check and reload on return from background, settings or 'manage'; system picker returns excepted.
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed && widget.reloadOnResume) {
@@ -195,7 +230,11 @@ class _PhotoStripState extends State<PhotoStrip> with WidgetsBindingObserver {
       if (!mounted || loadId != _loadId) return;
       setState(() {
         _assets = assets;
+        // ZH
         // 受限且可访问资产为 0 时只显示「管理」格，不显示空态。
+        //
+        // EN
+        // With limited access and zero assets, show only the 'manage' tile, not the empty state.
         _status = assets.isEmpty && !_limited
             ? _StripStatus.empty
             : _StripStatus.ready;
@@ -210,7 +249,11 @@ class _PhotoStripState extends State<PhotoStrip> with WidgetsBindingObserver {
     try {
       await widget.library.presentLimited();
     } on Object {
+      // ZH
       // 选择器不可用时按原资产重载。
+      //
+      // EN
+      // When the picker is unavailable, reload with the existing assets.
     }
     if (mounted) await _load();
   }
@@ -332,11 +375,19 @@ class _PhotoTile extends StatefulWidget {
 
   final PhotoAsset asset;
 
+  /// ZH
   /// 从 1 起的照片序号，用于无障碍文案。
+  ///
+  /// EN
+  /// 1-based photo index used in accessibility labels.
   final int index;
   final bool selected;
 
+  /// ZH
   /// 草稿已满时未选中的照片格不可添加，但仍可取消已有选择。
+  ///
+  /// EN
+  /// When drafts are full, unselected tiles cannot add, but selected ones can still be cleared.
   final bool enabled;
   final VoidCallback onToggle;
   final VoidCallback onLimitReached;

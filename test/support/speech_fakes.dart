@@ -13,7 +13,11 @@ class FakeMicrophonePermissions implements MicrophonePermissions {
   int requests = 0;
   bool openedSettings = false;
 
+  /// ZH
   /// 非空时请求挂起，模拟系统授权弹窗。
+  ///
+  /// EN
+  /// When non-null, requests hang, simulating the system permission dialog.
   Completer<bool>? requestGate;
 
   @override
@@ -82,7 +86,11 @@ class FakeRecorder implements SpeechRecorder {
   Object? error;
   int starts = 0;
 
+  /// ZH
   /// 非空时启动挂起，模拟设备启动耗时。
+  ///
+  /// EN
+  /// When non-null, start hangs, simulating device startup latency.
   Completer<void>? startGate;
 
   @override

@@ -49,12 +49,20 @@ WebSearchResult _result(String url, {String? title}) => WebSearchResult(
   encryptedContent: '',
 );
 
+/// ZH
 /// 消息列表自身的滚动视图（文本控件内部也有 Scrollable，取最外层）。
+///
+/// EN
+/// The message list's scroll view (text widgets have Scrollables too; take the outermost).
 final Finder _listScrollable = find
     .descendant(of: find.byType(ListView), matching: find.byType(Scrollable))
     .first;
 
+/// ZH
 /// 消息列表当前渲染窗口的条数。
+///
+/// EN
+/// Number of items in the message list's currently rendered window.
 int? _renderedCount(WidgetTester tester) =>
     (tester.widget<ListView>(find.byType(ListView)).childrenDelegate
             as SliverChildBuilderDelegate)
@@ -145,7 +153,11 @@ void main() {
       _reply(const [TextBlock(text: 'Hi')]),
     ]);
 
+    // ZH
     // 内容不足一屏：提问从视口顶部开始。
+    //
+    // EN
+    // Content fits one screen: the question starts at the top of the viewport.
     expect(
       tester.getTopLeft(find.byKey(const Key('user-bubble-u1'))).dy,
       lessThan(50),
@@ -167,7 +179,11 @@ void main() {
     ];
     await pumpMessages(tester, many);
 
+    // ZH
     // 内容超过一屏：跟随底部，最新回复留在视口下沿。
+    //
+    // EN
+    // Content exceeds one screen: follow the bottom; the latest reply stays at the viewport edge.
     final last = find.byKey(const Key('assistant-body-r29'));
     expect(last, findsOneWidget);
     expect(tester.getBottomLeft(last).dy, greaterThan(800));
@@ -206,7 +222,11 @@ void main() {
       final position = tester.state<ScrollableState>(_listScrollable).position;
       expect(position.maxScrollExtent, greaterThan(600));
 
+      // ZH
       // 上滑离开底部：出现悬浮按钮，内容继续增长时视口保持原位。
+      //
+      // EN
+      // Swipe up off the bottom: the floating button appears; the viewport holds as content grows.
       position.jumpTo(position.maxScrollExtent - 600);
       await tester.pump();
       await tester.pump();
@@ -224,7 +244,11 @@ void main() {
       }
       expect(position.pixels, moreOrLessEquals(held, epsilon: 1));
 
+      // ZH
       // 点悬浮按钮回到底部，随后恢复跟随。
+      //
+      // EN
+      // Tap the floating button to return to the bottom, then follow resumes.
       await tester.tap(find.byKey(const Key('scroll-to-bottom')));
       await tester.pump();
       await tester.pump();
@@ -274,13 +298,21 @@ void main() {
       await pumpMessages(tester, messages);
       final position = tester.state<ScrollableState>(_listScrollable).position;
 
+      // ZH
       // 先停在触发线外，记下一条已渲染消息的屏幕位置。
+      //
+      // EN
+      // Stop outside the trigger line and record the screen position of a rendered message.
       position.jumpTo(230);
       await tester.pump();
       final anchor = find.byKey(const ValueKey('user-bubble-u152'));
       final before = tester.getTopLeft(anchor).dy;
 
+      // ZH
       // 再向顶部走 31px：触发补历史，整块内容只应下移 31px 而不是被顶下去。
+      //
+      // EN
+      // Move 31px toward the top: backfill triggers, so content shifts down 31px, not pushed off.
       position.jumpTo(199);
       await tester.pumpAndSettle();
 
@@ -290,7 +322,11 @@ void main() {
         moreOrLessEquals(before + 31, epsilon: 0.5),
       );
 
+      // ZH
       // 补进来的历史在锚点上方，继续滚到顶后可见。
+      //
+      // EN
+      // Backfilled history sits above the anchor and becomes visible after scrolling to the top.
       position.jumpTo(0);
       await tester.pumpAndSettle();
       expect(find.byKey(const ValueKey('user-bubble-u110')), findsOneWidget);
@@ -300,8 +336,13 @@ void main() {
   testWidgets(
     'a failing mermaid block above the viewport does not shift the content',
     (tester) async {
+      // ZH
       // 第 5 条回复里的 mermaid 解析失败；等错误回调再换代码块会让该条
       // 先撑高再缩回，滚动中视口上方高度突变、内容跳位。
+      //
+      // EN
+      // The mermaid block in reply 5 fails to parse; swapping to a code block on the error
+      // callback would first grow then shrink it, jumping content above the viewport mid-scroll.
       final messages = <Message>[
         for (var i = 0; i < 30; i++) ...[
           UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
@@ -330,7 +371,11 @@ void main() {
         return finder.evaluate().isEmpty ? null : tester.getTopLeft(finder).dy;
       }
 
+      // ZH
       // 一边往上拖（看更早的消息），一边核对固定消息的屏幕位移与滚动位移。
+      //
+      // EN
+      // Drag up for earlier messages while checking a fixed message moves exactly with the scroll.
       var checked = false;
       for (var step = 0; step < 20; step++) {
         final tracked = yOf('u10') != null
@@ -431,8 +476,13 @@ void main() {
       _reply(const [TextBlock(text: 'Cut off')], status: ReplyStatus.stopped),
     ]);
 
+    // ZH
     // 图标顺序复制 → 朗读 → 重新生成；继续生成靠右、高约 32（同 chat-demo，
     // ShadButton 的 1px 描边占 2px，渲染为 34）。
+    //
+    // EN
+    // Icon order: copy, read aloud, regenerate; continue is rightmost, about 32 high (as
+    // chat-demo, where ShadButton's 1px border takes 2px, so it renders at 34).
     final copyX = tester.getCenter(find.byTooltip('复制')).dx;
     final readX = tester.getCenter(find.byTooltip('朗读')).dx;
     final regenerateX = tester.getCenter(find.byTooltip('重新生成')).dx;
@@ -488,7 +538,11 @@ void main() {
           .onPressed,
       isNull,
     );
+    // ZH
     // 朗读按回复自身状态判断：已完成的回复仍可朗读（§5.3）。
+    //
+    // EN
+    // Read-aloud follows the reply's own status: a completed reply can still be read (§5.3).
     expect(
       tester.widget<ReadAloudButton>(find.byType(ReadAloudButton)).enabled,
       isTrue,

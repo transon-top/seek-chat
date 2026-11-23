@@ -15,7 +15,11 @@ const double _draftImageSize = 64;
 const double _draftStripHeight = 76;
 const double _draftDocumentWidth = 210;
 
+/// ZH
 /// 文件卡固定 64 高，两行文字在系统字号 2.0 下放不下；卡内封顶到 1.3。
+///
+/// EN
+/// File card fixed at 64 high; two text lines do not fit at system scale 2.0, so cap at 1.3.
 const double _draftDocumentTextScaleMax = 1.3;
 const double _draftImageRadius = 12;
 const double _draftCardRadius = 8;
@@ -24,7 +28,11 @@ const double _draftExtensionSize = 36;
 const double _singleImageSize = 120;
 const double _mixedImageSize = 64;
 
+/// ZH
 /// 缩略图按显示尺寸解码：`fit` 内切，既不拉伸、也限制长截图的解码内存。
+///
+/// EN
+/// Decode thumbnails at display size: `fit` avoids stretching and limits tall-screenshot memory.
 Widget _thumbnail(
   BuildContext context,
   String path,
@@ -44,7 +52,11 @@ Widget _thumbnail(
   );
 }
 
+/// ZH
 /// 输入区的附件条：图片缩略图或文档卡片，带上传中、失败与移除（`attachments.md` §7）。
+///
+/// EN
+/// Composer attachment strip: thumbnails/cards with upload, failure and remove (`attachments.md` §7).
 class DraftAttachmentStrip extends StatelessWidget {
   const DraftAttachmentStrip({
     super.key,
@@ -324,7 +336,11 @@ class _DraftDocument extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 消息里的附件：图片缩略图（点击全屏查看）或文档卡片（`attachments.md` §7）。
+///
+/// EN
+/// Message attachment: image thumbnail (tap for full screen) or file card (`attachments.md` §7).
 class MessageAttachments extends ConsumerWidget {
   const MessageAttachments({super.key, required this.attachments});
 
@@ -465,7 +481,11 @@ class _MessageDocument extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 36×36 扩展名配色色块；可重试失败时换成白色重试图标。
+///
+/// EN
+/// A 36×36 extension-colored badge; shows a white retry icon on a retryable failure.
 class _ExtensionBadge extends StatelessWidget {
   const _ExtensionBadge({
     super.key,
@@ -508,7 +528,11 @@ class _ExtensionBadge extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 卡片内右上角 20 白色圆移除徽标。
+///
+/// EN
+/// A 20 px white circular remove badge at the card's top-right.
 class _RemoveBadge extends StatelessWidget {
   const _RemoveBadge({
     super.key,
@@ -554,7 +578,11 @@ class _RemoveBadge extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 草稿文件卡扩展名配色（取自输入区原型）。
+///
+/// EN
+/// Extension colors for draft file cards (from the composer prototype).
 Color _extensionColor(String extension) => switch (extension) {
   'PDF' => const Color(0xFFE5484D),
   'DOC' || 'DOCX' => const Color(0xFF2F63F6),

@@ -9,9 +9,15 @@ import 'speech/speech_controller.dart';
 import 'speech/voice_button.dart';
 import 'upload_tasks.dart';
 
+/// ZH
 /// 输入区：大圆角容器、开关胶囊、附件条、语音与发送 / 停止（ui.md §1.3、§5.2）。
 ///
 /// 容器圆角 28、1px 描边、无阴影；内部左 16 / 上 12 / 右 12 / 下 10。
+///
+/// EN
+/// Composer: large rounded container, toggle pills, attachment strip, voice, send / stop (ui.md §1.3, §5.2).
+///
+/// Container radius 28, 1px border, no shadow; inner padding left 16 / top 12 / right 12 / bottom 10.
 class Composer extends StatelessWidget {
   const Composer({
     super.key,
@@ -78,8 +84,13 @@ class Composer extends StatelessWidget {
           mainAxisSize: MainAxisSize.min,
           children: [
             Container(
+              // ZH
               // 下 5：按钮行 40 命中区比 29 胶囊高 5.5，胶囊下缘到卡片边
               // 才是官方 app 的约 10。
+              //
+              // EN
+              // Bottom 5: the 40 button-row hit area is 5.5 taller than the 29 pill, so the
+              // pill's lower edge sits about 10 from the card edge, matching the official app.
               padding: const EdgeInsets.fromLTRB(16, 12, 12, 5),
               decoration: BoxDecoration(
                 color: colors.card,
@@ -105,7 +116,11 @@ class Composer extends StatelessWidget {
                       controller: input,
                       focusNode: inputFocus,
                       readOnly: voiceBusy,
+                      // ZH
                       // 官方 app 窄屏输入区约 1.25 行高；单行起步，随内容增高。
+                      //
+                      // EN
+                      // Official app narrow composer is about 1.25 lines; start at one line and grow.
                       minLines: 1,
                       maxLines: 5,
                       padding: EdgeInsets.zero,
@@ -127,11 +142,19 @@ class Composer extends StatelessWidget {
                       ),
                     ),
                   ),
+                  // ZH
                   // 官方 app：输入框下缘到按钮行 = 4 外边距 + 12 行内边距。
+                  //
+                  // EN
+                  // Official app: input bottom to button row = 4 outer margin + 12 inner padding.
                   const SizedBox(height: 16),
                   Row(
                     children: [
+                      // ZH
                       // 左侧开关可横向滚动，右侧按钮定宽不动，避免窄屏溢出。
+                      //
+                      // EN
+                      // Left toggles scroll horizontally; fixed right buttons avoid narrow-screen overflow.
                       Expanded(
                         child: HorizontalFadeScroll(
                           child: Row(
@@ -183,7 +206,11 @@ class Composer extends StatelessWidget {
                                   onCancelRecording: onVoiceCancel,
                                 ),
                               ],
+                              // ZH
                               // 无可发送内容（空文本且无附件）时不渲染发送按钮。
+                              //
+                              // EN
+                              // No send button when there is nothing to send (no text and no attachments).
                               if (busy ||
                                   hasText ||
                                   attachments.isNotEmpty) ...[
@@ -238,8 +265,14 @@ const _darkToggleBorder = Color(0xFF4868B2);
 const _darkToggleForeground = Color(0xFF679EFE);
 const _darkToggleIdleForeground = Color(0xFFF9FAFB);
 
+/// ZH
 /// 深度思考 / 智能搜索胶囊；照搬官方 app：高 29、未激活近黑字、激活浅蓝底 +
 /// 蓝描边 + 蓝图标文字。深色取值照搬 chat-demo（blue-900 / blue-600 / blue-400）。
+///
+/// EN
+/// Deep Search / Web Search pills; mirror the official app: height 29, near-black
+/// idle text, light blue fill + blue border + blue icon and text. Dark values
+/// mirror chat-demo (blue-900 / blue-600 / blue-400).
 class ComposerToggle extends StatelessWidget {
   const ComposerToggle({
     super.key,
@@ -272,7 +305,11 @@ class ComposerToggle extends StatelessWidget {
       child: GestureDetector(
         onTap: enabled ? () => onChanged(!selected) : null,
         behavior: HitTestBehavior.opaque,
+        // ZH
         // 官方 app 点击后底色 / 描边 / 文字同帧切换，不做渐变。
+        //
+        // EN
+        // The official app switches fill / border / text in the same frame on tap, with no fade.
         child: Container(
           constraints: const BoxConstraints(minHeight: 29),
           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -309,7 +346,11 @@ class ComposerToggle extends StatelessWidget {
   }
 }
 
+/// ZH
 /// `+` / `×`：展开与收起附件面板，180ms 交叉淡入 + 90° 旋转（ui.md §3.8）。
+///
+/// EN
+/// `+` / `×`: expand / collapse the Attachment Panel with 180ms cross-fade + 90° rotation (ui.md §3.8).
 class _PlusButton extends StatelessWidget {
   const _PlusButton({required this.open, required this.onPressed});
 
@@ -325,7 +366,11 @@ class _PlusButton extends StatelessWidget {
       message: open ? l10n.closeAttachmentPanel : l10n.addAttachment,
       child: Opacity(
         opacity: onPressed == null ? 0.4 : 1,
+        // ZH
         // 视觉 20 描边圆，点击区保持 40（参照官方 app）。
+        //
+        // EN
+        // Visual 20 outlined circle; hit area stays 40 (per official app).
         child: SizedBox(
           width: 40,
           height: 40,
@@ -378,8 +423,14 @@ class _PlusButton extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 发送 / 停止圆形按钮：视觉 28 实心圆（点击区 40），可用为主色，禁用为主色 35%，
 /// 生成中同底换成实心方块停止图标（参照 DeepSeek 官方输入区，ui.md §5.2）。
+///
+/// EN
+/// Send / stop round button: visual 28 filled circle (hit area 40), primary when
+/// enabled, 35% when disabled, and a filled square stop icon on the same fill while
+/// generating (per DeepSeek composer, ui.md §5.2).
 class SendButton extends StatelessWidget {
   const SendButton({
     super.key,
@@ -419,7 +470,11 @@ class SendButton extends StatelessWidget {
                     color: colors.primary,
                     shape: BoxShape.circle,
                   ),
+                  // ZH
                   // 实心圆角方块，按官方比例收在 28 圆内。
+                  //
+                  // EN
+                  // Filled rounded square scaled into the 28 circle as in the official app.
                   child: Container(
                     width: 10,
                     height: 10,

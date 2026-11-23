@@ -4,14 +4,26 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import 'markdown_theme.dart';
 
+/// ZH
 /// 主题种子；只补齐未被 chat-demo 令牌显式覆盖的 Material 角色。
+///
+/// EN
+/// Theme seed; fills only Material roles not explicitly covered by chat-demo tokens.
 const appThemeSeed = Color(0xFF4D6BFE);
 
+/// ZH
 /// 主按钮色；浅色取 chat-demo blue-500，深色取 blue-450。
+///
+/// EN
+/// Primary button color: chat-demo blue-500 in light, blue-450 in dark.
 const appPrimaryColor = Color(0xFF3964FE);
 const appPrimaryColorDark = Color(0xFF5686FE);
 
+/// ZH
 /// 会话抽屉配色：照搬 chat-demo 侧边栏令牌，仅供抽屉使用，不并入全局色表。
+///
+/// EN
+/// Session Drawer colors: copied from chat-demo sidebar tokens; drawer only, not global.
 class AppSidebarColors {
   const AppSidebarColors({
     required this.fill,
@@ -28,7 +40,11 @@ class AppSidebarColors {
   });
 
   static const light = AppSidebarColors(
+    // ZH
     // 官方侧栏与对话层同为纯白，只靠内容层阴影分隔。
+    //
+    // EN
+    // The official sidebar and chat layer are both pure white, split only by content shadow.
     fill: Color(0xFFFFFFFF),
     border: Color(0x0A000000),
     labelPrimary: Color(0xFF0F1115),
@@ -69,17 +85,28 @@ class AppSidebarColors {
   final Color danger;
 }
 
+/// ZH
 /// Material 主题：供 Markdown / Mermaid / 原生控件使用。
 ///
 /// 中文正文用稍高行高，英文保持 Material 默认。
 /// 状态栏图标亮度由 AppBar 底色推导；导航栏沿用系统默认。
+///
+/// EN
+/// Material theme: used by Markdown / Mermaid / native widgets.
+///
+/// Chinese body text gets a taller line height; English keeps the Material default.
+/// Status bar icon brightness follows the AppBar color; navigation bar keeps the system default.
 ThemeData buildAppTheme({
   required Brightness brightness,
   required bool chinese,
 }) {
   final base = ThemeData(colorSchemeSeed: appThemeSeed, brightness: brightness);
   final text = base.textTheme;
+  // ZH
   // 配色照搬 chat-demo 令牌：浅色白底 + 蓝色气泡，深色 #151517 底 + 中性灰层。
+  //
+  // EN
+  // Colors copy chat-demo tokens: white base and blue bubble in light, #151517 base in dark.
   final scheme = brightness == Brightness.dark
       ? base.colorScheme.copyWith(
           primary: appPrimaryColorDark,
@@ -104,7 +131,11 @@ ThemeData buildAppTheme({
           onSurface: const Color(0xFF0F1115),
           surfaceContainerLowest: const Color(0xFFFFFFFF),
           surfaceContainerLow: const Color(0xFFFFFFFF),
+          // ZH
           // 用户气泡：chat-demo blue-50。
+          //
+          // EN
+          // User bubble: chat-demo blue-50.
           surfaceContainer: const Color(0xFFEDF3FE),
           surfaceContainerHigh: const Color(0xFFFFFFFF),
           surfaceContainerHighest: const Color(0xFFF5F6F7),
@@ -118,7 +149,11 @@ ThemeData buildAppTheme({
     colorScheme: scheme,
     scaffoldBackgroundColor: scheme.surface,
     canvasColor: scheme.surface,
+    // ZH
     // Markdown 样式照搬 chat-demo，见 `markdown_theme.dart`。
+    //
+    // EN
+    // Markdown styles copy chat-demo; see `markdown_theme.dart`.
     extensions: [...base.extensions.values, buildMarkdownTheme(brightness)],
     textTheme: chinese
         ? text.copyWith(
@@ -135,7 +170,11 @@ ThemeData buildAppTheme({
   );
 }
 
+/// ZH
 /// shadcn 主题：颜色全部由 Material 种子映射，不维护第二套色表（ui.md §3.1）。
+///
+/// EN
+/// shadcn theme: colors map entirely from the Material seed; no second color table (ui.md §3.1).
 ShadThemeData buildShadTheme({
   required Brightness brightness,
   required bool chinese,
@@ -171,9 +210,15 @@ ShadThemeData buildShadTheme({
   );
 }
 
+/// ZH
 /// 显式覆盖全部 13 个样式，字体留空使用系统字体。
 ///
 /// 未覆盖的样式会回退 shadcn 自带的 Geist 字体，违反票 18 的系统字体约束。
+///
+/// EN
+/// All 13 styles are set explicitly; an empty font family keeps the system font.
+///
+/// Unset styles fall back to shadcn's Geist font, violating the system-font rule in ticket 18.
 ShadTextTheme buildShadTextTheme({required bool chinese}) {
   TextStyle system(TextStyle style, {double? height}) => TextStyle(
     fontSize: style.fontSize,

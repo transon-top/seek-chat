@@ -103,7 +103,11 @@ Uint8List zipOfBytes(List<(String, List<int>)> entries) {
   return Uint8List.fromList(ZipEncoder().encode(archive, level: 0)!);
 }
 
+/// ZH
 /// 只含一个条目的手写 ZIP32，用于声明超限/加密而不实际分配大文件。
+///
+/// EN
+/// Hand-written ZIP32 with one entry, declaring oversize/encryption without allocating a big file.
 Uint8List declaredZip({
   required String name,
   required int uncompressedSize,
@@ -132,6 +136,10 @@ Uint8List declaredZip({
     }
   }
 
+  // ZH
+  // 本地文件头
+  //
+  // EN
   // local file header
   u32(0x04034b50);
   u16(20);
@@ -146,6 +154,10 @@ Uint8List declaredZip({
   u16(0);
   bytes(nameBytes);
 
+  // ZH
+  // 中央目录头
+  //
+  // EN
   // central directory header
   u32(0x02014b50);
   u16(20);
@@ -166,6 +178,10 @@ Uint8List declaredZip({
   u32(0);
   bytes(nameBytes);
 
+  // ZH
+  // 中央目录结束记录
+  //
+  // EN
   // end of central directory
   u32(0x06054b50);
   u16(0);

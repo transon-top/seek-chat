@@ -5,7 +5,11 @@ import '../models/types.dart';
 import 'errors.dart';
 import 'sse.dart';
 
+/// ZH
 /// Anthropic 兼容消息流中的类型化事件（`api.md` §4）。
+///
+/// EN
+/// Typed events in the Anthropic-compatible message stream (`api.md` §4).
 sealed class StreamEvent {
   const StreamEvent();
 }
@@ -27,10 +31,18 @@ final class ContentBlockStart extends StreamEvent {
 
   final int index;
 
+  /// ZH
   /// 为 null 表示块被丢弃：客户端 `tool_use` 或未知类型。
+  ///
+  /// EN
+  /// Null means the block is dropped: client `tool_use` or an unknown type.
   final ReplyBlock? block;
 
+  /// ZH
   /// 客户端工具块既不展示也不保存，并禁用续写。
+  ///
+  /// EN
+  /// Client tool blocks are neither shown nor saved, and they disable continuation.
   final bool isClientToolUse;
 }
 
@@ -81,7 +93,11 @@ final class MessageDelta extends StreamEvent {
   final StopReason stopReason;
   final StopDetails? stopDetails;
 
+  /// ZH
   /// 仅在开启自动标题且生成成功时出现。
+  ///
+  /// EN
+  /// Present only when auto-title is enabled and generation succeeds.
   final String? title;
   final Usage? usage;
 }
@@ -90,10 +106,17 @@ final class MessageStop extends StreamEvent {
   const MessageStop();
 }
 
+/// ZH
 /// 把 SSE 帧转换为类型化事件，并归类流内错误。
 ///
 /// 未知事件、未知增量与无法解析的 JSON 帧静默丢弃；错误帧抛
 /// [ApiException]，kind 为 [ApiErrorKind.stream]。
+///
+/// EN
+/// Convert SSE frames into typed events and classify in-stream errors.
+///
+/// Unknown events, unknown deltas, and unparsable JSON frames are silently dropped.
+/// Error frames throw [ApiException] with kind [ApiErrorKind.stream].
 class StreamEventParser {
   StreamEventParser({int Function()? clock})
       : _clock = clock ?? _nowMilliseconds;
@@ -204,7 +227,11 @@ class StreamEventParser {
         final citation = parseCitation(delta['citation']);
         return citation == null ? null : CitationsDelta(citation);
       default:
+        // ZH
         // `input_json_delta` 与后续新增的增量均不消费。
+        //
+        // EN
+        // `input_json_delta` and any deltas added later are not consumed.
         return null;
     }
   }

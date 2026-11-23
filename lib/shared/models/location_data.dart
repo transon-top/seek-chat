@@ -1,7 +1,17 @@
+// ZH
 // 数据移植自 `https://github.com/deepseek-ai/chat-demo/blob/main/src/services/locationData.ts`；地区名称
 // 取自同一 CLDR 来源（`Intl.DisplayNames`）。来源更新时重新提取，不随构建生成。
+//
+// EN
+// Ported from `https://github.com/deepseek-ai/chat-demo/blob/main/src/services/locationData.ts`;
+// region names come from the same CLDR source (`Intl.DisplayNames`). Re-extract on
+// updates; they are not generated at build.
 
+/// ZH
 /// 中国省级行政区，按 chat-demo 的显示顺序。
+///
+/// EN
+/// Chinese province-level regions, in chat-demo display order.
 const Map<String, String> provinceNames = {
   '110000': '北京市',
   '120000': '天津市',
@@ -39,7 +49,11 @@ const Map<String, String> provinceNames = {
   '820000': '澳门特别行政区',
 };
 
+/// ZH
 /// 中国城市；前两位与省份代码匹配。
+///
+/// EN
+/// Chinese cities; the first two digits match the province code.
 const Map<String, String> cityNames = {
   '110100': '北京市',
   '120100': '天津市',
@@ -435,7 +449,11 @@ const Map<String, String> cityNames = {
   '712800': '连江县',
 };
 
+/// ZH
 /// ISO 3166-1 alpha-2 地区代码，顺序沿用 chat-demo。
+///
+/// EN
+/// ISO 3166-1 alpha-2 region codes, in chat-demo order.
 const List<String> regionCodes = [
   'AD',
   'AE',
@@ -688,13 +706,21 @@ const List<String> regionCodes = [
   'ZW',
 ];
 
+/// ZH
 /// 港澳台使用固定的中英文名称。
+///
+/// EN
+/// Hong Kong, Macao, and Taiwan use fixed Chinese and English names.
 const Map<String, Map<String, String>> regionNameOverrides = {
   'zh': {'TW': '中国台湾', 'HK': '中国香港', 'MO': '中国澳门'},
   'en': {'TW': 'Taiwan, China', 'HK': 'Hong Kong, China', 'MO': 'Macao, China'},
 };
 
+/// ZH
 /// 地区的中文名称。
+///
+/// EN
+/// Chinese names of regions.
 const Map<String, String> regionNamesZh = {
   'AD': '安道尔',
   'AE': '阿拉伯联合酋长国',
@@ -947,7 +973,11 @@ const Map<String, String> regionNamesZh = {
   'ZW': '津巴布韦',
 };
 
+/// ZH
 /// 地区的英文名称。
+///
+/// EN
+/// English names of regions.
 const Map<String, String> regionNamesEn = {
   'AD': 'Andorra',
   'AE': 'United Arab Emirates',

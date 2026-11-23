@@ -34,7 +34,11 @@ String messageDelta({String stopReason = 'end_turn', String? title}) =>
       'delta': {'stop_reason': stopReason, 'title': ?title},
     });
 
+/// ZH
 /// 一段完整的 SSE 回复：一个文本块，随后正常结束。
+///
+/// EN
+/// A complete SSE reply: one text block followed by a normal end.
 String simpleReply(String text, {String? title}) =>
     messageStart +
     textStart(0) +
@@ -46,7 +50,11 @@ String simpleReply(String text, {String? title}) =>
 http.StreamedResponse streamOf(String body) =>
     sseResponse(Stream.value(utf8.encode(body)));
 
+/// ZH
 /// 读取延迟到测试显式完成的密钥存储，用于“请求发出前停止”的用例。
+///
+/// EN
+/// Key store whose read waits for the test to finish it, for the 'stop before request' case.
 final class _DeferredApiKeyStore implements ApiKeyStore {
   final Completer<String?> _key = Completer<String?>();
 
@@ -62,7 +70,11 @@ final class _DeferredApiKeyStore implements ApiKeyStore {
   Future<void> clear() async {}
 }
 
+/// ZH
 /// 读取即失败的密钥存储，用于请求发出前的错误映射用例。
+///
+/// EN
+/// Key store that fails on read, for error mapping before the request is sent.
 final class _ThrowingApiKeyStore implements ApiKeyStore {
   _ThrowingApiKeyStore(this.error);
 
@@ -220,7 +232,11 @@ void main() {
         stored.latestReminder,
       );
 
+      // ZH
       // 切换语言不改写已生成回复的快照。
+      //
+      // EN
+      // Switching the language does not rewrite the snapshot of generated replies.
       final original = stored.latestReminder;
       await metadata.setLocale('en');
       final reloaded =
@@ -471,7 +487,11 @@ void main() {
     expect(controller.state.versions[original.id]?.index, 0);
     expect(controller.state.versions[question.id]?.index, 1);
 
+    // ZH
     // 编辑请求只带编辑前的问题作为上下文，旧回答不进入请求。
+    //
+    // EN
+    // The edit request carries only the pre-edit question as context; the old answer is not sent.
     final wireMessages = bodies.last['messages'] as List<dynamic>;
     expect(wireMessages.last, {'role': 'user', 'content': 'Hello edited'});
     expect(wireMessages, hasLength(2));
@@ -1026,7 +1046,11 @@ void main() {
       final body = jsonDecode(captured.body) as Map<String, dynamic>;
       final messages = body['messages'] as List<dynamic>;
       expect(messages, hasLength(4));
+      // ZH
       // 旧回复没有快照，历史轮次不插；本轮快照插在新提问之前。
+      //
+      // EN
+      // Old reply lacks a snapshot, so no history turn; the new snapshot precedes the new question.
       expect(messages[0]['role'], 'user');
       expect(messages[2]['role'], 'latest_reminder');
       expect((messages[0]['content'] as List<dynamic>).first, {

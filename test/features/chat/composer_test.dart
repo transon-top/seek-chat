@@ -10,7 +10,11 @@ import 'package:open_chat/l10n/generated/app_localizations.dart';
 import 'package:open_chat/shared/models/types.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
+/// ZH
 /// 输入区状态行只读语音状态；测试固定为空闲，避免启动真实录音 / 播放依赖。
+///
+/// EN
+/// Composer status row reads only voice state; tests pin it idle, avoiding real recording/playback.
 class _IdleSpeech extends SpeechController {
   @override
   SpeechState build() => const SpeechState();
@@ -102,7 +106,11 @@ void main() {
     final toggleTop = tester
         .getTopLeft(find.byKey(const Key('thinking-toggle')))
         .dy;
+    // ZH
     // 输入框下缘 16；40 命中区里的 29 胶囊再居中 5.5。
+    //
+    // EN
+    // Input bottom at 16; a 29 pill centered in a 40 hit area adds 5.5.
     expect(toggleTop - inputBottom, closeTo(21.5, 0.6));
   });
 
@@ -123,7 +131,11 @@ void main() {
       tester.element(find.byKey(const Key('thinking-toggle'))),
     ).colorScheme;
     final active = decorationOf(tester, const Key('thinking-toggle'));
+    // ZH
     // 激活色照搬官方 app：blue-50 底 + 浅蓝描边。
+    //
+    // EN
+    // Active colors copy the official app: blue-50 fill with a light blue border.
     expect(active.color, const Color(0xFFEDF3FE));
     expect((active.border! as Border).top.color, const Color(0xFFD3E1FF));
     final label = tester.widget<Text>(
@@ -150,7 +162,11 @@ void main() {
   ) async {
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
+    // ZH
     // 空输入且无附件时不渲染发送按钮，只显示 + 与语音。
+    //
+    // EN
+    // With no text and no attachment, no send button; only + and voice input show.
     expect(find.byKey(const Key('send-button')), findsNothing);
     expect(find.byKey(const Key('voice-button')), findsOneWidget);
 
@@ -165,7 +181,11 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('stop-button')), findsOneWidget);
     expect(find.byKey(const Key('send-button')), findsNothing);
+    // ZH
     // 停止与发送同底：主色圆 + 实心方块图标（照搬 chat-demo）。
+    //
+    // EN
+    // Stop shares the send base: a primary circle with a filled square icon (like chat-demo).
     final colors = ShadTheme.of(
       tester.element(find.byKey(const Key('stop-button'))),
     ).colorScheme;
@@ -327,7 +347,11 @@ void main() {
   testWidgets('button matrix covers empty, text and reading states', (
     tester,
   ) async {
+    // ZH
     // 无文本无附件：+ 可用、麦克风显示、发送隐藏。
+    //
+    // EN
+    // No text, no attachments: + is enabled, the mic shows, send is hidden.
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
     expect(
@@ -339,14 +363,22 @@ void main() {
     expect(find.byKey(const Key('voice-button')), findsOneWidget);
     expect(find.byKey(const Key('send-button')), findsNothing);
 
+    // ZH
     // 有文本：麦克风隐藏、发送可用。
+    //
+    // EN
+    // With text: the mic is hidden and send is enabled.
     input.text = 'Hello';
     await tester.pumpWidget(host());
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('voice-button')), findsNothing);
     expect(tester.widget<SendButton>(find.byType(SendButton)).enabled, isTrue);
 
+    // ZH
     // 朗读中：麦克风显示但禁用。
+    //
+    // EN
+    // While reading aloud: the mic shows but is disabled.
     input.clear();
     await tester.pumpWidget(host(phase: SpeechPhase.playing));
     await tester.pumpAndSettle();

@@ -1,12 +1,19 @@
+/// ZH
 /// API 客户端与本地存储共用的领域类型与协议类型。
 ///
 /// 命名遵循 `GLOSSARY.md`：Session、Message、Reply、ReplyBlock、Thinking、
 /// Citation、Attachment、Latest Reminder。
+///
+/// EN
+/// Domain and protocol types shared by the API client and local storage.
+///
+/// Names follow `GLOSSARY.md`: Session, Message, Reply, ReplyBlock, Thinking,
+/// Citation, Attachment, Latest Reminder.
 library;
 
 enum ChatModel {
   deepseekFlash('deepseek-flash'),
-  deepseekV4Pro('deepseek-v4-pro'); // 预留；v1 恒用 deepseek-flash
+  deepseekV4Pro('deepseek-v4-pro'); // Reserved; v1 always uses deepseek-flash.
 
   const ChatModel(this.wire);
   final String wire;
@@ -69,7 +76,11 @@ enum ApiErrorCondition {
   other,
 }
 
+// ZH
 // ------------------------------------------------------------- 工具输入
+//
+// EN
+// ------------------------------------------------------------- Tool input
 
 sealed class ServerToolInput {
   const ServerToolInput();
@@ -98,13 +109,21 @@ final class ReadLinkInput extends ServerToolInput {
   final String url;
 }
 
+/// ZH
 /// 未知 action 原样保留，保证块可往返序列化。
+///
+/// EN
+/// Unknown actions are preserved as-is so blocks can round-trip.
 final class UnknownToolInput extends ServerToolInput {
   const UnknownToolInput(this.json);
   final Map<String, dynamic> json;
 }
 
+// ZH
 // ------------------------------------------------------------------- 引用
+//
+// EN
+// ------------------------------------------------------------------- Citation
 
 final class TextCitation {
   const TextCitation({
@@ -120,7 +139,11 @@ final class TextCitation {
   final String encryptedIndex;
 }
 
+// ZH
 // ------------------------------------------------------------- 回复块
+//
+// EN
+// ------------------------------------------------------------- ReplyBlock
 
 sealed class ReplyBlock {
   const ReplyBlock();
@@ -161,7 +184,11 @@ final class ThinkingBlock extends ReplyBlock {
   final String thinking;
   final String signature;
 
+  /// ZH
   /// epoch 毫秒；仅带耗时的导入块缺省。
+  ///
+  /// EN
+  /// Epoch milliseconds; absent for imported blocks that only carry elapsed time.
   final int? startedAt;
   final int? endedAt;
   final int? elapsedSeconds;
@@ -254,7 +281,11 @@ final class WebFetchResult extends WebFetchContent {
 
   final String url;
 
+  /// ZH
   /// 协议中嵌套的 `content` 对象，原样保留：v1 不读正文，但必须能往返。
+  ///
+  /// EN
+  /// Nested `content` object, preserved as-is: v1 does not read the body but must round-trip.
   final Map<String, dynamic> content;
   final String? publishedAt;
 
@@ -280,7 +311,11 @@ final class WebFetchToolResultBlock extends ReplyBlock {
   final String? signature;
 }
 
+// ZH
 // ------------------------------------------------------------------- 用量
+//
+// EN
+// ------------------------------------------------------------------- Usage
 
 final class Usage {
   const Usage({
@@ -296,7 +331,11 @@ final class Usage {
   final int cacheCreationInputTokens;
   final int cacheReadInputTokens;
 
+  /// ZH
   /// `message_delta` 中为整轮累计输出数。
+  ///
+  /// EN
+  /// In `message_delta`, this is the cumulative output count for the whole turn.
   final int outputTokens;
   final int? webSearchRequests;
   final int? toolSearch;
@@ -310,7 +349,11 @@ final class StopDetails {
   final String? explanation;
 }
 
+// ZH
 // ------------------------------------------------------------------- 实体
+//
+// EN
+// ------------------------------------------------------------------- Entity
 
 final class SessionSummary {
   const SessionSummary({
@@ -328,7 +371,11 @@ final class SessionSummary {
   final bool pinned;
 }
 
+/// ZH
 /// 同一父节点下的兄弟消息 id（按模型顺序）与当前消息的下标。
+///
+/// EN
+/// Sibling message ids under the same parent (in model order) and the current message index.
 final class MessageVersions {
   const MessageVersions({required this.ids, required this.index});
 
@@ -342,7 +389,11 @@ final class MessageVersions {
   String? get nextId => index < ids.length - 1 ? ids[index + 1] : null;
 }
 
+/// ZH
 /// 一个会话及其完整消息树；导入导出的共享载体。
+///
+/// EN
+/// A session with its complete message tree; the shared carrier for import and export.
 final class SessionHistory {
   const SessionHistory({required this.session, required this.messages});
 
@@ -365,13 +416,21 @@ final class Session {
   final DateTime createdAt;
   final DateTime updatedAt;
 
+  /// ZH
   /// 选中分支的第一条消息；空会话为 null。
+  ///
+  /// EN
+  /// First message on the selected branch; null for an empty session.
   final String? rootMessageId;
 
   final bool pinned;
 }
 
+/// ZH
 /// 会话搜索的一条命中：会话摘要与命中消息片段。
+///
+/// EN
+/// One session search hit: the session summary and the matching message snippet.
 final class SessionSearchHit {
   const SessionSearchHit({required this.session, required this.snippet});
 
@@ -447,7 +506,11 @@ final class AssistantMessage extends Message {
   final Usage? usage;
   final ReplyError? error;
 
+  /// ZH
   /// 已创建且尚未结束：`pending` 或 `streaming`。
+  ///
+  /// EN
+  /// Created but not yet finished: `pending` or `streaming`.
   bool get isInFlight =>
       status == ReplyStatus.pending || status == ReplyStatus.streaming;
 }
@@ -469,13 +532,25 @@ final class Attachment {
   final bool isImage;
   final String mimeType;
 
+  /// ZH
   /// 相对应用支持目录的路径。
+  ///
+  /// EN
+  /// Path relative to the application support directory.
   final String? localPath;
 
+  /// ZH
   /// Files API 的 `file_id`，按附件 id 在所有引用间共享。
+  ///
+  /// EN
+  /// Files API `file_id`, shared across all references by attachment id.
   final String? serverId;
 
+  /// ZH
   /// 传 null 表示 `serverId` 已失效。
+  ///
+  /// EN
+  /// Passing null means `serverId` is no longer valid.
   Attachment withServerId(String? serverId) => Attachment(
         id: id,
         name: name,
@@ -487,7 +562,11 @@ final class Attachment {
       );
 }
 
+/// ZH
 /// 输入区里尚未发送的附件；原件仍在选择器给出的临时路径。
+///
+/// EN
+/// Attachment not yet sent from the input area; the original stays at the picker's temp path.
 final class DraftAttachment {
   const DraftAttachment({
     required this.id,
@@ -506,7 +585,11 @@ final class DraftAttachment {
   final bool isImage;
   final String mimeType;
 
+  /// ZH
   /// 照片横条来源资产；仅存活于当前页面内存，不落库、不进导出。
+  ///
+  /// EN
+  /// Photo strip source asset; lives only in current page memory, never persisted or exported.
   final String? sourceAssetId;
 }
 
@@ -517,7 +600,11 @@ final class LocalMessage {
   final Map<String, Object?> params;
 }
 
+/// ZH
 /// 本地化键（`data-model.md` §2.2）。键名与 ARB 条目一致，`app/` 负责翻译。
+///
+/// EN
+/// Localization keys (`data-model.md` §2.2). Key names match ARB entries; `app/` translates.
 abstract final class LocalMessageKeys {
   static const errorNoApiKey = 'errorNoApiKey';
   static const errorSaveReplyFailed = 'errorSaveReplyFailed';
@@ -554,6 +641,10 @@ final class ReplyError {
   final int? status;
   final LocalMessage? localMessage;
 
+  /// ZH
   /// 仅 `upload` 错误使用：重新上传是否可能成功。
+  ///
+  /// EN
+  /// Used only for `upload` errors: whether a retry upload may succeed.
   final bool? retryable;
 }

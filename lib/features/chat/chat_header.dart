@@ -6,9 +6,15 @@ import '../../shared/widgets/push_menu.dart';
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/toast.dart';
 
+/// ZH
 /// 聊天页顶部栏：菜单、左对齐标题、新建对话（ui.md §1.3）。
 ///
 /// 首屏（空对话）不展示标题与新建按钮，进入对话后才展示。
+///
+/// EN
+/// Chat page header: menu, left-aligned title, new chat (ui.md §1.3).
+///
+/// First screen (empty conversation) hides title and new-chat; both appear inside a conversation.
 class ChatHeader extends StatelessWidget {
   const ChatHeader({
     super.key,
@@ -46,7 +52,11 @@ class ChatHeader extends StatelessWidget {
           Expanded(
             child: inConversation
                 ? Padding(
+                    // ZH
                     // 与 chat-demo 移动端顶栏一致：标题左右各 12。
+                    //
+                    // EN
+                    // Match the chat-demo mobile header: 12 horizontal padding around the title.
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       title,
@@ -84,7 +94,11 @@ class ChatHeader extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 照抄 chat-demo 的 IconMenuOutline20：上长下短两条左对齐横杠。
+///
+/// EN
+/// Copy chat-demo's IconMenuOutline20: two left-aligned bars, long on top and short below.
 class _MenuIcon extends StatelessWidget {
   const _MenuIcon({required this.color});
 
