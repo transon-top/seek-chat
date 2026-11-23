@@ -12,8 +12,7 @@
 - Android：`applicationId` 已定为 `com.transon_top.seekchat`（原 `com.example.open_chat`）；release 当前用 debug 签名；`pubspec` 版本 `0.5.0+1`；构建命令 `flutter build apk --release --split-per-abi`。
 - 既有计划：`.scratch/flutter-deepseek-chat/roadmap.md` 的 S6 要求 CI 在 `v1-dev` 执行 `build_runner`、`gen-l10n`、`analyze`、`test`；本图把该测试线扩展到 tag 发版线，不另起炉灶。两条线如何合并见票 05。
 - 已定：tag `v*` 为唯一发版触发；workflow 用祖先校验确保 tag 落在 `main`；构建前跑 `analyze` + `test`；新建正式 release keystore 经 GitHub Secrets 注入；产物为 `arm64-v8a` / `armeabi-v7a` / `x86_64` 三个 split APK。
-- 待票 04 决定：Release 此前定为自动 published；票 02 建议改为 draft + `git-cliff` notes。tag 与 `pubspec` 版本一致性校验此前预留；票 02 建议恢复为硬校验。
-- 提交信息为 emoji 前缀；票 02 实测会破坏 Conventional Commits 解析，`git-cliff` 需一行预处理或把新提交改成 `feat(chat): ✨ ...`。
+- 提交信息为 emoji 前缀；票 02 实测会破坏 Conventional Commits 解析，`git-cliff` 需一行预处理或把新提交改成 `feat(chat): ✨ ...`（票 04 已定：预处理 + 允许新格式）。
 - 研究约定：findings 写在 `research/<name>` 分支的 `docs/research/`，不合并；票内记录分支、commit 与路径。
 - 每个会话先读根目录 `GLOSSARY.md` 与 `docs/adr/`；research 票调用 research 技能，grilling 票调用 grilling + domain-modeling 技能。
 
@@ -24,16 +23,11 @@
 - [GitHub Actions 构建 Flutter Android 的事实与限制](issues/01-github-actions-flutter-android.md): `ubuntu-24.04` 预装 API 37 可直接构建；固定 JDK 21 + Flutter 3.50.0；NDK 28.2 需显式处理；用 `gh release create --generate-notes`；tag 来源用 merge-base guard；参考耗时首次 12–20 分钟、有缓存 6–10 分钟。
 - [版本说明与整套发版流程的最佳实践](issues/02-release-notes-best-practices.md): GitHub 原生 notes 基于 merged PR、直接 push 不收录，不适合本项目；最小方案用 `git-cliff`（加 emoji 预处理）+ `CHANGELOG.md` 同源 + `v1-dev`→`main` merge commit + CI 校验 tag 与 `pubspec` + draft Release + SHA256SUMS + immutable releases。
 - [发布签名与应用身份](issues/03-signing-and-app-identity.md): PKCS12 + RSA 4096 + 10000 天 + alias `seekchat`；本机 `android/key.properties`、两份加密离线备份、单一密码；CI 只存 `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 于 `release` environment；release 缺 keystore 即失败；首次公开发版前做一次备份恢复演练。
+- [版本说明形态与版本号流程](issues/04-release-notes-and-versioning.md): git-cliff + `CHANGELOG.md` 同源（emoji 预处理）；面向用户、中英双语、四类、10 条以内；tag↔pubspec 硬校验且 `+n` 递增；bump 在 `v1-dev` 最后一次提交；`v1-dev`→`main` merge commit，tag 打 main；draft Release；最小保护集（main 规则集 + `refs/tags/v*` + release environment）；暂不引入 rc；现有 tag 清空，从 `v1.0.0+1` 起。
 
 ## Not yet specified
 
-- 版本说明的最终形态：票 02 推荐 `git-cliff` + emoji 预处理 + `CHANGELOG.md` 同源；待票 04 确认
-- `tag` 与 `pubspec` 版本一致性校验：票 02 建议恢复为硬校验；待票 04 决定（此前预留）
-- Release 发布形态：票 02 建议 draft；此前定为自动 published；待票 04 决定
-- 公开仓库后的分支保护、tag 保护与 PR 流程：票 02 建议 `refs/tags/v*` + main 规则集；`release` environment 已由票 03 定案；分支 / tag 保护待票 04 定稿
-- 版本说明的读者、语言（中 / 英 / 双语）与内容分类（待票 04）
-- CI 是否校验 `build_runner` / `gen-l10n` 生成物无 diff（事实已由票 01 确认可用 `git diff --exit-code`，待票 05 决定）
-- 是否额外提供 universal APK 作为 Release 资产（待票 05）
+<!-- 票 04 收口后，剩余待决项已全部并入票 05 的问题清单（生成物 diff 校验、universal APK）；本图只剩票 05。 -->
 
 ## Out of scope
 
