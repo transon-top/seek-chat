@@ -3,6 +3,7 @@ import 'dart:convert';
 
 import 'package:http/http.dart' as http;
 
+/// ZH
 /// 慢速流式 mock：替换传输层，让真实 DeepSeekApiClient 收到按节奏吐出的
 /// Anthropic 兼容 SSE，用来观察思考块与正文的逐字渲染。
 ///
@@ -12,16 +13,35 @@ import 'package:http/http.dart' as http;
 /// `--dart-define=OPEN_CHAT_MOCK_STREAM_DELAY_MS=200`
 ///
 /// 仍需要设置里存有任意 API Key（mock 不校验）。
+///
+/// EN
+/// Slow streaming mock: replaces the transport so the real DeepSeekApiClient receives
+/// paced Anthropic-compatible SSE, for watching per-token thinking and body rendering.
+///
+/// Enable:
+/// `flutter run --dart-define=OPEN_CHAT_MOCK_STREAM=true`
+/// Adjust the interval between chunks:
+/// `--dart-define=OPEN_CHAT_MOCK_STREAM_DELAY_MS=200`
+///
+/// An API Key still must exist in settings (the mock does not validate it).
 class MockStreamClient extends http.BaseClient {
   MockStreamClient({
     this.ttfb = const Duration(milliseconds: 900),
     this.chunkDelay = const Duration(milliseconds: 150),
   });
 
+  /// ZH
   /// 首字节延迟，模拟弱网下的等待。
+  ///
+  /// EN
+  /// Time to first byte, simulating a slow-network wait.
   final Duration ttfb;
 
+  /// ZH
   /// 每个增量块之间的间隔。
+  ///
+  /// EN
+  /// Interval between incremental chunks.
   final Duration chunkDelay;
 
   static const String _model = 'deepseek-flash';
@@ -134,7 +154,11 @@ class MockStreamClient extends http.BaseClient {
     yield _frame('message_stop', {'type': 'message_stop'});
   }
 
+  /// ZH
   /// 按固定字数切块；中文每块 3 字，肉眼能看清逐个落下的节奏。
+  ///
+  /// EN
+  /// Split by fixed character count: three Chinese characters per chunk to see each drop.
   Iterable<String> _chunks(String text) sync* {
     const size = 3;
     for (var start = 0; start < text.length; start += size) {
@@ -153,7 +177,11 @@ class MockStreamClient extends http.BaseClient {
       '3. 正文里放少量 Markdown，顺便检查增量渲染。\n'
       '整个过程不联网，也没有真实 token 消耗。';
 
+  /// ZH
   /// 约 14 段，手机上约为两倍视口高度，用于观察生成中的滚动行为。
+  ///
+  /// EN
+  /// About 14 sections, roughly two viewports on mobile, for observing scroll while streaming.
   static final String _replyText = _buildReplyText();
 
   static String _buildReplyText() {

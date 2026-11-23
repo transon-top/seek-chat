@@ -6,7 +6,11 @@ import '../shared/data/chat_repository.dart';
 import '../shared/data/database.dart';
 import '../shared/security/api_key_store.dart';
 
+/// ZH
 /// 基础设施 Provider（architecture.md §2）。main() 与测试用 override 注入实例。
+///
+/// EN
+/// Infrastructure Providers (architecture.md §2). main() and tests inject via overrides.
 final appDatabaseProvider = Provider<AppDatabase>((ref) => AppDatabase.open());
 
 final chatRepositoryProvider = Provider<ChatRepository>(

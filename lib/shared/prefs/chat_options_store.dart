@@ -3,9 +3,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'preferences_provider.dart';
 
+/// ZH
 /// 输入区的深度思考 / 智能搜索开关（`search.md` §2）。
 ///
 /// 默认关闭，按回复创建时快照；开关状态不进数据库。
+///
+/// EN
+/// Deep thinking / smart search toggles in the input area (`search.md` §2).
+///
+/// Off by default, snapshotted when a reply is created; toggle state never enters the database.
 class ChatOptionsStore {
   ChatOptionsStore(this._preferences);
 

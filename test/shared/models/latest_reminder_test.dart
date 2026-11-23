@@ -52,7 +52,11 @@ void main() {
       ),
       '2026-11-18,Wednesday,United States,iOS,English',
     );
+    // ZH
     // 界面语言为英文时不展开中国省市，只发送国家名。
+    //
+    // EN
+    // With an English UI, Chinese provinces and cities are not expanded; only the country is sent.
     expect(
       buildLatestReminder(
         languageCode: 'en',

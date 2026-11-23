@@ -9,7 +9,11 @@ import '../../shared/models/types.dart';
 import '../../shared/providers.dart';
 import 'history_zip.dart';
 
+/// ZH
 /// 历史导入导出服务：文件选择由界面负责，这里只处理数据与事务。
+///
+/// EN
+/// History import/export service: the UI picks files; this handles data and transactions only.
 final historyServiceProvider = Provider<HistoryService>(
   (ref) => HistoryService(
     ref.watch(chatRepositoryProvider),
@@ -31,8 +35,13 @@ final class HistoryService {
   final String Function() _newId;
   final DateTime Function() _now;
 
+  /// ZH
   /// 读取全部会话并生成 ZIP。导出使用开始时的列表快照；会话在读取中消失
   /// 时整次失败（`history.md` §6）。
+  ///
+  /// EN
+  /// Read all sessions and build a ZIP. Export uses the list snapshot from the start;
+  /// a session disappearing during the read fails the whole export (`history.md` §6).
   Future<({String fileName, Uint8List bytes})> exportArchive({
     required String? Function(AssistantMessage reply) notice,
   }) async {
@@ -82,8 +91,13 @@ final class HistoryService {
     return (fileName: _fileName(_now()), bytes: bytes);
   }
 
+  /// ZH
   /// 覆盖导入。解码与校验全部通过后才停止生成并写文件；数据库替换在单事务
   /// 中完成（`history.md` §5）。返回导入的会话数。
+  ///
+  /// EN
+  /// Destructive import. Stop generation and write files only after decode and validation pass;
+  /// the database swaps in a single transaction (`history.md` §5). Returns the session count.
   Future<int> importArchive(
     Uint8List bytes, {
     required void Function() stopGeneration,
@@ -91,7 +105,11 @@ final class HistoryService {
     final decoded = decodeHistoryZip(bytes, newId: _newId);
     stopGeneration();
 
+    // ZH
     // 附件改用新的本地 id：旧原件不会被覆盖，归档 id 也不能决定写入路径。
+    //
+    // EN
+    // Attachments get new local ids: no old original is overwritten, archive ids never pick paths.
     final attachmentIds = <String, String>{};
     for (final tree in decoded.sessions) {
       for (final message in tree.messages.whereType<UserMessage>()) {
@@ -134,7 +152,11 @@ final class HistoryService {
     return history.length;
   }
 
+  /// ZH
   /// 删除全部会话与附件；返回删除的会话数。
+  ///
+  /// EN
+  /// Delete all sessions and attachments; returns the number of deleted sessions.
   Future<int> deleteAll({required void Function() stopGeneration}) async {
     stopGeneration();
     final count =

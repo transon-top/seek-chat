@@ -17,7 +17,11 @@ bool? asBool(Object? value) => value is bool ? value : null;
 List<String> asStringList(Object? value) =>
     value is List ? value.whereType<String>().toList() : const [];
 
+/// ZH
 /// 解码 JSON 列；数据损坏时返回 null 而不抛异常。
+///
+/// EN
+/// Decode a JSON column; return null instead of throwing when the data is corrupt.
 Object? decodeJsonSource(String? source) {
   if (source == null || source.isEmpty) return null;
   try {
@@ -27,7 +31,11 @@ Object? decodeJsonSource(String? source) {
   }
 }
 
+// ZH
 // ------------------------------------------------------------------- 引用
+//
+// EN
+// ------------------------------------------------------------------- Citation
 
 TextCitation? parseCitation(Object? value) {
   final json = asJsonMap(value);
@@ -50,7 +58,11 @@ Map<String, dynamic> encodeCitation(TextCitation citation) => {
       'encrypted_index': citation.encryptedIndex,
     };
 
+// ZH
 // ------------------------------------------------------------- 工具输入
+//
+// EN
+// ------------------------------------------------------------- Tool input
 
 ServerToolInput parseToolInput(Object? value) {
   final json = asJsonMap(value);
@@ -91,12 +103,23 @@ Map<String, dynamic> encodeToolInput(ServerToolInput input) => switch (input) {
       UnknownToolInput(:final json) => json,
     };
 
+// ZH
 // ------------------------------------------------------------- 回复块
+//
+// EN
+// ------------------------------------------------------------- ReplyBlock
 
+/// ZH
 /// 解析一个协议内容块。未知块类型返回 null，调用方可跳过且不占下标。
 ///
 /// [thinkingStartedAt] 是实时流块的接收时间；持久化的块自带
 /// [ThinkingBlock.startedAt]。
+///
+/// EN
+/// Parse a protocol content block. Unknown types return null; callers skip them without an index.
+///
+/// [thinkingStartedAt] is the receive time for live stream blocks; persisted blocks
+/// carry their own [ThinkingBlock.startedAt].
 ReplyBlock? parseReplyBlock(Map<String, dynamic> json, {int? thinkingStartedAt}) {
   switch (asString(json['type'])) {
     case 'text':
@@ -335,7 +358,11 @@ List<ReplyBlock> decodeReplyBlocks(String? source) {
 String encodeReplyBlocks(List<ReplyBlock> blocks) =>
     jsonEncode(blocks.map(encodeReplyBlock).toList());
 
+// ZH
 // ------------------------------------------------------------------- 用量
+//
+// EN
+// ------------------------------------------------------------------- Usage
 
 Usage? parseUsage(Object? value) {
   final json = asJsonMap(value);
@@ -380,7 +407,11 @@ Map<String, dynamic> encodeStopDetails(StopDetails details) => {
       'explanation': details.explanation,
     };
 
+// ZH
 // ------------------------------------------------------------------- 错误
+//
+// EN
+// ------------------------------------------------------------------- Errors
 
 ApiErrorKind? apiErrorKindFromWire(String? value) {
   for (final kind in ApiErrorKind.values) {

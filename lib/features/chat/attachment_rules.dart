@@ -1,11 +1,23 @@
 import '../../shared/models/types.dart';
 
+/// ZH
 /// 附件的选择规则与上传取值（`attachments.md` §3、§2）。
 ///
 /// 扩展名白名单逐项复制 `chat-demo/src/services/uploadExts.ts`；图片按扩展名
 /// 判定（移动端拿不到可靠 MIME）。白名单只接受小写、不含点。
+///
+/// EN
+/// Attachment selection rules and upload values (`attachments.md` §3, §2).
+///
+/// The extension allowlist copies `chat-demo/src/services/uploadExts.ts` item by item;
+/// images are detected by extension (no reliable MIME on mobile). The allowlist accepts
+/// lowercase extensions only, with no dots.
 
+/// ZH
 /// Files API 的 `purpose` 字段取值。
+///
+/// EN
+/// Values of the Files API `purpose` field.
 enum UploadPurpose {
   richLayoutRecognition('rich_layout_recognition'),
   userData('user_data');
@@ -14,7 +26,11 @@ enum UploadPurpose {
   final String wire;
 }
 
+/// ZH
 /// 选择器返回的候选文件，校验只关心名称与字节数。
+///
+/// EN
+/// Candidate file returned by the picker; validation only cares about name and size.
 final class SelectedFile {
   const SelectedFile({required this.name, required this.size});
 
@@ -22,7 +38,11 @@ final class SelectedFile {
   final int size;
 }
 
+/// ZH
 /// 白名单中的扩展名（小写、不含点）。
+///
+/// EN
+/// Extensions in the allowlist (lowercase, no dots).
 const List<String> acceptedFileExtensions = [
   'wxml', 'wxss', 'wxs', 'axml', 'acss',
   'sjs', 'swan', 'ttml', 'ttss', 'qml',
@@ -223,7 +243,11 @@ const List<String> acceptedFileExtensions = [
   'mobi',
 ];
 
+/// ZH
 /// 界面按扩展名判定的图片类型；其余非图片文件走 document 块。
+///
+/// EN
+/// Image types detected by extension in the UI; other non-image files use the document block.
 const Set<String> imageFileExtensions = {
   'png',
   'jpg',
@@ -257,7 +281,11 @@ const Set<String> _layoutRecognitionExtensions = {
   'pptx',
 };
 
+/// ZH
 /// 文件扩展名（小写、不含点）；没有扩展名时返回空字符串。
+///
+/// EN
+/// File extension (lowercase, no dots); returns an empty string when there is none.
 String fileExtension(String name) {
   final dot = name.lastIndexOf('.');
   return dot > 0 ? name.substring(dot + 1).toLowerCase() : '';
@@ -265,7 +293,11 @@ String fileExtension(String name) {
 
 String fileExtensionUpper(String name) => fileExtension(name).toUpperCase();
 
+/// ZH
 /// 常见类型的 MIME；移动端拿不到可靠类型，未知扩展名留空。
+///
+/// EN
+/// MIME for common types; mobile lacks reliable types, so unknown extensions stay empty.
 String mimeTypeForFileName(String name) => switch (fileExtension(name)) {
       'png' => 'image/png',
       'jpg' || 'jpeg' => 'image/jpeg',
@@ -290,7 +322,11 @@ bool isAcceptedFileName(String name) =>
 bool isImageFileName(String name) =>
     imageFileExtensions.contains(fileExtension(name));
 
+/// ZH
 /// 图片不传 `purpose`；PDF 与 Word、PPT 做版面解析，其余按 `user_data` 上传。
+///
+/// EN
+/// Images send no `purpose`; PDF, Word and PPT use layout recognition, the rest upload as `user_data`.
 UploadPurpose? uploadPurposeFor(String name, {required bool isImage}) {
   if (isImage) return null;
   return _layoutRecognitionExtensions.contains(fileExtension(name))
@@ -303,7 +339,11 @@ int maxSizeMbFor(String name, {required bool isImage}) =>
         ? maxUserDataSizeMb
         : maxRichLayoutSizeMb;
 
+/// ZH
 /// 添加前校验：格式 → 大小 → 数量，任一不满足即整批不加入。
+///
+/// EN
+/// Validate before adding: format → size → count; any failure rejects the whole batch.
 LocalMessage? validateAttachmentSelection({
   required List<SelectedFile> files,
   required int currentCount,
@@ -329,7 +369,11 @@ LocalMessage? validateAttachmentSelection({
   return null;
 }
 
+/// ZH
 /// 文件卡片的元信息大小，与 `chat-demo` 的 `formatSize` 一致。
+///
+/// EN
+/// File card meta size, matching `formatSize` in `chat-demo`.
 String formatFileSize(int bytes) {
   if (bytes < 1024) return '$bytes B';
   const units = ['KB', 'MB', 'GB'];

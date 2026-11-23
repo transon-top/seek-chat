@@ -16,12 +16,20 @@ import '../../shared/widgets/scroll_edge_fade.dart';
 import 'session_search_page.dart';
 import 'session_skeleton.dart';
 
+/// ZH
 /// 会话列表的响应式来源：drift 在会话增删改后推送新列表。
+///
+/// EN
+/// Reactive session list source: drift pushes a new list after session changes.
 final sessionsProvider = StreamProvider.autoDispose<List<SessionSummary>>(
   (ref) => ref.watch(chatRepositoryProvider).watchSessions(),
 );
 
+/// ZH
 /// 会话分组（ui.md §1.4），保留列表原有顺序。
+///
+/// EN
+/// Session groups (ui.md §1.4), preserving the list's original order.
 enum SessionGroup { pinned, today, yesterday, last7Days, earlier }
 
 List<(SessionGroup, List<SessionSummary>)> groupSessions(
@@ -59,20 +67,34 @@ AppSidebarColors _sidebarColorsOf(BuildContext context) =>
     ? AppSidebarColors.dark
     : AppSidebarColors.light;
 
+/// ZH
 /// 收起推入式侧栏；单独挂载（测试）时无操作。
+///
+/// EN
+/// Close the push-style sidebar; no-op when mounted standalone (tests).
 void _closeMenu(BuildContext context) =>
     PushMenuScope.maybeOf(context)?.close();
 
+/// ZH
 /// 浮层阴影：会话菜单与删除确认弹窗共用，照搬 chat-demo。
+///
+/// EN
+/// Overlay shadow shared by the session menu and delete dialog, copied from chat-demo.
 const _overlayShadows = [
   BoxShadow(color: Color(0x33000000), blurRadius: 1),
   BoxShadow(color: Color(0x05000000), blurRadius: 4),
   BoxShadow(color: Color(0x14000000), offset: Offset(0, 12), blurRadius: 32),
 ];
 
+/// ZH
 /// 左侧会话抽屉：搜索、分组列表、置顶与多选、设置入口。
 ///
 /// 外观照搬 chat-demo 侧边栏的移动端形态（ui.md §1.4）。
+///
+/// EN
+/// Left Session Drawer: search, grouped list, pin and Selection Mode, settings entry.
+///
+/// Looks copy the mobile shape of the chat-demo sidebar (ui.md §1.4).
 class SessionDrawer extends ConsumerStatefulWidget {
   const SessionDrawer({
     super.key,
@@ -87,7 +109,11 @@ class SessionDrawer extends ConsumerStatefulWidget {
   final ValueChanged<String> onOpen;
   final VoidCallback onOpenSettings;
 
+  /// ZH
   /// 删除会话前取消其进行中的流（api.md §9.1）。
+  ///
+  /// EN
+  /// Cancel an in-flight stream before deleting its session (api.md §9.1).
   final ValueChanged<String> cancelSession;
   final ValueChanged<String> onDeleted;
 
@@ -120,12 +146,21 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     super.dispose();
   }
 
+  /// ZH
   /// 抽屉被点遮罩或左滑收起时，顺带退出多选与搜索，避免下次打开还停在
   /// 选择态或保留搜索内容。
+  ///
+  /// EN
+  /// When the drawer closes via scrim tap or left swipe, also leave Selection Mode and
+  /// search, so the next open does not stay in selection or keep the search query.
   void _onMenuChanged() {
     if (!mounted) return;
     final progress = _menuController?.progress ?? 0;
+    // ZH
     // 官方从搜索态收起时先回抽屉页再滑出，而不是留搜索页到最后再跳回。
+    //
+    // EN
+    // The official app returns from search to the drawer before sliding out, not at the very end.
     if (_searching && progress < 1) {
       _searchFocus.unfocus();
       _menuController?.resetSearch();
@@ -153,7 +188,11 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     _menuController?.backHandler = null;
   }
 
+  /// ZH
   /// 系统返回：搜索先收键盘再收回搜索，多选先退出选择，都不关闭抽屉。
+  ///
+  /// EN
+  /// System back: search hides the keyboard first, then closes; selection exits; drawer stays.
   bool _handleBack() {
     if (_searching) {
       if (_searchFocus.hasFocus) {
@@ -231,7 +270,11 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     try {
       await ref.read(attachmentStoreProvider).deleteAttachments(orphans);
     } on Object catch (error) {
+      // ZH
       // 原件删除失败不阻塞界面切换；启动时的孤儿清理会兜底。
+      //
+      // EN
+      // Source deletion failure does not block UI changes; startup orphan cleanup covers it.
       debugLog('deleting attachments failed', error);
     }
     if (mounted) _exitSelection();
@@ -249,7 +292,11 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     try {
       await ref.read(attachmentStoreProvider).deleteAttachments(orphaned);
     } on Object catch (error) {
+      // ZH
       // 原件删除失败不阻塞界面切换；启动时的孤儿清理会兜底。
+      //
+      // EN
+      // Source deletion failure does not block UI changes; startup orphan cleanup covers it.
       debugLog('deleting attachments failed', error);
     }
   }
@@ -263,16 +310,28 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     final width = math.min(380.0, MediaQuery.sizeOf(context).width - 32);
     return showShadDialog<bool>(
       context: context,
+      // ZH
       // 照搬 chat-demo：遮罩浅色 36%、深色 60%。
+      //
+      // EN
+      // Copied from chat-demo: scrim is 36% in light, 60% in dark.
       barrierColor: dark ? const Color(0x99000000) : const Color(0x5C000000),
       builder: (context) => ShadTheme(
+        // ZH
         // 只把弹窗内按钮改成 chat-demo 的胶囊形。
+        //
+        // EN
+        // Only dialog buttons become chat-demo pill shapes.
         data: ShadTheme.of(context)
             .copyWith(radius: const BorderRadius.all(Radius.circular(999))),
         child: ShadDialog.alert(
           title: Text(title),
           description: Padding(
+            // ZH
             // chat-demo 标题与描述间距 12、描述与按钮间距 20。
+            //
+            // EN
+            // chat-demo gaps: 12 between title and description, 20 between description and buttons.
             padding: const EdgeInsets.only(bottom: 8),
             child: Text(l10n.deleteSessionDescription),
           ),
@@ -333,7 +392,11 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
     ];
     final allPinned =
         selected.isNotEmpty && selected.every((session) => session.pinned);
+    // ZH
     // 内容层打开后会盖住右侧一条；操作控件不能落到那条下面。
+    //
+    // EN
+    // The open content layer covers a right strip; action controls must not fall under it.
     final controller = PushMenuScope.maybeOf(context);
     final openInset = controller?.openInset ?? 0;
 
@@ -476,12 +539,20 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
       content = AnimatedBuilder(
         animation: controller.animation,
         builder: (context, _) => Transform.translate(
+          // ZH
           // 进度 0 时整体左移一段，随打开滑回原位。
+          //
+          // EN
+          // At progress 0 the content is shifted left and slides back as the drawer opens.
           offset: Offset((controller.progress - 1) * controller.menuSlide, 0),
           child: Stack(
             fit: StackFit.expand,
             children: [
+              // ZH
               // 官方式：搜索页从侧栏胶囊位置展开，旧列表原地淡出。
+              //
+              // EN
+              // Official style: search expands from the sidebar pill while the old list fades out.
               AnimatedBuilder(
                 animation: controller.searchAnimation,
                 child: drawerBody,
@@ -543,7 +614,11 @@ class _SearchEntry extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 叠在列表第一行分组头上的多选入口，与最近的分组标题同一行。
+///
+/// EN
+/// Selection Mode entry overlaid on the first group header, on the latest group's row.
 class _SelectButton extends StatelessWidget {
   const _SelectButton({required this.onPressed});
 
@@ -594,7 +669,11 @@ class _SelectionHeader extends StatelessWidget {
         children: [
           Expanded(
             child: Padding(
+              // ZH
               // 与下方分组标题的左内边距 10 对齐。
+              //
+              // EN
+              // Aligns with the 10 left padding of group headers below.
               padding: const EdgeInsets.only(left: 10),
               child: Text(
                 count == 0 ? l10n.selectionTitle : l10n.selectionCount(count),
@@ -766,7 +845,11 @@ class _SessionListState extends State<_SessionList> {
     super.dispose();
   }
 
+  /// ZH
   /// 会话行固定高度；吸顶标签按它推算各分组头的滚动位置。
+  ///
+  /// EN
+  /// Fixed session row height; the sticky label uses it to compute group header offsets.
   static const _rowExtent = 44.0;
 
   @override
@@ -774,7 +857,11 @@ class _SessionListState extends State<_SessionList> {
     final l10n = AppLocalizations.of(context)!;
     final colors = _sidebarColorsOf(context);
     final groups = groupSessions(widget.sessions, DateTime.now());
+    // ZH
     // 分组头高度随字号缩放；固定值在非标准字号下会与子项实际高度不一致。
+    //
+    // EN
+    // Header height scales with font size; a fixed value would mismatch item heights at other sizes.
     final headerExtent =
         7 + MediaQuery.textScalerOf(context).scale(14) * 22 / 14;
     final labels = [
@@ -787,18 +874,26 @@ class _SessionListState extends State<_SessionList> {
           SessionGroup.earlier => l10n.sessionGroupEarlier,
         },
     ];
+    // ZH
     // 各分组头在滚动坐标里的起点，供吸顶标签判定当前分组与顶出位移。
+    //
+    // EN
+    // Group header offsets in scroll coordinates, for the sticky label's group and push-out shift.
     final headerOffsets = <double>[];
     var cursor = 0.0;
     for (final (index, (_, items)) in groups.indexed) {
-      if (index > 0) cursor += 20; // 组间 16 + 标题上方 4
+      if (index > 0) cursor += 20; // 16 gap + 4 above title
       headerOffsets.add(cursor);
       cursor += headerExtent + items.length * _rowExtent;
     }
     final list = ScrollEdgeFade(
       controller: _controller,
       color: colors.fill,
+      // ZH
       // 顶部渐隐从吸顶标签下缘开始，标签本身不参与渐隐。
+      //
+      // EN
+      // Top fade starts below the sticky label; the label itself does not fade.
       topInset: headerExtent,
       child: CustomScrollView(
         controller: _controller,
@@ -806,10 +901,19 @@ class _SessionListState extends State<_SessionList> {
           for (final (index, (_, items)) in groups.indexed) ...[
             if (index > 0)
               const SliverToBoxAdapter(child: SizedBox(height: 16)),
+            // ZH
             // 与 chat-demo 一致：分组标题上方留 4；首组不留，使搜索框下缘
             // 到首个标题的距离与 DeepSeek 一致（17）。
+            //
+            // EN
+            // Match chat-demo: leave 4 above group headers, none for the first group, so
+            // search to first title spacing matches DeepSeek (17).
             if (index > 0) const SliverToBoxAdapter(child: SizedBox(height: 4)),
+            // ZH
             // 首组标签常驻吸顶行，列表里只留高度，避免同一标签出现两次。
+            //
+            // EN
+            // First label stays sticky; the list stores only its height to avoid a duplicate.
             index == 0
                 ? SliverToBoxAdapter(child: SizedBox(height: headerExtent))
                 : SliverToBoxAdapter(
@@ -845,8 +949,13 @@ class _SessionListState extends State<_SessionList> {
     return Stack(
       children: [
         list,
+        // ZH
         // 照搬真机：日期标签一次只吸一条，下一条到来时把当前条顶出；
         // 多选入口属于吸顶行，随标签一起顶出。
+        //
+        // EN
+        // Match the real app: only one date label sticks at a time, pushed out by the next;
+        // the Selection Mode entry belongs to the sticky row and is pushed out with it.
         Positioned(
           top: 0,
           left: 0,
@@ -891,7 +1000,11 @@ class _SessionListState extends State<_SessionList> {
   }
 }
 
+/// ZH
 /// 分组标题；高度 = 上 4 + 行高 22（随字号缩放）+ 下 3。
+///
+/// EN
+/// Group header; height = 4 top + 22 line (scaled) + 3 bottom.
 class _GroupHeader extends StatelessWidget {
   const _GroupHeader({
     required this.colors,
@@ -1003,7 +1116,11 @@ class _SessionRowState extends State<_SessionRow> {
     setState(() => _editing = true);
   }
 
+  /// ZH
   /// 提交规则同 chat-demo：空输入或未改动不写库。
+  ///
+  /// EN
+  /// Commit rules match chat-demo: empty or unchanged input is not persisted.
   void _finishEditing({bool commit = true}) {
     if (!_editing) return;
     final title = _rename.text.trim();
@@ -1178,7 +1295,11 @@ class _SessionRowState extends State<_SessionRow> {
   }
 }
 
+/// ZH
 /// 勾选圈槽位：多选时宽度 0 → 32 与透明度一起变化，带动整行文字右移。
+///
+/// EN
+/// Check circle slot: in Selection Mode width goes 0 → 32 with opacity, shifting the row text.
 class _AnimatedSelectionSlot extends StatelessWidget {
   const _AnimatedSelectionSlot({
     required this.selecting,
@@ -1253,7 +1374,11 @@ class _MenuDivider extends StatelessWidget {
       Container(height: 1, color: colors.border);
 }
 
+/// ZH
 /// 菜单项：图标 18 + 文案 16，危险项整体变红。
+///
+/// EN
+/// Menu item: 18 icon + 16 label; destructive items turn red.
 class _MenuOption extends StatelessWidget {
   const _MenuOption({
     super.key,

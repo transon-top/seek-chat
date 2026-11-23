@@ -1,8 +1,14 @@
 import 'location_data.dart';
 
+/// ZH
 /// 用户所在地：国家/地区代码，中国（`CN`）可再带省与市。
 ///
 /// 取值与校验对齐 chat-demo 的 `location.ts`。
+///
+/// EN
+/// User location: a country/region code; China (`CN`) may also include province and city.
+///
+/// Values and validation align with `location.ts` in chat-demo.
 final class UserLocation {
   const UserLocation({required this.region, this.province, this.city});
 
@@ -46,7 +52,11 @@ final class Province {
   final List<City> cities;
 }
 
+/// ZH
 /// 省级行政区与下辖城市，顺序沿用 chat-demo。
+///
+/// EN
+/// Province-level regions and their cities, in chat-demo order.
 final List<Province> provinces = [
   for (final province in provinceNames.entries)
     Province(
@@ -74,11 +84,19 @@ City? cityByCode(Province? province, String? code) {
   return null;
 }
 
+/// ZH
 /// 界面语言代码是否中文；决定 `/ 中文` 还是 `/ English` 的地区名称。
+///
+/// EN
+/// Whether the UI language code is Chinese; picks Chinese or English region names.
 bool isChineseLanguage(String languageCode) =>
     languageCode.toLowerCase().startsWith('zh');
 
+/// ZH
 /// 地区名称；未知代码返回 null。港澳台使用固定名称覆盖。
+///
+/// EN
+/// Region name; returns null for unknown codes. Hong Kong, Macao, and Taiwan use fixed overrides.
 String? getRegionName(String code, String languageCode) {
   final zh = isChineseLanguage(languageCode);
   final key = zh ? 'zh' : 'en';
@@ -86,7 +104,11 @@ String? getRegionName(String code, String languageCode) {
       (zh ? regionNamesZh : regionNamesEn)[code];
 }
 
+/// ZH
 /// 校验并收敛本地保存的所在地；结构不合法时返回 null（chat-demo `normalizeLocation`）。
+///
+/// EN
+/// Validate and normalize the stored location; null if invalid (chat-demo `normalizeLocation`).
 UserLocation? normalizeLocation(Object? value) {
   if (value is! Map) return null;
   final region = value['region'];

@@ -22,8 +22,14 @@ void main() {
     ),
   );
 
+  /// ZH
   /// 单侧渐隐的目标展开进度；`tween.end` 与 `ScrollEdgeFade` 测试里读
   /// `AnimatedOpacity.opacity` 同理，反映目标状态而非过渡中的当前值。
+  ///
+  /// EN
+  /// Target expansion progress of one side's fade; `tween.end` and `ScrollEdgeFade`
+  /// tests read `AnimatedOpacity.opacity` likewise, reflecting the target rather than the
+  /// current value mid-transition.
   double fadeTarget(WidgetTester tester, String side) {
     final tween = tester.widget<TweenAnimationBuilder<double>>(
       find

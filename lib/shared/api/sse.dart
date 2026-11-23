@@ -1,9 +1,16 @@
 import 'dart:convert';
 
+/// ZH
 /// 一条已派发的 Server-Sent Events 帧。
 ///
 /// [event] 缺省为 `message`；[data] 是多行 payload 以 `\n` 连接后的结果，
 /// 不含末尾换行。
+///
+/// EN
+/// One dispatched Server-Sent Events frame.
+///
+/// [event] defaults to `message`. [data] is a multi-line payload joined with `\n`;
+/// it has no trailing newline.
 class SseEvent {
   const SseEvent({required this.event, required this.data});
 
@@ -11,12 +18,20 @@ class SseEvent {
   final String data;
 }
 
+/// ZH
 /// 由调用方驱动响应字节流时使用的同步适配器。
+///
+/// EN
+/// Synchronous adapter for caller-driven response byte streams.
 class SseDecoder {
   final List<SseEvent> _events = <SseEvent>[];
   late final SseParser _parser = SseParser(_events.add);
 
+  /// ZH
   /// 喂入一个分片，取走它补齐的全部帧。
+  ///
+  /// EN
+  /// Feed one chunk and take all frames it completes.
   List<SseEvent> add(List<int> bytes) {
     _parser.add(bytes);
     return _drain();
@@ -34,10 +49,17 @@ class SseDecoder {
   }
 }
 
+/// ZH
 /// WHATWG Server-Sent Events 解析器。
 ///
 /// 用 [add] 喂入原始响应字节。只有以空行结束的完整帧才会派发；流结束时
 /// 未完结的尾部帧按规范丢弃（见 [close]）。
+///
+/// EN
+/// WHATWG Server-Sent Events parser.
+///
+/// Feed raw response bytes with [add]. Only complete frames ending in a blank line are
+/// dispatched; at end of stream, incomplete trailing frames are dropped per spec (see [close]).
 class SseParser {
   SseParser(this._onEvent);
 
@@ -63,7 +85,11 @@ class SseParser {
 
   void close() {
     _startStream();
+    // ZH
     // 未以空行结束的帧永远不派发。
+    //
+    // EN
+    // Frames not terminated by a blank line are never dispatched.
     _line.clear();
     _data.clear();
     _eventName = null;
@@ -118,7 +144,11 @@ class SseParser {
           ..write('\n');
       case 'event':
         _eventName = value;
+      // ZH
       // `id` 与 `retry` 不影响本客户端：不自动重连、不续传。
+      //
+      // EN
+      // `id` and `retry` do not affect this client: no auto-reconnect and no resume.
     }
   }
 

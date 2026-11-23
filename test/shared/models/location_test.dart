@@ -31,7 +31,11 @@ void main() {
     expect(normalizeLocation(['CN']), isNull);
     expect(normalizeLocation({'region': 42}), isNull);
     expect(normalizeLocation({'region': 'XX'}), isNull);
+    // ZH
     // 有市无省、省或市非法、市不属于该省。
+    //
+    // EN
+    // City without province, invalid province or city, and city outside its province.
     expect(normalizeLocation({'region': 'CN', 'city': '330100'}), isNull);
     expect(normalizeLocation({'region': 'CN', 'province': '999999'}), isNull);
     expect(

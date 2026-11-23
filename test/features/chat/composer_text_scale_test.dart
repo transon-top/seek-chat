@@ -17,7 +17,11 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../support/photo_fakes.dart';
 
+/// ZH
 /// 票 07 第 4 项：双语 × 320 宽 × 动态字体 2.0 的输入区文本不溢出。
+///
+/// EN
+/// Ticket 07 item 4: composer text must not overflow at two locales, width 320, text scale 2.0.
 void main() {
   late TextEditingController input;
   late FocusNode focus;
@@ -170,7 +174,11 @@ void main() {
 
         final library = FakePhotoLibrary();
 
+        // ZH
         // 空态：占位、开关胶囊、按钮矩阵。
+        //
+        // EN
+        // Empty state: placeholder, toggle pills, button matrix.
         await tester.pumpWidget(
           host(
             locale: locale,
@@ -181,13 +189,21 @@ void main() {
         await tester.pumpAndSettle();
         expectNoOverflow(tester);
 
+        // ZH
         // 有文本：麦克风隐藏，发送可用。
+        //
+        // EN
+        // With text: the mic is hidden and send is enabled.
         input.text =
             'Message with a long line that must wrap instead of overflowing.';
         await tester.pumpAndSettle();
         expectNoOverflow(tester);
 
+        // ZH
         // 生成中：`+` 禁用、发送变停止、无麦克风。
+        //
+        // EN
+        // Generating: `+` is disabled, send becomes stop, no mic.
         await tester.pumpWidget(
           host(
             locale: locale,
@@ -199,7 +215,11 @@ void main() {
         await tester.pumpAndSettle();
         expectNoOverflow(tester);
 
+        // ZH
         // 草稿：图片 + 长文件名 + 失败原因。
+        //
+        // EN
+        // Draft: image + long filename + failure reason.
         await tester.pumpWidget(
           host(
             locale: locale,
@@ -224,14 +244,22 @@ void main() {
         );
         await tester.pumpAndSettle();
         expectNoOverflow(tester);
+        // ZH
         // 固定 64 高卡片的文字封顶生效，而不是被整体压到不可读。
+        //
+        // EN
+        // The fixed 64-high card caps its text instead of squeezing it into unreadable type.
         expect(
           MediaQuery.textScalerOf(tester.element(find.text('report.xlsx')))
               .scale(10),
           13,
         );
 
+        // ZH
         // 面板：横条四态 + 三宫格，均在 320 宽内。
+        //
+        // EN
+        // Panel: four bar states + a 3-cell grid, all within width 320.
         final states = <String, PhotoLibrary>{
           'ready': FakePhotoLibrary(assets: [FakePhotoAsset(id: 'a0')]),
           'denied': FakePhotoLibrary(status: PhotoAccessStatus.denied),
@@ -255,7 +283,11 @@ void main() {
           expectNoOverflow(tester);
         }
 
+        // ZH
         // 浮层三态：录音、取消、识别中。
+        //
+        // EN
+        // Overlay in three states: recording, canceling, recognizing.
         for (final phase in const [
           SpeechPhase.recording,
           SpeechPhase.cancelling,

@@ -1,9 +1,17 @@
 import 'package:material_ui/material_ui.dart';
 
+/// ZH
 /// 横向滚动 + 两侧边缘渐隐（Scroll Edge Fade 横向变体）。
 ///
 /// 用 `ShaderMask` 的 alpha 遮罩实现，不依赖背景色；左右两侧各自按剩余
 /// 可滚动距离显隐，出现与消失都有 150ms 过渡。滚动控制器自持。
+///
+/// EN
+/// Horizontal scroll with edge fades on both sides (horizontal variant of Scroll Edge Fade).
+///
+/// Uses a `ShaderMask` alpha mask, independent of background color; each side shows
+/// or hides by remaining scroll distance, with a 150ms transition; controller owned
+/// internally.
 class HorizontalFadeScroll extends StatefulWidget {
   const HorizontalFadeScroll({super.key, required this.child});
 
@@ -26,7 +34,11 @@ class _HorizontalFadeScrollState extends State<HorizontalFadeScroll> {
   @override
   Widget build(BuildContext context) {
     return NotificationListener<ScrollMetricsNotification>(
+      // ZH
       // 内容尺寸 / 视口变化时刷新可滚动状态。
+      //
+      // EN
+      // Refresh scrollable state when content size / viewport changes.
       onNotification: (_) {
         setState(() {});
         return false;
@@ -35,8 +47,13 @@ class _HorizontalFadeScrollState extends State<HorizontalFadeScroll> {
         animation: _controller,
         builder: (context, child) {
           final position = _controller.hasClients ? _controller.position : null;
+          // ZH
           // 没有横向溢出时不挂遮罩：省掉两层 ShaderMask 的光栅化成本
           // （表格滚动逐帧重绘时最明显）。此时偏移必为 0，重建滚动视图无副作用。
+          //
+          // EN
+          // No mask without horizontal overflow: saves rasterization cost of two ShaderMasks
+          // (most visible with per-frame table repaints). Offset is 0, so rebuild is harmless.
           if (position == null || position.maxScrollExtent <= _threshold) {
             return child!;
           }
@@ -64,10 +81,17 @@ class _HorizontalFadeScrollState extends State<HorizontalFadeScroll> {
   }
 }
 
+/// ZH
 /// 单侧渐隐遮罩；[active] 变化时用 150ms 过渡。
 ///
 /// 可滚动期间遮罩常驻（无渐隐时是全白渐变），避免淡入瞬间切换控件类型重建
 /// `Scrollable`、丢失滚动位置；不可滚动时外层不挂遮罩（见 `build`）。
+///
+/// EN
+/// One-sided fade mask; uses a 150ms transition when [active] changes.
+///
+/// Mask stays mounted while scrollable (all-white gradient when idle), so fading in avoids
+/// type switch, `Scrollable` rebuild, scroll loss; no mask when unscrollable (see `build`).
 class _EdgeFadeMask extends StatelessWidget {
   const _EdgeFadeMask({
     super.key,
@@ -100,10 +124,17 @@ class _EdgeFadeMask extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 单侧渐隐渐变色：边缘透明、到 [fadeExtent] 处不透明。
 ///
 /// [amount] 为展开进度 0...1（0 时全不透明，等于没有遮罩）；
 /// 渐隐带不超过可视宽度一半。
+///
+/// EN
+/// One-sided fade gradient: transparent at the edge, opaque at [fadeExtent].
+///
+/// [amount] is expansion progress 0...1 (0 is fully opaque, equal to no mask);
+/// the fade band never exceeds half the visible width.
 LinearGradient horizontalFadeGradient({
   required bool left,
   required double width,
@@ -120,5 +151,9 @@ LinearGradient horizontalFadeGradient({
   );
 }
 
+/// ZH
 /// 渐隐带宽度，与纵向 `ScrollEdgeFade` 一致。
+///
+/// EN
+/// Fade band width, matching the vertical `ScrollEdgeFade`.
 const horizontalFadeExtent = 12.0;

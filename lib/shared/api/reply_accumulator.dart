@@ -1,13 +1,25 @@
 import '../models/types.dart';
 import 'stream_events.dart';
 
+/// ZH
 /// 接收过程中把类型化流事件合并进回复。
 ///
 /// 对齐 chat-demo 的 `applyEvent` / `settleReply`：服务端块下标映射到本地
 /// 下标，被跳过的块不占位，本类不写数据库。
+///
+/// EN
+/// Merge typed stream events into a reply while it is received.
+///
+/// Mirrors chat-demo's `applyEvent` / `settleReply`: server block indexes map to
+/// local indexes. Skipped blocks take no slot; this class never writes to the database.
 class ReplyAccumulator {
+  /// ZH
   /// [blocks]、[usage]、[prefix] 传入已有回复的当前状态，用于续写；新事件
   /// 追加在原块之后。
+  ///
+  /// EN
+  /// [blocks], [usage], and [prefix] pass an existing reply's current state for
+  /// continuation. New events are appended after the existing blocks.
   ReplyAccumulator({
     Iterable<ReplyBlock> blocks = const [],
     this.usage,
@@ -97,8 +109,13 @@ class ReplyAccumulator {
     return block;
   }
 
+  /// ZH
   /// 收尾回复：给未结束的思考块补结束时间；安全拒绝时丢弃已收到的思考与
   /// 正文，只保留工具块。
+  ///
+  /// EN
+  /// Settle the reply by closing unfinished thinking blocks with an end time.
+  /// On safety refusal, discard received thinking and text, keeping only tool blocks.
   void settle(ReplyStatus status) {
     final refused = stopReason == StopReason.refusal;
     final now = _clock();

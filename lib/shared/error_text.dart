@@ -4,8 +4,14 @@ import '../l10n/generated/app_localizations.dart';
 import '../shared/api/errors.dart';
 import '../shared/models/types.dart';
 
+/// ZH
 /// 错误文案的唯一映射点（architecture.md §5）。服务端原文只在 debug 构建、
 /// 且可映射条件为 `other` 时附在本地化文案后；release 不展示原文。
+///
+/// EN
+/// Single mapping point for error text (architecture.md §5). Raw server text is
+/// appended to the localized text only in debug builds and when the mapped
+/// condition is `other`; release hides it.
 String apiErrorText(
   AppLocalizations l10n,
   ApiErrorCondition condition, {
@@ -26,8 +32,14 @@ String apiErrorText(
   return raw.isEmpty ? text : '$text\n$raw';
 }
 
+/// ZH
 /// 语音输入可见的失败类别（`speech.md` §6.1）。ASR 的各状态码统一折叠为
 /// [failed]；只有权限、设备、空结果、时长与中断单独区分。
+///
+/// EN
+/// Failure categories visible to voice input (`speech.md` §6.1). ASR status codes
+/// all collapse into [failed]; only permission, device, empty result, duration, and
+/// interruption are distinguished.
 enum VoiceInputFailure {
   noApiKey,
   permissionDenied,
@@ -59,7 +71,11 @@ String voiceInputErrorText(AppLocalizations l10n, VoiceInputFailure failure) =>
       VoiceInputFailure.sendFailedInserted => l10n.voiceSendFailedInserted,
     };
 
+/// ZH
 /// 朗读失败的可见类别（`speech.md` §6.2）。
+///
+/// EN
+/// Failure categories visible for read-aloud (`speech.md` §6.2).
 enum TtsFailure {
   noApiKey,
   unavailable,
@@ -69,7 +85,11 @@ enum TtsFailure {
   failed,
 }
 
+/// ZH
 /// 400 单独区分，401 / 402 / 429 复用通用文案，其余折叠为 [TtsFailure.failed]。
+///
+/// EN
+/// 400 distinct; 401/402/429 reuse generic text; others collapse into [TtsFailure.failed].
 TtsFailure ttsFailureFromStatus(int? status) => switch (status) {
   400 => TtsFailure.unavailable,
   401 => TtsFailure.unauthorized,
@@ -88,7 +108,11 @@ String ttsErrorText(AppLocalizations l10n, TtsFailure failure) =>
       TtsFailure.failed => l10n.ttsFailed,
     };
 
+/// ZH
 /// 回复级错误优先 `localMessage`，否则按 `kind`/`status` 归类到通用文案。
+///
+/// EN
+/// Reply errors prefer `localMessage`; otherwise classify by `kind`/`status` into generic text.
 String replyErrorText(AppLocalizations l10n, ReplyError error) {
   final local = error.localMessage;
   if (local != null) return localMessageText(l10n, local);

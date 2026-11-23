@@ -25,7 +25,11 @@ class _Bone extends StatelessWidget {
   );
 }
 
+/// ZH
 /// 抽屉首次加载：6 行会话行形状的静态骨架。
+///
+/// EN
+/// First drawer load: static skeleton of six session-row shapes.
 class SessionListSkeleton extends StatelessWidget {
   const SessionListSkeleton({super.key});
 
@@ -52,7 +56,11 @@ class SessionListSkeleton extends StatelessWidget {
   );
 }
 
+/// ZH
 /// 搜索页加载：6 行搜索结果形状的静态骨架。
+///
+/// EN
+/// Search page load: static skeleton of six search-result shapes.
 class SearchListSkeleton extends StatelessWidget {
   const SearchListSkeleton({super.key});
 

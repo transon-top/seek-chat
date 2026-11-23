@@ -116,7 +116,11 @@ String fetchResultStart({
   },
 });
 
+/// ZH
 /// 一次深度搜索浏览：6 个打开的页面与 2 个页内查找。
+///
+/// EN
+/// One deep-search browse: 6 opened pages and 2 in-page searches.
 String pagesReplyFixture() {
   final frames = StringBuffer(messageStart);
   var index = 0;
@@ -179,7 +183,11 @@ String pagesReplyFixture() {
   return frames.toString();
 }
 
+/// ZH
 /// 一次普通搜索：工具调用、两个结果、带引用的正文。
+///
+/// EN
+/// One regular search: a tool call, two results, and a body with citations.
 final searchReplyFixture =
     messageStart +
     frame('content_block_start', {
@@ -256,7 +264,11 @@ Future<void> openDrawer(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// ZH
 /// 抽屉打开后点右侧对话区收起；遮罩层中心被内容层推出屏幕，只能按坐标点。
+///
+/// EN
+/// Tap the right chat area to close the drawer; scrim center is off-screen, so tap by offset.
 Future<void> closeDrawer(WidgetTester tester) async {
   await tester.tapAt(const Offset(760, 300));
   await tester.pumpAndSettle();
@@ -273,7 +285,11 @@ Future<void> startNewChat(WidgetTester tester) async {
   await tester.pumpAndSettle();
 }
 
+/// ZH
 /// 首条消息落库可被卡住的仓储，覆盖“新会话已创建、历史列表还没它”的窗口。
+///
+/// EN
+/// Repository with a gated first message write; the session exists before history lists it.
 class _GatedRepository extends ChatRepository {
   _GatedRepository(super.db);
 
@@ -305,7 +321,11 @@ void main() {
     repository = ChatRepository(db);
     SharedPreferences.setMockInitialValues({});
     prefs = await SharedPreferences.getInstance();
+    // ZH
     // 现有界面文案仍为中文（票 18 再全量本地化），固定 locale 后错误文案也走中文。
+    //
+    // EN
+    // UI copy is still Chinese (ticket 18 localizes it); a fixed locale keeps errors in Chinese.
     binding.platformDispatcher.localesTestValue = const [Locale('zh')];
   });
 
@@ -353,7 +373,11 @@ void main() {
   testWidgets('creates a session and streams a reply into it', (tester) async {
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
     await tester.pumpAndSettle();
+    // ZH
     // 首屏不展示标题与新建按钮，进入对话后才有。
+    //
+    // EN
+    // The empty state shows no title or new-chat button; both appear inside a conversation.
     expect(find.text('新对话'), findsNothing);
     expect(find.byKey(const Key('chat-new')), findsNothing);
 
@@ -488,12 +512,20 @@ void main() {
     expect(find.byKey(const Key('panel-photos')), findsOneWidget);
     expect(find.byKey(const Key('panel-files')), findsOneWidget);
 
+    // ZH
     // 点输入框收起面板。
+    //
+    // EN
+    // Tap the composer to collapse the panel.
     await tester.tap(find.byKey(const Key('composer-input')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('panel-take-photo')), findsNothing);
 
+    // ZH
     // 再次展开后用系统返回收起面板，页面不退出。
+    //
+    // EN
+    // Expand again, then collapse the panel with system back; the page stays open.
     await tester.tap(find.byKey(const Key('attach-button')));
     await tester.pumpAndSettle();
     await tester.binding.handlePopRoute();
@@ -547,7 +579,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    // ZH
     // 消息尚未落库：列表里还没有新会话，页面不能跳回旧会话。
+    //
+    // EN
+    // Message not persisted: list lacks the new session; the page must stay, not fall back.
     expect(find.text('嗨! 今天想聊些什么?'), findsOneWidget);
     expect(find.text('Old'), findsNothing);
 
@@ -582,7 +618,11 @@ void main() {
   ) async {
     await prefs.setString('ui.themeMode', 'dark');
     await tester.pumpWidget(appWith(apiKey: null));
+    // ZH
     // 中文 Material 委托异步加载；首帧内容出现时主题必须已是深色。
+    //
+    // EN
+    // The Chinese Material delegate loads async; the theme must be dark by the first content frame.
     await tester.pumpAndSettle();
 
     final context = tester.element(find.byType(Scaffold));
@@ -652,9 +692,17 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.textContaining('未设置 API Key'), findsOneWidget);
+    // ZH
     // 发送失败时保留输入内容，与 chat-demo 一致。
+    //
+    // EN
+    // Keep the composer text when sending fails, matching chat-demo.
     expect(find.text('Hello'), findsOneWidget);
+    // ZH
     // 首条消息未发出，不留下空会话。
+    //
+    // EN
+    // The first message never sent, so no empty session remains.
     expect(await repository.listSessions(), isEmpty);
 
     await unmountApp(tester);
@@ -683,7 +731,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    // ZH
     // 流式中的进度指示器持续动画，不能用 pumpAndSettle。
+    //
+    // EN
+    // The streaming progress indicator animates forever, so pumpAndSettle cannot be used.
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -1139,7 +1191,11 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: 'sk-good'));
     await tester.pumpAndSettle();
 
+    // ZH
     // 打开会话只显示选中分支，不把旧版本拼进消息流。
+    //
+    // EN
+    // A session shows only the selected branch; old versions never join the message flow.
     expect(find.text('second answer'), findsOneWidget);
     expect(find.text('first answer'), findsNothing);
     expect(find.text('2 / 2'), findsOneWidget);
@@ -1254,7 +1310,11 @@ void main() {
     await tester.pump();
     await tester.pump();
 
+    // ZH
     // 流式期间新提问已有两个版本；切换器必须禁用而不是空指针。
+    //
+    // EN
+    // The new question has two versions while streaming; disable the switcher, do not hit null.
     expect(tester.takeException(), isNull);
     expect(find.text('Edited'), findsOneWidget);
     expect(find.text('2 / 2'), findsOneWidget);
@@ -1292,8 +1352,13 @@ void main() {
     final first = await repository.createSession();
     await repository.renameSession(first.id, 'First');
     await repository.addUserMessage(sessionId: first.id, text: 'a');
+    // ZH
     // 列表按 updatedAt 排序；同一毫秒创建的两个会话顺序不稳定。
     // testWidgets 的假时钟不会推进真实 Timer，必须走 runAsync。
+    //
+    // EN
+    // The list sorts by updatedAt; two sessions from the same millisecond have unstable order.
+    // testWidgets' fake clock does not advance real Timers, so this must use runAsync.
     await tester.runAsync(
       () => Future<void>.delayed(const Duration(milliseconds: 2)),
     );
@@ -1323,7 +1388,11 @@ void main() {
     await tester.longPress(find.byKey(ValueKey('session-row-${first.id}')));
     await tester.pumpAndSettle();
     await tester.tap(find.byKey(ValueKey('session-menu-rename-${first.id}')));
+    // ZH
     // 行内输入框自动聚焦后光标定时闪烁，pumpAndSettle 永不结束。
+    //
+    // EN
+    // The inline field autofocuses and its cursor blinks forever, so pumpAndSettle never settles.
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 100));
     await tester.enterText(
@@ -1379,7 +1448,11 @@ void main() {
     final before = tester.widget<ChatPage>(find.byType(ChatPage));
     expect(before.sessionId, first.id);
 
+    // ZH
     // 标题变化只更新列表数据，当前会话不变：页面 widget 实例保持不变。
+    //
+    // EN
+    // A title change only updates list data; the current session and its page widget instance stay.
     await repository.renameSession(first.id, 'Renamed');
     await tester.pumpAndSettle();
     expect(
@@ -1387,7 +1460,11 @@ void main() {
       isTrue,
     );
 
+    // ZH
     // 当前会话被删除：当前 id 变化，页面重建并回到空对话。
+    //
+    // EN
+    // Deleting the current session changes the id, rebuilding the page to an empty conversation.
     await repository.deleteSession(first.id);
     await tester.pumpAndSettle();
     final after = tester.widget<ChatPage>(find.byType(ChatPage));
@@ -1438,7 +1515,11 @@ void main() {
     expect(player.sessions, hasLength(1));
     expect(find.byTooltip('停止朗读'), findsOneWidget);
 
+    // ZH
     // 朗读动画持续刷新，不能用 pumpAndSettle。
+    //
+    // EN
+    // The read-aloud animation keeps refreshing, so pumpAndSettle cannot be used.
     await tester.tap(find.byKey(const Key('chat-open-drawer')));
     await tester.pump();
     await tester.pump(const Duration(milliseconds: 300));
@@ -1502,7 +1583,11 @@ void main() {
 
     await tester.tap(find.byTooltip('上一个版本'));
     await tester.pump();
+    // ZH
     // 停止朗读要等流取消在真实事件循环上完成。
+    //
+    // EN
+    // Stopping read-aloud waits for stream cancellation on the real event loop.
     await tester.runAsync(() => Future<void>.delayed(Duration.zero));
     await tester.pumpAndSettle();
 

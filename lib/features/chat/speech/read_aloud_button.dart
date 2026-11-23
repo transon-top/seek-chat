@@ -6,9 +6,15 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../../l10n/generated/app_localizations.dart';
 import 'speech_controller.dart';
 
+/// ZH
 /// 助手消息操作条里的朗读按钮：空闲、加载扫光、播放起伏（`speech.md` §2.2）。
 ///
 /// 启用与否由聊天页按 `canReadAloud` 与语音互斥判断；减少动画时竖条静止。
+///
+/// EN
+/// Assistant action bar read-aloud button: idle, loading sweep, playback pulse (`speech.md` §2.2).
+///
+/// Chat page enables it via `canReadAloud`, exclusive with voice; bars freeze under reduced motion.
 class ReadAloudButton extends StatefulWidget {
   const ReadAloudButton({
     super.key,
@@ -18,10 +24,18 @@ class ReadAloudButton extends StatefulWidget {
     required this.onPressed,
   });
 
+  /// ZH
   /// 全局语音阶段，用于区分 `loading` 与 `playing`。
+  ///
+  /// EN
+  /// Global speech phase, used to distinguish `loading` from `playing`.
   final SpeechPhase phase;
 
+  /// ZH
   /// 当前朗读的是这条回复。
+  ///
+  /// EN
+  /// Whether this reply is the one being read aloud.
   final bool active;
 
   final bool enabled;
@@ -153,7 +167,11 @@ class _ReadingBars extends StatelessWidget {
       final wave = math.sin(2 * math.pi * (t + index * 0.15)).abs();
       return 5 + wave * 10;
     }
+    // ZH
     // 加载态：一道扫光依次抬升每根竖条。
+    //
+    // EN
+    // Loading state: a light sweep lifts each bar in turn.
     final phase = (t * 4 - index) % 4;
     return phase < 1 ? 14.0 : 6.0;
   }

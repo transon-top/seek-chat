@@ -7,8 +7,13 @@ import 'package:path_provider/path_provider.dart';
 
 part 'database.g.dart';
 
+/// ZH
 /// `data-model.md` 的四张表；回复块存在 `messages.blocks` JSON 列中，
 /// 不单独建表。
+///
+/// EN
+/// The four tables from `data-model.md`; reply blocks live in the `messages.blocks` JSON
+/// column and do not get a separate table.
 @DataClassName('SessionRow')
 @TableIndex.sql('CREATE INDEX sessions_updated_at ON sessions (updated_at DESC)')
 class Sessions extends Table {
@@ -96,8 +101,13 @@ class MessageAttachments extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase(super.e);
 
+  /// ZH
   /// 打开应用支持目录下的本机数据库。其他地方只存相对路径：iOS 容器路径
   /// 在每次安装后会变化。
+  ///
+  /// EN
+  /// Open the local database in the app support directory. Other places store relative
+  /// paths only, because iOS container paths change on every install.
   static AppDatabase open() => AppDatabase(
         LazyDatabase(() async {
           final directory = await getApplicationSupportDirectory();
@@ -111,8 +121,13 @@ class AppDatabase extends _$AppDatabase {
 
   @override
   MigrationStrategy get migration => MigrationStrategy(
+        // ZH
         // 每个版本都必须提供显式 from → to 的迁移，不启用破坏性回退，
         // 也不调用 deleteEverything。
+        //
+        // EN
+        // Every version must supply an explicit from → to migration; destructive fallback
+        // is not enabled, and deleteEverything is never called.
         onCreate: (m) async {
           await m.createAll();
         },

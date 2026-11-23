@@ -17,7 +17,11 @@ import '../../shared/prefs/user_metadata_store.dart';
 import '../../shared/speech/permissions.dart';
 import '../../shared/widgets/scroll_edge_fade.dart';
 
+/// ZH
 /// 打开系统设置底部 Sheet（`ui.md` §1.5）。
+///
+/// EN
+/// Open the settings bottom sheet (`ui.md` §1.5).
 Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
   final size = MediaQuery.sizeOf(context);
   return showShadSheet<void>(
@@ -37,11 +41,19 @@ Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
   );
 }
 
+/// ZH
 /// 设置内容：通用设置 / 数据管理两个视图，切换不离开 Sheet。
+///
+/// EN
+/// Settings content: General and Data views, switching without leaving the sheet.
 class SettingsSheet extends StatefulWidget {
   const SettingsSheet({super.key, this.dataManagement});
 
+  /// ZH
   /// 数据管理层由 `app/` 注入，设置页不直接 import 其他功能目录。
+  ///
+  /// EN
+  /// `app/` injects the data management layer; settings never imports other feature folders.
   final Widget? dataManagement;
 
   @override
@@ -64,7 +76,11 @@ class _SettingsSheetState extends State<SettingsSheet> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
+    // ZH
     // Sheet 弹层不在 Material 路由内；透明 Material 供 InkWell / Divider 使用。
+    //
+    // EN
+    // Sheets live outside Material routes; a transparent Material serves InkWell / Divider.
     return Material(
       type: MaterialType.transparency,
       child: Column(
@@ -211,7 +227,11 @@ class _NavTab extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 通用设置：主题卡片、语言、朗读音色、位置信息（`ui.md` §1.5）。
+///
+/// EN
+/// General settings: theme cards, language, TTS voice, location (`ui.md` §1.5).
 class _GeneralSettings extends ConsumerWidget {
   const _GeneralSettings();
 
@@ -239,7 +259,11 @@ class _GeneralSettings extends ConsumerWidget {
   }
 }
 
+/// ZH
 /// 语音：麦克风权限三态；从系统设置返回时刷新权限状态。
+///
+/// EN
+/// Voice Input: three mic permission states; refresh when returning from system settings.
 class _SpeechSection extends ConsumerStatefulWidget {
   const _SpeechSection();
 
@@ -354,7 +378,11 @@ class _RowDivider extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 主题：浅色 / 深色 / 跟随系统 三张等宽卡片一行，高度随内容撑开。
+///
+/// EN
+/// Theme: three equal-width cards in a row (light / dark / system), height fits content.
 class _ThemeSection extends ConsumerWidget {
   const _ThemeSection();
 
@@ -455,7 +483,11 @@ class _ThemeCard extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 字体大小：跟随系统开关 + 七档滑杆（`ui.md` §3.5）。
+///
+/// EN
+/// Font size: follow-system switch plus a seven-step slider (`ui.md` §3.5).
 class _FontSizeSection extends ConsumerWidget {
   const _FontSizeSection();
 
@@ -464,7 +496,11 @@ class _FontSizeSection extends ConsumerWidget {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
     final settings = ref.watch(fontScaleProvider);
+    // ZH
     // 跟随时 thumb 停在系统字号最近的档位；手动档位直接使用所选档位。
+    //
+    // EN
+    // In follow mode the thumb snaps to the nearest system scale; manual mode uses the chosen step.
     final scaler = MediaQuery.textScalerOf(context);
     final level = settings.followSystem
         ? FontScaleLevels.nearest(
@@ -538,7 +574,11 @@ class _FontSizeSection extends ConsumerWidget {
   }
 }
 
+/// ZH
 /// 以正文 16px 为参照换算系统字号倍率，非线性缩放也能映射到最近档位。
+///
+/// EN
+/// Map the system scale against a 16px body reference, even non-linear scales snap to a step.
 const _referenceFontSize = 16.0;
 
 String _fontLevelName(AppLocalizations l10n, int level) => switch (level) {
@@ -551,9 +591,15 @@ String _fontLevelName(AppLocalizations l10n, int level) => switch (level) {
   _ => l10n.settingsFontSizeLargest,
 };
 
+/// ZH
 /// 七档滑杆：点击/拖动吸附到最近刻度，跨档触发一次触觉反馈。
 ///
 /// 轨道两端各内缩半个 thumb，使 7 个刻度都落在 thumb 圆心可到达的位置。
+///
+/// EN
+/// Seven-step slider: taps and drags snap to the nearest tick; crossing a step gives haptics.
+///
+/// The track insets half a thumb on both ends so all seven ticks reach the thumb center.
 class _FontScaleSlider extends StatefulWidget {
   const _FontScaleSlider({
     super.key,
@@ -577,7 +623,11 @@ class _FontScaleSlider extends StatefulWidget {
 class _FontScaleSliderState extends State<_FontScaleSlider> {
   static const _thumbSize = 26.0;
 
+  /// ZH
   /// 触摸区保持 44；thumb 视觉上小于触摸区。
+  ///
+  /// EN
+  /// The touch target stays 44; the thumb is visually smaller than the touch area.
   static const _touchHeight = 44.0;
   static const _trackHeight = 2.0;
   static const _tickHeight = 12.0;
@@ -660,7 +710,11 @@ class _FontScaleSliderState extends State<_FontScaleSlider> {
                           height: _thumbSize,
                           decoration: BoxDecoration(
                             shape: BoxShape.circle,
+                            // ZH
                             // 亮色白滑块靠阴影浮起；深色沿用高对比前景色。
+                            //
+                            // EN
+                            // White thumb on shadow in light; high-contrast foreground in dark.
                             color: theme.brightness == Brightness.light
                                 ? const Color(0xFFFFFFFF)
                                 : colors.foreground,
@@ -686,7 +740,11 @@ class _FontScaleSliderState extends State<_FontScaleSlider> {
   }
 }
 
+/// ZH
 /// 语言行：右侧下拉胶囊，选项含「跟随系统」。
+///
+/// EN
+/// Language row: dropdown pill on the right, including "System default".
 class _LanguageRow extends ConsumerWidget {
   const _LanguageRow();
 
@@ -734,8 +792,13 @@ class _TtsVoiceRow extends ConsumerWidget {
   }
 }
 
+/// ZH
 /// 位置信息：与语言 / 朗读音色同版式，左侧标签 + 右侧省份 / 城市胶囊；
 /// 行下说明与语音区间距一致。
+///
+/// EN
+/// Location: same layout as language / TTS voice, label left and province / city pills right;
+/// the description below matches the Voice Input section spacing.
 class _LocationRow extends ConsumerWidget {
   const _LocationRow();
 
@@ -836,7 +899,11 @@ class _LocationRow extends ConsumerWidget {
   }
 }
 
+/// ZH
 /// 一行设置：左侧标签，右侧控件，行高 52。
+///
+/// EN
+/// One settings row: label on the left, control on the right, height 52.
 class _SettingRow extends StatelessWidget {
   const _SettingRow({required this.label, required this.trailing});
 
@@ -869,7 +936,11 @@ class _SettingRow extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 下拉胶囊 + 锚定弹层：选中项打勾，长列表在弹层内滚动。
+///
+/// EN
+/// Dropdown pill plus anchored popover: the selected item is checked; long lists scroll inside.
 class _SettingsSelect<T> extends StatefulWidget {
   const _SettingsSelect({
     super.key,
@@ -1036,10 +1107,17 @@ class _SelectOption extends StatelessWidget {
   }
 }
 
+/// ZH
 /// 数据管理：API Key 输入 + 导入 / 导出 / 删除全部（参考图）。
 ///
 /// API Key 表单状态由本组件持有：输入框与输入后出现的整行「确定」按钮共用
 /// （参考 chat-demo 的 useApiKeyEditor）。
+///
+/// EN
+/// Data management: API Key input plus import / export / delete all (reference layout).
+///
+/// This widget owns the API Key form state: the field and the full-width confirm button
+/// that appears after typing share it (like chat-demo's useApiKeyEditor).
 class _DataSettings extends ConsumerStatefulWidget {
   const _DataSettings({required this.dataManagement});
 
@@ -1049,7 +1127,11 @@ class _DataSettings extends ConsumerStatefulWidget {
   ConsumerState<_DataSettings> createState() => _DataSettingsState();
 }
 
+/// ZH
 /// API Key 输入：提交（键盘完成）或底部「确定」校验并保存（票 10 / 20）。
+///
+/// EN
+/// API Key input: keyboard done or bottom confirm validates and saves (tickets 10 / 20).
 class _DataSettingsState extends ConsumerState<_DataSettings> {
   final _controller = TextEditingController();
   final _focusNode = FocusNode();
@@ -1071,7 +1153,11 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
     setState(() => _saved = saved);
   }
 
+  /// ZH
   /// 修改时没输入就离开，回到已保存的掩码状态（参考 chat-demo）。
+  ///
+  /// EN
+  /// Leaving editing with no input returns to the saved masked state (like chat-demo).
   void _handleFocusChange() {
     if (!mounted) return;
     final cancel =
@@ -1157,7 +1243,11 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
           const SizedBox(height: 24),
           widget.dataManagement!,
         ],
+        // ZH
         // 移动端：输入 Key 后在数据区下方显示整行「确定」（参考 chat-demo）。
+        //
+        // EN
+        // Mobile: after typing a key, show a full-width confirm below the data section (like chat-demo).
         if (showInput)
           ValueListenableBuilder<TextEditingValue>(
             valueListenable: _controller,
@@ -1324,7 +1414,11 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
   }
 }
 
+/// ZH
 /// 已保存 Key 胶囊内的图标按钮。
+///
+/// EN
+/// Icon button inside the saved-key pill.
 class _PillIconButton extends StatelessWidget {
   const _PillIconButton({
     super.key,

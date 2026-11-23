@@ -42,7 +42,11 @@ void main() {
     expect(find.byKey(const Key('push-menu-scrim')), findsOneWidget);
     expect(find.byKey(const Key('push-menu-content-veil')), findsOneWidget);
 
+    // ZH
     // 打开后内容层只露出右侧一条，关闭层也覆盖在那条上。
+    //
+    // EN
+    // When open, only a right-side strip of content shows; the closed layer covers that strip too.
     await tester.tapAt(const Offset(760, 300));
     await tester.pumpAndSettle();
     expect(find.text('MENU'), findsNothing);

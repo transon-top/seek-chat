@@ -4,9 +4,15 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 import '../../l10n/generated/app_localizations.dart';
 import 'attachment_rules.dart';
 
+/// ZH
 /// 输入卡下方的内联附件面板：照片横条 + 拍照 / 相册 / 文件三宫格（ui.md §5.7）。
 ///
 /// [photoStrip] 为空时只渲染三宫格并按内容收缩（Android 构建关闭横条）。
+///
+/// EN
+/// Inline Attachment Panel below composer: Device Photo Strip + camera / photos / files (ui.md §5.7).
+///
+/// When [photoStrip] is null, render only the grid, shrinking to content (Android hides the strip).
 class AttachmentPanel extends StatelessWidget {
   const AttachmentPanel({
     super.key,
@@ -18,7 +24,11 @@ class AttachmentPanel extends StatelessWidget {
     this.photoStrip,
   });
 
+  /// ZH
   /// 当前草稿附件数；已满 50 时拍照与相册入口只提示，不打开系统界面。
+  ///
+  /// EN
+  /// Current draft attachment count; at 50, camera and photos only show a notice, not system UI.
   final int attachmentCount;
   final VoidCallback onTakePhoto;
   final VoidCallback onPickPhotos;

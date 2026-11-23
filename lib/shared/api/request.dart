@@ -51,7 +51,11 @@ final class UserParam extends MessageParam {
 final class AssistantParam extends MessageParam {
   const AssistantParam(this.content);
 
+  /// ZH
   /// 已转换好的协议内容块。
+  ///
+  /// EN
+  /// Protocol content blocks that are already converted.
   final List<Map<String, dynamic>> content;
 
   @override
@@ -94,7 +98,11 @@ final class CreateMessageRequest {
   final List<ToolDeclaration> tools;
   final bool titleEnabled;
 
+  /// ZH
   /// 请求体含文件块时，传输层必须追加 Files API 的 beta 头。
+  ///
+  /// EN
+  /// When the body contains file blocks, the transport must add the Files API beta header.
   bool get hasFileBlocks =>
       messages.any((message) => message is UserParam && message.files.isNotEmpty);
 
@@ -110,11 +118,19 @@ final class CreateMessageRequest {
       };
 }
 
+/// ZH
 /// 构造新回复、重新生成或续写所需的请求。
 ///
 /// [history] 是 [question] 之前的可见路径。[latestReminder] 是本轮快照；
 /// 续写时传原回复保存的快照。[prefix] 存在时，其记录的 model/thinking/search
 /// 快照优先于入参，缺省再回退到当前设置。
+///
+/// EN
+/// Build the request needed for a new reply, regeneration, or continuation.
+///
+/// [history] is the visible path before [question]. [latestReminder] is this turn's snapshot.
+/// Continuation passes the stored original-reply snapshot. A present [prefix] takes priority.
+/// Its recorded model/thinking/search snapshot beats the arguments, then current settings.
 CreateMessageRequest buildMessageRequest({
   required List<Message> history,
   required UserMessage question,
@@ -140,7 +156,11 @@ CreateMessageRequest buildMessageRequest({
 
   for (final (userMessage, reply) in contextRounds(history)) {
     final userParam = _userParam(userMessage);
+    // ZH
     // 既无文本也无服务端文件的提问整轮不发送。
+    //
+    // EN
+    // A question with neither text nor server files is not sent at all.
     if (userParam.text.isEmpty && userParam.files.isEmpty) continue;
     appendReminder(reply.latestReminder);
     messages.add(userParam);
@@ -163,7 +183,11 @@ CreateMessageRequest buildMessageRequest({
           return false;
       }
     });
+    // ZH
     // 空前缀会被服务端拒绝，此时直接重发原问题。
+    //
+    // EN
+    // The server rejects an empty prefix, so resend the original question.
     if (hasContent) messages.add(AssistantParam(content));
   }
 
@@ -179,7 +203,11 @@ CreateMessageRequest buildMessageRequest({
   );
 }
 
+/// ZH
 /// 进入请求上下文的历史轮次：提问后紧跟可用回答。
+///
+/// EN
+/// History rounds entering the request context: a question followed by a usable answer.
 Iterable<(UserMessage, AssistantMessage)> contextRounds(
   List<Message> history,
 ) sync* {
@@ -207,11 +235,19 @@ UserParam _userParam(UserMessage message) => UserParam(
       ],
     );
 
+/// ZH
 /// 把回复块转回请求内容（`api.md` §3.4）。
 ///
 /// 文本合并与 chat-demo 一致：相邻文本块直接拼接；两个保留文本块之间夹着
 /// 被丢弃的块时补一个空行；保留工具块之后的文本不加前缀。历史上下文不带
 /// 思考、引用与非 read_link 工具。
+///
+/// EN
+/// Convert reply blocks back into request content (`api.md` §3.4).
+///
+/// Text merging matches chat-demo. Adjacent text blocks are concatenated directly.
+/// Discarded blocks between two kept text blocks become a blank line.
+/// Post-tool text has no prefix. History drops thinking, citations, and non-read_link tools.
 List<Map<String, dynamic>> _assistantContent(
   AssistantMessage reply, {
   bool prefix = false,
@@ -230,7 +266,11 @@ List<Map<String, dynamic>> _assistantContent(
   Map<String, dynamic>? text;
 
   for (final block in reply.blocks) {
+    // ZH
     // 本轮空白思考直接跳过，不打断相邻文本的拼接。
+    //
+    // EN
+    // Skip empty thinking in this turn; it must not break adjacent text merging.
     if (prefix && block is ThinkingBlock && block.thinking.trim().isEmpty) {
       continue;
     }

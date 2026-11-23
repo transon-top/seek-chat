@@ -1,7 +1,11 @@
 import '../../l10n/generated/app_localizations.dart';
 import '../../shared/models/types.dart';
 
+/// ZH
 /// 工具调用的界面状态，只由已持久化的块推导（`search.md` §3.1）。
+///
+/// EN
+/// UI status of a tool call, derived only from persisted blocks (`search.md` §3.1).
 enum ToolStatus { wip, done, failed }
 
 bool isDeepSearchKind(ServerToolKind kind) =>
@@ -11,7 +15,11 @@ bool isImageSearchKind(ServerToolKind kind) =>
     kind == ServerToolKind.imageSearch ||
     kind == ServerToolKind.deepImageSearch;
 
+/// ZH
 /// 正文引用可指向的来源；编号按首次登记顺序，从 1 开始。
+///
+/// EN
+/// Sources body citations can point to; numbering follows first registration, starting at 1.
 final class Source {
   Source({
     required this.index,
@@ -85,7 +93,11 @@ final class SearchStep extends ReplyStep {
     required this.status,
   });
 
+  /// ZH
   /// 该步骤首次调用的 `tool_use` id。
+  ///
+  /// EN
+  /// ID of the first `tool_use` call for this step.
   final String key;
   final ServerToolKind kind;
   final List<String> queries;
@@ -111,10 +123,17 @@ final class ReadLinkStep extends ReplyStep {
   final List<PageItem> links;
 }
 
+/// ZH
 /// 回复的界面结构：步骤时间线、带引用角标的正文与来源列表。
 ///
 /// 纯函数，不修改 [AssistantMessage.blocks]；每次块变化时重算
 /// （`search.md` §3）。
+///
+/// EN
+/// UI structure of a reply: step timeline, body with citation badges, and source list.
+///
+/// Pure function that does not modify [AssistantMessage.blocks]; recomputed on
+/// each block change (`search.md` §3).
 final class ReplyView {
   const ReplyView({
     required this.steps,
@@ -126,10 +145,18 @@ final class ReplyView {
   final List<ReplyStep> steps;
   final ({String markdown, String text})? answer;
 
+  /// ZH
   /// 全部可引用来源，按编号排列。
+  ///
+  /// EN
+  /// All citable sources, ordered by index.
   final List<Source> sources;
 
+  /// ZH
   /// 去重后的网页搜索结果，供胶囊与抽屉使用。
+  ///
+  /// EN
+  /// Deduplicated Web Search results, used by the pill and drawer.
   final List<Source> searchResults;
 }
 
@@ -174,7 +201,11 @@ ReplyView buildReplyView(
     pending.clear();
   }
 
+  // ZH
   // 先登记搜索结果与深度搜索抓取结果，保证它们先于正文引用获得编号。
+  //
+  // EN
+  // Register Web Search results and Deep Search fetches first, so they get indices before citations.
   for (final block in reply.blocks) {
     if (block is! ServerToolUseBlock) continue;
     final result = results[block.id];
@@ -196,11 +227,19 @@ ReplyView buildReplyView(
 
   for (var index = 0; index < reply.blocks.length; index++) {
     final block = reply.blocks[index];
+    // ZH
     // 任何非思考块都断开相邻思考块的合并，包括被跳过的模板块。
+    //
+    // EN
+    // Any non-thinking block breaks adjacent thinking-block merges, including skipped template blocks.
     if (block is! ThinkingBlock) mergedThinking = null;
 
     if (block is TextBlock) {
+      // ZH
       // 模板统一由外层展示，不混入正文或过程性文字。
+      //
+      // EN
+      // Template Text is rendered by the outer layer, not mixed into the body or preamble.
       if (block.isTemplate) continue;
       pending.add(_PendingText(index, block));
       continue;
@@ -209,7 +248,11 @@ ReplyView buildReplyView(
       if (mergedThinking != null) {
         mergedThinking.blocks.add(block);
       } else {
+        // ZH
         // 首个思考块出现前先结算待定正文；空思考块也按块边界结算。
+        //
+        // EN
+        // Flush pending body before the first thinking block; empty thinking blocks also flush at boundaries.
         flushPreamble();
         if (block.thinking.isNotEmpty) {
           mergedThinking = ThinkingStep(
@@ -240,7 +283,11 @@ ReplyView buildReplyView(
           for (final item in result.content)
             if (item is WebSearchResult) registerSearchResult(item),
       ];
+      // ZH
       // 普通搜索按种类合并到首次出现的位置；深度搜索只合并相邻同类调用。
+      //
+      // EN
+      // Normal Web Search merges by kind at first occurrence; Deep Search merges adjacent same-kind calls.
       final target = isDeepSearchKind(block.kind)
           ? (last is SearchStep && last.kind == block.kind ? last : null)
           : mergedSearch[block.kind];
@@ -284,7 +331,11 @@ ReplyView buildReplyView(
     );
 
     if (input is ReadLinkInput) {
+      // ZH
       // 阅读链接只展示进行态；结束后行消失，原始块仍保留用于请求。
+      //
+      // EN
+      // Reading links show only while in progress; the row disappears, but the raw block stays for requests.
       if (status != ToolStatus.wip) continue;
       if (last is ReadLinkStep) {
         last.links.add(page);
@@ -316,8 +367,13 @@ ReplyView buildReplyView(
   );
 }
 
+/// ZH
 /// 拒答回复展示的文案：模板文本优先，其次图片审核文案，最后通用拒答文案
 /// （`safety.md` §3）。非拒答回复返回 null。
+///
+/// EN
+/// Refused reply text: Template Text first, then image moderation text, then
+/// generic refusal text (`safety.md` §3). Returns null for non-refused replies.
 String? refusalText(AppLocalizations l10n, AssistantMessage reply) {
   if (reply.stopReason != StopReason.refusal) return null;
   final template = reply.blocks
@@ -338,7 +394,11 @@ final class _PendingText {
   final TextBlock block;
 }
 
+/// ZH
 /// 拼接正文块，并把每个块的引用登记后插入块尾（尾部空白之前）。
+///
+/// EN
+/// Join body blocks; append each block's registered citations at end (before trailing whitespace).
 ({String markdown, String text}) _joinTextBlocks(
   List<_PendingText> pending,
   _SourceRegistry registry,
@@ -383,7 +443,11 @@ ToolStatus _mergeStatus(Iterable<ToolStatus> statuses) {
   return ToolStatus.done;
 }
 
+/// ZH
 /// 来源登记：同一 URL 只编号一次，后到的元数据只补空、不覆盖。
+///
+/// EN
+/// Source registry: each URL is numbered once; later metadata only fills gaps and never overwrites.
 final class _SourceRegistry {
   final List<Source> list = [];
   final Map<String, Source> _byUrl = {};

@@ -32,10 +32,17 @@ import 'composer.dart';
 import 'markdown_view.dart';
 import 'messages_view.dart';
 
+/// ZH
 /// 聊天页：顶部栏、可见路径、流式文本、停止、重新生成、续写、搜索与引用。
 ///
 /// 会话为空时停在新对话草稿上；首条消息发出时创建会话（ui.md §5.10）。
 /// 侧栏内容由 `app/` 注入，推入式布局见 `shared/widgets/push_menu.dart`。
+///
+/// EN
+/// Chat page: header, visible path, streaming text, stop, regenerate, continue, search and citations.
+///
+/// Stay on the new-chat draft while empty; create the Session on the first sent message (ui.md §5.10).
+/// Sidebar content is injected by `app/`; see `shared/widgets/push_menu.dart` for the push layout.
 class ChatPage extends ConsumerStatefulWidget {
   const ChatPage({
     super.key,
@@ -52,10 +59,18 @@ class ChatPage extends ConsumerStatefulWidget {
   final VoidCallback? onNewChat;
   final ValueChanged<String>? onSessionCreated;
 
+  /// ZH
   /// 首条消息未发出时回滚刚创建的空会话。
+  ///
+  /// EN
+  /// Roll back the empty Session just created when the first message is not sent.
   final VoidCallback? onSessionDiscarded;
 
+  /// ZH
   /// 每次递增表示外部要求聚焦输入框（新对话）。
+  ///
+  /// EN
+  /// Each increment asks the composer to take focus (new chat).
   final int focusRequest;
 
   @override
@@ -74,13 +89,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   bool _panelOpen = false;
   String? _sessionId;
 
+  /// ZH
   /// 横条转码登记：第二次点击取消，迟到结果作废。
+  ///
+  /// EN
+  /// Strip transcode registry: a second tap cancels; late results are voided.
   final PendingPhotoImports _pendingPhotoImports = PendingPhotoImports();
 
+  /// ZH
   /// 相机 / 相册 / 文件选择器打开期间不因回到前台刷新横条。
+  ///
+  /// EN
+  /// Do not refresh the strip on resume while the camera, photo or file picker is open.
   bool _pickerActive = false;
 
+  /// ZH
   /// 草稿会话创建后，先占住控制器，避免自动销毁丢掉首轮流式状态。
+  ///
+  /// EN
+  /// Hold the controller after the draft Session is created so auto-dispose cannot drop the first stream.
   ProviderSubscription<ChatState>? _controllerHold;
 
   @override
@@ -114,7 +141,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     if (_sessionId != null) _load(_sessionId!);
   }
 
+  /// ZH
   /// 空回调只用于在页面开始 watch 前钉住 autoDispose 控制器。
+  ///
+  /// EN
+  /// The empty callback only pins the autoDispose controller before the page starts watching.
   void _holdController(String? sessionId) {
     _controllerHold?.close();
     _controllerHold = sessionId == null
@@ -137,9 +168,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     super.dispose();
   }
 
+  /// ZH
   /// 转写结果先替换当前选区，再按发送闸门尝试自动发送（`speech.md` §3.4）。
+  ///
+  /// EN
+  /// Replace the selection with the transcript, then try auto-send through the send gate (`speech.md` §3.4).
   Future<VoiceAutoSendOutcome> _insertTranscriptAndSend(String text) async {
+    // ZH
     // 麦克风在有文本时隐藏，故插入前非空即转写期间用户手动输入过。
+    //
+    // EN
+    // Mic hides when text exists, so non-empty before insert means the user typed during transcription.
     final typedDuring = _input.value.text.isNotEmpty;
     _input.value = insertTranscript(_input.value, text);
     if (!mounted) return VoiceAutoSendOutcome.notSent;
@@ -206,13 +245,21 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _input.clear();
     setState(() {
       _attachments.clear();
+      // ZH
       // 有文本发送后收起面板；纯附件发送保持展开供继续选照片（ui.md §5.2）。
+      //
+      // EN
+      // Close the panel after a text send; attachment-only sends stay open for more photos (ui.md §5.2).
       if (hadText) _panelOpen = false;
     });
     return true;
   }
 
+  /// ZH
   /// 请求未发出时不留下空会话；发送失败的空会话直接删除。
+  ///
+  /// EN
+  /// Leave no empty Session when the request is not sent; delete the empty Session on failure.
   Future<void> _discardEmptySession(String sessionId) async {
     _holdController(null);
     try {
@@ -228,7 +275,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() => _sessionId = null);
   }
 
+  /// ZH
   /// 点输入框时收起面板；键盘与面板不同时出现（ui.md §5.2）。
+  ///
+  /// EN
+  /// Collapse the panel on composer focus; the keyboard and panel never show together (ui.md §5.2).
   void _handleInputFocus() {
     if (_inputFocus.hasFocus && _panelOpen) {
       setState(() => _panelOpen = false);
@@ -245,7 +296,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     setState(() => _panelOpen = true);
   }
 
+  /// ZH
   /// 按下麦克风：同步失焦、收键盘与面板，再启动录音（`speech.md` §3.2）。
+  ///
+  /// EN
+  /// Mic press: unfocus and collapse keyboard and panel together, then start recording (`speech.md` §3.2).
   void _voiceStart() {
     _inputFocus.unfocus();
     FocusScope.of(context).unfocus();
@@ -259,7 +314,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   void _voiceCancelArmed(bool armed) => _speech.setCancelArmed(armed);
 
+  /// ZH
   /// 读屏「取消录音」：丢弃并播报「已取消」。
+  ///
+  /// EN
+  /// Screen reader 'cancel recording': discard and announce 'cancelled'.
   void _voiceCancel() {
     _speech.cancelFromSemantics();
     if (!MediaQuery.supportsAnnounceOf(context)) return;
@@ -308,7 +367,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
+  /// ZH
   /// 相机 / 相册产物：嗅探 JPEG 后加入草稿并上传；非 JPEG 提示且不入草稿。
+  ///
+  /// EN
+  /// Camera / gallery output: sniff JPEG, add to drafts and upload; non-JPEG shows a hint and is skipped.
   Future<void> _addPickedPhotos(List<XFile> files) async {
     final l10n = AppLocalizations.of(context)!;
     final drafts = <DraftAttachment>[];
@@ -345,8 +408,13 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _addDrafts(drafts);
   }
 
+  /// ZH
   /// 横条缩略图切换选中：选中即转码、追加到草稿末尾并上传；再点即取消
   /// （`attachments.md` §9.2）。
+  ///
+  /// EN
+  /// Strip tile toggle: selecting transcodes, appends to the Draft Attachment Row, uploads; tapping again
+  /// cancels (`attachments.md` §9.2).
   Future<void> _togglePhotoAsset(PhotoAsset asset) async {
     final l10n = AppLocalizations.of(context)!;
     for (final item in _attachments) {
@@ -368,7 +436,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         outputDir: await getTemporaryDirectory(),
       );
       if (!mounted) return;
+      // ZH
       // 转码期间再次点击已取消：迟到结果直接丢弃。
+      //
+      // EN
+      // Tapped again during transcode, i.e. cancelled: drop the late result.
       if (!_pendingPhotoImports.isCurrent(asset.id, token)) return;
       final failure = result.failure;
       if (failure != null) {
@@ -440,7 +512,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _addDrafts(picked);
   }
 
+  /// ZH
   /// 横条转码产生的临时文件在移除、发送或销毁时删除；其余草稿原件留给系统清理。
+  ///
+  /// EN
+  /// Delete strip transcode temp files on remove, send or dispose; leave other draft originals to the system.
   void _deletePhotoDrafts(Iterable<DraftAttachment> drafts) {
     final paths = [
       for (final item in drafts)
@@ -460,7 +536,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
+  /// ZH
   /// 追加到草稿行末尾并开始上传。
+  ///
+  /// EN
+  /// Append to the end of the Draft Attachment Row and start uploading.
   void _addDrafts(List<DraftAttachment> drafts) {
     setState(() => _attachments.addAll(drafts));
     for (final item in drafts) {
@@ -548,7 +628,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     _controller.stop();
   }
 
+  /// ZH
   /// 配额类上传失败：原因用 Toast 说明，并给出删除旧文件的文档入口。
+  ///
+  /// EN
+  /// Quota upload failure: explain with a Toast and offer the docs entry for deleting old files.
   void _showQuotaToast(LocalMessage quota) {
     final l10n = AppLocalizations.of(context)!;
     _showToast(
@@ -579,7 +663,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         ? const ChatState()
         : ref.watch(chatControllerProvider(sessionId));
     final tasks = ref.watch(uploadTasksProvider);
+    // ZH
     // 只订阅按钮相关字段；电平与计时刷新由状态行单独重建（speech.md §7）。
+    //
+    // EN
+    // Subscribe to button fields only; level and timer updates rebuild the status line alone (speech.md §7).
     final speech = ref.watch(
       speechControllerProvider.select(
         (state) => (
@@ -621,7 +709,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         _showQuotaToast(quota);
       }
     });
+    // ZH
     // 输入卡空态与有消息状态共用同一实例，始终贴底（ui.md §1.3）。
+    //
+    // EN
+    // The empty and populated input card share one instance, always sticky bottom (ui.md §1.3).
     final composer = Composer(
       input: _input,
       inputFocus: _inputFocus,
@@ -667,9 +759,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       onVoiceCancelArmed: _voiceCancelArmed,
       onVoiceCancel: _voiceCancel,
     );
+    // ZH
     // 录音 / 识别浮层覆盖输入卡并向上延伸 60% 屏高（ui.md §8.2）。
+    //
+    // EN
+    // The recording / recognition overlay covers the composer and extends 60% of screen height (ui.md §8.2).
     final voiceCancelable = speech.phase.voiceCancelable;
+    // ZH
     // 输入卡始终贴底；空态问候语在顶部栏与输入卡之间居中（ui.md §1.3）。
+    //
+    // EN
+    // The composer stays sticky bottom; the empty greeting centers between header and composer (ui.md §1.3).
     return PushMenu(
       menu: widget.drawer ?? const SizedBox.shrink(),
       child: PopScope(
@@ -712,7 +812,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                               child: messages.isEmpty
                                   ? const _EmptyGreeting()
                                   : ChatMessageList(
+                                      // ZH
                                       // 切换会话时重建状态，初始窗口随之重置。
+                                      //
+                                      // EN
+                                      // Rebuild state on Session switch, resetting the initial window.
                                       key: ValueKey(sessionId),
                                       messages: messages,
                                       versions: state.versions,
@@ -745,7 +849,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                       ),
                     ),
                   ),
+                  // ZH
                   // 录音 / 识别期间隐藏输入卡，让浮层渐变铺满底部（参照官方）。
+                  //
+                  // EN
+                  // Hide composer during recording / recognition so overlay fades over bottom (official app).
                   Visibility(
                     visible: !speech.voiceBusy,
                     maintainState: true,
@@ -769,7 +877,11 @@ class _ChatPageState extends ConsumerState<ChatPage> {
   }
 }
 
+/// ZH
 /// 只在录音相关阶段重建浮层，不触发整页重建（`speech.md` §7）。
+///
+/// EN
+/// Rebuild the overlay only on recording phases, avoiding a full-page rebuild (`speech.md` §7).
 class _RecordingOverlaySlot extends ConsumerWidget {
   const _RecordingOverlaySlot();
 
@@ -786,7 +898,11 @@ class _RecordingOverlaySlot extends ConsumerWidget {
   }
 }
 
+/// ZH
 /// 空态问候语：在剩余区域内垂直居中，剩余高度不足 96 时隐藏（ui.md §1.3）。
+///
+/// EN
+/// Empty greeting: centered vertically in the remaining space; hidden under 96 of height (ui.md §1.3).
 class _EmptyGreeting extends StatelessWidget {
   const _EmptyGreeting();
 

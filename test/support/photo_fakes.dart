@@ -6,12 +6,20 @@ import 'dart:typed_data';
 import 'package:open_chat/features/chat/photo_import.dart';
 import 'package:open_chat/features/chat/photo_strip.dart';
 
+/// ZH
 /// 1×1 PNG，供照片格缩略图测试解码。
+///
+/// EN
+/// A 1×1 PNG for photo grid thumbnail tests to decode.
 final Uint8List testPhotoThumbnail = base64Decode(
   'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==',
 );
 
+/// ZH
 /// 可配置的横条照片：只在内存，不触达 `photo_manager`。
+///
+/// EN
+/// Configurable strip photo: in memory only, never touching `photo_manager`.
 class FakePhotoAsset implements PhotoAsset {
   FakePhotoAsset({
     required this.id,
@@ -44,7 +52,11 @@ class FakePhotoAsset implements PhotoAsset {
   }
 }
 
+/// ZH
 /// 可配置的 `PhotoLibrary`：覆盖权限四态、空图库、读取失败与「管理」返回。
+///
+/// EN
+/// Configurable `PhotoLibrary`: four permission states, empty library, read failure, Manage return.
 class FakePhotoLibrary implements PhotoLibrary {
   FakePhotoLibrary({
     this.status = PhotoAccessStatus.authorized,

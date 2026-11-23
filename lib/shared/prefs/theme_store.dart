@@ -4,9 +4,15 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'preferences_provider.dart';
 
+/// ZH
 /// 主题偏好（票 18）：浅色 / 深色 / 跟随系统，默认跟随系统。
 ///
 /// 与语言一样在启动时同步读取，首帧即为最终主题，不闪。
+///
+/// EN
+/// Theme preferences (ticket 18): light / dark / follow system, following the system by default.
+///
+/// Like language, read synchronously at startup so the first frame has the final theme, no flash.
 class ThemeStore {
   ThemeStore(this._preferences);
 
