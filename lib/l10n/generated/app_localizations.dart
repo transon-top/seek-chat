@@ -105,6 +105,18 @@ abstract class AppLocalizations {
   /// **'No API key set. Add one in Settings first.'**
   String get errorNoApiKey;
 
+  /// No description provided for @keyPromptMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'No API key set. Add one to start chatting.'**
+  String get keyPromptMessage;
+
+  /// No description provided for @keyPromptAction.
+  ///
+  /// In en, this message translates to:
+  /// **'Add key'**
+  String get keyPromptAction;
+
   /// No description provided for @errorSaveReplyFailed.
   ///
   /// In en, this message translates to:

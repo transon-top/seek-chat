@@ -50,6 +50,8 @@ void main() {
     required ApiKeyStore store,
     Locale locale = const Locale('zh'),
     FakeMicrophonePermissions? permissions,
+    SettingsView initialView = SettingsView.general,
+    bool focusApiKey = false,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -70,7 +72,14 @@ void main() {
               brightness: Brightness.light,
               chinese: locale.languageCode == 'zh',
             ),
-            child: ShadToaster(child: Scaffold(body: const SettingsSheet())),
+            child: ShadToaster(
+              child: Scaffold(
+                body: SettingsSheet(
+                  initialView: initialView,
+                  focusApiKey: focusApiKey,
+                ),
+              ),
+            ),
           ),
         ),
       ),
@@ -100,6 +109,20 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
   }
+
+  testWidgets('opens the data view with the key field focused', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+      initialView: SettingsView.data,
+      focusApiKey: true,
+    );
+
+    final input = find.byKey(const Key('settings-api-key-input'));
+    expect(input, findsOneWidget);
+    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+  });
 
   testWidgets('validates and stores a working key', (tester) async {
     final store = FakeApiKeyStore();

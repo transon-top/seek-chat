@@ -4,6 +4,7 @@ import '../shared/api/client.dart';
 import '../shared/data/attachment_store.dart';
 import '../shared/data/chat_repository.dart';
 import '../shared/data/database.dart';
+import '../shared/logging.dart';
 import '../shared/security/api_key_store.dart';
 
 /// ZH
@@ -24,6 +25,25 @@ final apiClientProvider = Provider<DeepSeekApiClient>((ref) {
 });
 
 final apiKeyStoreProvider = Provider<ApiKeyStore>((ref) => ApiKeyStore());
+
+/// ZH
+/// 是否已保存非空 API Key；设置页保存或清除后需 `invalidate`。
+///
+/// 读取失败按「无 Key」处理；界面在首次读取完成前按「有 Key」渲染。
+///
+/// EN
+/// Whether a non-blank API Key is saved (invalidate after saving / clearing).
+///
+/// A failed read counts as "no key"; the UI renders as "has key" until the first read settles.
+final hasApiKeyProvider = FutureProvider<bool>((ref) async {
+  try {
+    final apiKey = (await ref.watch(apiKeyStoreProvider).read())?.trim();
+    return apiKey != null && apiKey.isNotEmpty;
+  } on Object catch (error) {
+    debugLog('reading api key failed', error);
+    return false;
+  }
+});
 
 final attachmentStoreProvider = Provider<AttachmentStore>(
   (ref) => AttachmentStore(),

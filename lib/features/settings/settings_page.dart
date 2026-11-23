@@ -22,7 +22,12 @@ import '../../shared/widgets/scroll_edge_fade.dart';
 ///
 /// EN
 /// Open the settings bottom sheet (`ui.md` §1.5).
-Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
+Future<void> showSettingsSheet(
+  BuildContext context, {
+  Widget? dataManagement,
+  SettingsView initialView = SettingsView.general,
+  bool focusApiKey = false,
+}) {
   final size = MediaQuery.sizeOf(context);
   return showShadSheet<void>(
     context: context,
@@ -36,7 +41,11 @@ Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
       removeBorderRadiusWhenTiny: false,
       closeIcon: const SizedBox.shrink(),
       scrollable: false,
-      child: SettingsSheet(dataManagement: dataManagement),
+      child: SettingsSheet(
+        dataManagement: dataManagement,
+        initialView: initialView,
+        focusApiKey: focusApiKey,
+      ),
     ),
   );
 }
@@ -47,7 +56,12 @@ Future<void> showSettingsSheet(BuildContext context, {Widget? dataManagement}) {
 /// EN
 /// Settings content: General and Data views, switching without leaving the sheet.
 class SettingsSheet extends StatefulWidget {
-  const SettingsSheet({super.key, this.dataManagement});
+  const SettingsSheet({
+    super.key,
+    this.dataManagement,
+    this.initialView = SettingsView.general,
+    this.focusApiKey = false,
+  });
 
   /// ZH
   /// 数据管理层由 `app/` 注入，设置页不直接 import 其他功能目录。
@@ -56,14 +70,28 @@ class SettingsSheet extends StatefulWidget {
   /// `app/` injects the data management layer; settings never imports other feature folders.
   final Widget? dataManagement;
 
+  /// ZH
+  /// 打开时停留的视图；Key Prompt 与「无 Key 点发送」直达数据管理。
+  ///
+  /// EN
+  /// View shown on open; the Key Prompt and "send without a key" land on Data.
+  final SettingsView initialView;
+
+  /// ZH
+  /// 首次挂载时聚焦 API Key 输入框。
+  ///
+  /// EN
+  /// Focus the API Key field when first mounted.
+  final bool focusApiKey;
+
   @override
   State<SettingsSheet> createState() => _SettingsSheetState();
 }
 
-enum _SettingsView { general, data }
+enum SettingsView { general, data }
 
 class _SettingsSheetState extends State<SettingsSheet> {
-  _SettingsView _view = _SettingsView.general;
+  late SettingsView _view = widget.initialView;
   final _scroll = ScrollController();
 
   @override
@@ -120,8 +148,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     key: const Key('settings-nav-general'),
                     icon: LucideIcons.settings2,
                     label: l10n.settingsGeneral,
-                    selected: _view == _SettingsView.general,
-                    onTap: () => setState(() => _view = _SettingsView.general),
+                    selected: _view == SettingsView.general,
+                    onTap: () => setState(() => _view = SettingsView.general),
                   ),
                 ),
                 const SizedBox(width: 8),
@@ -130,8 +158,8 @@ class _SettingsSheetState extends State<SettingsSheet> {
                     key: const Key('settings-nav-data'),
                     icon: LucideIcons.database,
                     label: l10n.settingsData,
-                    selected: _view == _SettingsView.data,
-                    onTap: () => setState(() => _view = _SettingsView.data),
+                    selected: _view == SettingsView.data,
+                    onTap: () => setState(() => _view = SettingsView.data),
                   ),
                 ),
               ],
@@ -152,9 +180,12 @@ class _SettingsSheetState extends State<SettingsSheet> {
                 child: Center(
                   child: ConstrainedBox(
                     constraints: const BoxConstraints(maxWidth: 640),
-                    child: _view == _SettingsView.general
+                    child: _view == SettingsView.general
                         ? const _GeneralSettings()
-                        : _DataSettings(dataManagement: widget.dataManagement),
+                        : _DataSettings(
+                            dataManagement: widget.dataManagement,
+                            focusApiKey: widget.focusApiKey,
+                          ),
                   ),
                 ),
               ),
@@ -1119,9 +1150,10 @@ class _SelectOption extends StatelessWidget {
 /// This widget owns the API Key form state: the field and the full-width confirm button
 /// that appears after typing share it (like chat-demo's useApiKeyEditor).
 class _DataSettings extends ConsumerStatefulWidget {
-  const _DataSettings({required this.dataManagement});
+  const _DataSettings({required this.dataManagement, this.focusApiKey = false});
 
   final Widget? dataManagement;
+  final bool focusApiKey;
 
   @override
   ConsumerState<_DataSettings> createState() => _DataSettingsState();
@@ -1184,6 +1216,7 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
       await ref.read(apiClientProvider).validateApiKey(apiKey);
       await ref.read(apiKeyStoreProvider).write(apiKey);
       if (!mounted) return;
+      ref.invalidate(hasApiKeyProvider);
       _controller.clear();
       _focusNode.unfocus();
       setState(() {
@@ -1216,6 +1249,7 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
   Future<void> _clear() async {
     await ref.read(apiKeyStoreProvider).clear();
     if (!mounted) return;
+    ref.invalidate(hasApiKeyProvider);
     _controller.clear();
     setState(() {
       _saved = null;
@@ -1298,7 +1332,7 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
                     key: const Key('settings-api-key-input'),
                     controller: _controller,
                     focusNode: _focusNode,
-                    autofocus: saved != null,
+                    autofocus: widget.focusApiKey || saved != null,
                     obscureText: true,
                     autocorrect: false,
                     enableSuggestions: false,

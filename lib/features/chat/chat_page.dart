@@ -51,6 +51,7 @@ class ChatPage extends ConsumerStatefulWidget {
     this.onNewChat,
     this.onSessionCreated,
     this.onSessionDiscarded,
+    this.onOpenKeySettings,
     this.focusRequest = 0,
   });
 
@@ -65,6 +66,13 @@ class ChatPage extends ConsumerStatefulWidget {
   /// EN
   /// Roll back the empty Session just created when the first message is not sent.
   final VoidCallback? onSessionDiscarded;
+
+  /// ZH
+  /// 打开设置的数据管理页并聚焦 API Key 输入框（由 `app/` 注入接线）。
+  ///
+  /// EN
+  /// Open Settings on the data view with the API Key field focused (wired by `app/`).
+  final VoidCallback? onOpenKeySettings;
 
   /// ZH
   /// 每次递增表示外部要求聚焦输入框（新对话）。
@@ -212,7 +220,18 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final l10n = AppLocalizations.of(context)!;
     final apiKey = (await ref.read(apiKeyStoreProvider).read())?.trim();
     if (apiKey == null || apiKey.isEmpty) {
-      if (mounted) _showToast(l10n.errorNoApiKey);
+      // ZH
+      // 无 Key 不发、不弹 Toast：直达设置的数据管理页，草稿原样保留。
+      //
+      // EN
+      // Without a key: do not send or toast, open Settings on the data view and keep the draft.
+      if (mounted) {
+        if (widget.onOpenKeySettings != null) {
+          _openKeySettings();
+        } else {
+          _showToast(l10n.errorNoApiKey);
+        }
+      }
       return false;
     }
     var sessionId = _sessionId;
@@ -581,6 +600,17 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     }
   }
 
+  /// ZH
+  /// 收起键盘后打开设置的数据管理页；接线与数据层由 `app/` 注入。
+  ///
+  /// EN
+  /// Dismiss the keyboard, then open Settings on the data view; `app/` injects wiring and data.
+  void _openKeySettings() {
+    _inputFocus.unfocus();
+    FocusScope.of(context).unfocus();
+    widget.onOpenKeySettings?.call();
+  }
+
   void _showToast(
     String message, {
     String? actionLabel,
@@ -679,6 +709,12 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     );
     final messages = state.messages;
     final strings = AppLocalizations.of(context)!;
+    // ZH
+    // 首次读取完成前按「有 Key」渲染，避免提示条闪烁；读取失败按无 Key。
+    //
+    // EN
+    // Treat as "has key" until the first read settles to avoid a flashing prompt; a failed read is no key.
+    final hasApiKey = ref.watch(hasApiKeyProvider).value ?? true;
     ref.listen<SpeechState>(speechControllerProvider, (previous, next) {
       if (previous == null || previous.noticeId == next.noticeId) return;
       final voice = next.voiceFailure;
@@ -753,6 +789,8 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       onRemoveAttachment: _removeAttachment,
       onSend: _send,
       onStop: _stopGeneration,
+      showKeyPrompt: !hasApiKey,
+      onKeyPrompt: _openKeySettings,
       onVoiceStart: _voiceStart,
       onVoiceEnd: _voiceEnd,
       onVoicePointerCancel: _voicePointerCancel,

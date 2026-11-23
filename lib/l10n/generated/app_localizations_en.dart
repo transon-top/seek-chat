@@ -15,6 +15,12 @@ class AppLocalizationsEn extends AppLocalizations {
   String get errorNoApiKey => 'No API key set. Add one in Settings first.';
 
   @override
+  String get keyPromptMessage => 'No API key set. Add one to start chatting.';
+
+  @override
+  String get keyPromptAction => 'Add key';
+
+  @override
   String errorSaveReplyFailed(String error) {
     return 'Could not save the reply: $error';
   }

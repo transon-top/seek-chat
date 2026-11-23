@@ -682,7 +682,70 @@ void main() {
     await unmountApp(tester);
   });
 
-  testWidgets('tells the user to set a key when none is saved', (tester) async {
+  testWidgets('shows the key prompt only when no key is saved', (tester) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('key-prompt')), findsOneWidget);
+    expect(find.text('未设置 API Key，填写后即可开始对话'), findsOneWidget);
+    expect(find.text('去填写'), findsOneWidget);
+
+    await unmountApp(tester);
+    await tester.pumpWidget(appWith(apiKey: 'sk-good'));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('key-prompt')), findsNothing);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('tapping the key prompt opens the focused key field', (
+    tester,
+  ) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('key-prompt')));
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsSheet), findsOneWidget);
+    final input = find.byKey(const Key('settings-api-key-input'));
+    expect(input, findsOneWidget);
+    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('saving or clearing the key updates the prompt in place', (
+    tester,
+  ) async {
+    await tester.pumpWidget(appWith(apiKey: null));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('key-prompt')));
+    await tester.pumpAndSettle();
+    await tester.enterText(
+      find.byKey(const Key('settings-api-key-input')),
+      'sk-good',
+    );
+    await tester.testTextInput.receiveAction(TextInputAction.done);
+    await tester.pumpAndSettle();
+
+    expect(find.byType(SettingsSheet), findsOneWidget);
+    expect(find.byKey(const Key('key-prompt')), findsNothing);
+
+    await tester.tap(find.byKey(const Key('settings-clear-key')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('key-prompt')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('settings-close')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('key-prompt')), findsOneWidget);
+
+    await unmountApp(tester);
+  });
+
+  testWidgets('sending without a key opens the focused key field', (
+    tester,
+  ) async {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
 
@@ -691,7 +754,10 @@ void main() {
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
-    expect(find.textContaining('未设置 API Key'), findsOneWidget);
+    expect(find.byType(SettingsSheet), findsOneWidget);
+    final input = find.byKey(const Key('settings-api-key-input'));
+    expect(input, findsOneWidget);
+    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
     // ZH
     // 发送失败时保留输入内容，与 chat-demo 一致。
     //

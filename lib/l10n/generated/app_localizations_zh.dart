@@ -15,6 +15,12 @@ class AppLocalizationsZh extends AppLocalizations {
   String get errorNoApiKey => '未设置 API Key，请先在设置中填写。';
 
   @override
+  String get keyPromptMessage => '未设置 API Key，填写后即可开始对话';
+
+  @override
+  String get keyPromptAction => '去填写';
+
+  @override
   String errorSaveReplyFailed(String error) {
     return '保存回复失败：$error';
   }

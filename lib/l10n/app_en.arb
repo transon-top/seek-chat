@@ -1,6 +1,8 @@
 {
   "@@locale": "en",
   "errorNoApiKey": "No API key set. Add one in Settings first.",
+  "keyPromptMessage": "No API key set. Add one to start chatting.",
+  "keyPromptAction": "Add key",
   "errorSaveReplyFailed": "Could not save the reply: {error}",
   "@errorSaveReplyFailed": {
     "placeholders": {
