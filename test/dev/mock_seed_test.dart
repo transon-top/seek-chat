@@ -1,10 +1,10 @@
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/dev/markdown_samples.dart';
-import 'package:open_chat/dev/mock_seed.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/features/sessions/session_drawer.dart';
-import 'package:open_chat/shared/data/database.dart';
+import 'package:seek_chat/dev/markdown_samples.dart';
+import 'package:seek_chat/dev/mock_seed.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/features/sessions/session_drawer.dart';
+import 'package:seek_chat/shared/data/database.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

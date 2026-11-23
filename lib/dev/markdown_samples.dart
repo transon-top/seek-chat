@@ -154,7 +154,7 @@ flutter run -d ios --debug
     prompt: '第 6 类：链接',
     blocks: [
       const TextBlock(
-        text: r'''命名链接：[Open Chat](https://example.com/chat)
+        text: r'''命名链接：[SeekChat](https://example.com/chat)
 
 裸 URL：https://example.com/bare 与 www.example.com
 

@@ -8,9 +8,9 @@ import 'package:http/http.dart' as http;
 /// Anthropic 兼容 SSE，用来观察思考块与正文的逐字渲染。
 ///
 /// 开启：
-/// `flutter run --dart-define=OPEN_CHAT_MOCK_STREAM=true`
+/// `flutter run --dart-define=SEEK_CHAT_MOCK_STREAM=true`
 /// 调整每块间隔：
-/// `--dart-define=OPEN_CHAT_MOCK_STREAM_DELAY_MS=200`
+/// `--dart-define=SEEK_CHAT_MOCK_STREAM_DELAY_MS=200`
 ///
 /// 仍需要设置里存有任意 API Key（mock 不校验）。
 ///
@@ -19,9 +19,9 @@ import 'package:http/http.dart' as http;
 /// paced Anthropic-compatible SSE, for watching per-token thinking and body rendering.
 ///
 /// Enable:
-/// `flutter run --dart-define=OPEN_CHAT_MOCK_STREAM=true`
+/// `flutter run --dart-define=SEEK_CHAT_MOCK_STREAM=true`
 /// Adjust the interval between chunks:
-/// `--dart-define=OPEN_CHAT_MOCK_STREAM_DELAY_MS=200`
+/// `--dart-define=SEEK_CHAT_MOCK_STREAM_DELAY_MS=200`
 ///
 /// An API Key still must exist in settings (the mock does not validate it).
 class MockStreamClient extends http.BaseClient {

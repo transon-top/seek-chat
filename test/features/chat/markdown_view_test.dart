@@ -3,10 +3,10 @@ import 'package:gpt_markdown/custom_widgets/code_field.dart';
 import 'package:gpt_markdown/gpt_markdown.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:mermaid_flutter/mermaid_flutter.dart';
-import 'package:open_chat/app/markdown_theme.dart';
-import 'package:open_chat/features/chat/markdown_view.dart';
-import 'package:open_chat/features/chat/reply_view.dart';
-import 'package:open_chat/shared/widgets/horizontal_fade_scroll.dart';
+import 'package:seek_chat/app/markdown_theme.dart';
+import 'package:seek_chat/features/chat/markdown_view.dart';
+import 'package:seek_chat/features/chat/reply_view.dart';
+import 'package:seek_chat/shared/widgets/horizontal_fade_scroll.dart';
 import 'package:val_latex_flutter/val_latex_flutter.dart' show Math;
 
 Source _source(int index) => Source(

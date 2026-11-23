@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/api/stream_events.dart';
-import 'package:open_chat/shared/api/reply_accumulator.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/api/stream_events.dart';
+import 'package:seek_chat/shared/api/reply_accumulator.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 TextCitation citation(String url) => TextCitation(
       url: url,

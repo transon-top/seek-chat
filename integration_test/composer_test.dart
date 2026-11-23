@@ -16,18 +16,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/testing.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:open_chat/app/app.dart';
-import 'package:open_chat/features/chat/photo_import.dart';
-import 'package:open_chat/features/chat/photo_strip.dart';
-import 'package:open_chat/features/chat/speech/speech_controller.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/shared/prefs/preferences_provider.dart';
-import 'package:open_chat/shared/providers.dart';
-import 'package:open_chat/shared/speech/permissions.dart';
+import 'package:seek_chat/app/app.dart';
+import 'package:seek_chat/features/chat/photo_import.dart';
+import 'package:seek_chat/features/chat/photo_strip.dart';
+import 'package:seek_chat/features/chat/speech/speech_controller.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../test/support/fake_api_key_store.dart';
@@ -35,7 +35,7 @@ import '../test/support/pump.dart';
 import '../test/support/speech_fakes.dart';
 import '../test/support/sse_fixtures.dart';
 
-const _origin = 'https://mock.open-chat.test';
+const _origin = 'https://mock.seek-chat.test';
 
 final _replyFixture =
     messageStart +
@@ -96,7 +96,7 @@ void main() {
           ),
           photoLibraryProvider.overrideWithValue(_DeniedPhotoLibrary()),
         ],
-        child: const OpenChatApp(),
+        child: const SeekChatApp(),
       ),
     );
     await pumpUntil(

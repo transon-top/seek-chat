@@ -1,4 +1,4 @@
-# Open Chat
+# SeekChat
 
 This file provides guidance to Claude Code (claude.ai/code) and other agents when working with code in this repository.
 
@@ -16,7 +16,7 @@ Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/a
 
 Flutter 版 DeepSeek 聊天应用（iOS + Android）。v1 固定模型 `deepseek-flash`，
 API 源默认 `https://api.deepseek.com`，可用
-`--dart-define=OPEN_CHAT_API_ORIGIN=<origin>` 覆盖。
+`--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
 
 规格与票在 `.scratch/<feature>/`（`spec.md` + `issues/NN-*.md`），领域术语见
 根目录 `GLOSSARY.md`，架构决策见 `docs/adr/`。写票、命名领域概念时先读
@@ -47,7 +47,7 @@ flutter drive --profile -d <device> \
 ```
 
 Debug 构建会自动写入 Markdown 样本与历史样本（`lib/dev/mock_seed.dart`）；
-`--dart-define=OPEN_CHAT_STRESS_SEED=true` 额外写入 1000 会话压测数据。
+`--dart-define=SEEK_CHAT_STRESS_SEED=true` 额外写入 1000 会话压测数据。
 Release 不写样本。
 
 ## 架构

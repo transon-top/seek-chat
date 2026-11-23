@@ -1,8 +1,8 @@
 import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
-import 'package:open_chat/shared/error_text.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/shared/error_text.dart';
 
 void main() {
   final zh = lookupAppLocalizations(const Locale('zh'));

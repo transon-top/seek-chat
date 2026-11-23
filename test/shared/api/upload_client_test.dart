@@ -4,9 +4,9 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/api/errors.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/api/errors.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 const origin = 'https://api.test';
 

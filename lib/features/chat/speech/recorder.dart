@@ -65,7 +65,7 @@ class DeviceSpeechRecorder implements SpeechRecorder {
       final devices = await recorder.listInputDevices();
       if (devices.isEmpty) throw const NoInputDeviceException();
       final directory = Directory(
-        '${(await getTemporaryDirectory()).path}/open_chat_voice',
+        '${(await getTemporaryDirectory()).path}/seek_chat_voice',
       );
       await directory.create(recursive: true);
       await _removeStaleFiles(directory);

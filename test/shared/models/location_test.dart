@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/models/location.dart';
+import 'package:seek_chat/shared/models/location.dart';
 
 void main() {
   test('normalizeLocation keeps valid countries and Chinese divisions', () {

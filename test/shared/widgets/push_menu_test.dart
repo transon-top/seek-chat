@@ -1,10 +1,10 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/app/theme.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
-import 'package:open_chat/shared/widgets/push_menu.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/app/theme.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/shared/widgets/push_menu.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 Widget app(Widget home) => ShadApp(

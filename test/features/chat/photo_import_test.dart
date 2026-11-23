@@ -3,7 +3,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:open_chat/features/chat/photo_import.dart';
+import 'package:seek_chat/features/chat/photo_import.dart';
 
 import '../../support/photo_fakes.dart';
 

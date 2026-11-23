@@ -14,7 +14,7 @@ import 'dart:ui' as ui;
 
 import 'package:flutter/rendering.dart' show RenderRepaintBoundary;
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/theme.dart';
+import 'package:seek_chat/app/theme.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 

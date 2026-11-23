@@ -40,7 +40,7 @@ class _PrototypeAppState extends State<PrototypeApp> {
   @override
   Widget build(BuildContext context) {
     return ShadApp(
-      title: 'Open Chat 原型',
+      title: 'SeekChat 原型',
       debugShowCheckedModeBanner: false,
       theme: prototypeShadTheme(Brightness.light),
       darkTheme: prototypeShadTheme(Brightness.dark),
@@ -807,7 +807,7 @@ class _SessionDrawer extends StatelessWidget {
                   ),
                   const SizedBox(width: 8),
                   Text(
-                    'Open Chat',
+                    'SeekChat',
                     style: TextStyle(
                       fontSize: 15,
                       fontWeight: FontWeight.w600,

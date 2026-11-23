@@ -3,8 +3,8 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
 
-import 'package:open_chat/features/chat/photo_import.dart';
-import 'package:open_chat/features/chat/photo_strip.dart';
+import 'package:seek_chat/features/chat/photo_import.dart';
+import 'package:seek_chat/features/chat/photo_strip.dart';
 
 /// ZH
 /// 1×1 PNG，供照片格缩略图测试解码。

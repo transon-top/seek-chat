@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/api/errors.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/api/errors.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 ApiException httpError(int status, String message) =>
     ApiException(ApiErrorKind.http, message, status: status);

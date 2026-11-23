@@ -3,12 +3,12 @@ import 'dart:typed_data';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/features/history/history_service.dart';
-import 'package:open_chat/features/history/history_zip.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/features/history/history_service.dart';
+import 'package:seek_chat/features/history/history_zip.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -20,7 +20,7 @@ void main() {
   var nextId = 0;
 
   setUp(() async {
-    support = await Directory.systemTemp.createTemp('open_chat_history_');
+    support = await Directory.systemTemp.createTemp('seek_chat_history_');
     db = AppDatabase(NativeDatabase.memory());
     repository = ChatRepository(db);
     store = AttachmentStore(supportDirectory: () async => support);

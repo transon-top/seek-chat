@@ -17,7 +17,7 @@ import 'photo_import.dart';
 /// EN
 /// Build flag disables the Device Photo Strip on Android only; iOS is unaffected (`attachments.md` §9.1).
 const bool _photoStripBuildEnabled = bool.fromEnvironment(
-  'OPEN_CHAT_PHOTO_STRIP',
+  'SEEK_CHAT_PHOTO_STRIP',
   defaultValue: true,
 );
 

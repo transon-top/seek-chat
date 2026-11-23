@@ -1,7 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/api/sse.dart';
+import 'package:seek_chat/shared/api/sse.dart';
 
 List<SseEvent> parseAll(List<String> chunks) {
   final events = <SseEvent>[];

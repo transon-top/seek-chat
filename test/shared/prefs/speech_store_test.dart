@@ -1,7 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/prefs/preferences_provider.dart';
-import 'package:open_chat/shared/prefs/speech_store.dart';
+import 'package:seek_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/prefs/speech_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

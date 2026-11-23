@@ -9,26 +9,26 @@ import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:open_chat/app/app.dart';
-import 'package:open_chat/features/chat/chat_page.dart';
-import 'package:open_chat/features/chat/composer.dart';
-import 'package:open_chat/features/chat/speech/player.dart';
-import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
-import 'package:open_chat/features/chat/speech/recorder.dart';
-import 'package:open_chat/features/chat/speech/speech_api.dart';
-import 'package:open_chat/features/chat/speech/speech_controller.dart';
-import 'package:open_chat/features/sessions/session_drawer.dart';
-import 'package:open_chat/features/settings/settings_page.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/shared/prefs/chat_options_store.dart';
-import 'package:open_chat/shared/prefs/font_scale_store.dart';
-import 'package:open_chat/shared/prefs/preferences_provider.dart';
-import 'package:open_chat/shared/providers.dart';
-import 'package:open_chat/shared/speech/permissions.dart';
+import 'package:seek_chat/app/app.dart';
+import 'package:seek_chat/features/chat/chat_page.dart';
+import 'package:seek_chat/features/chat/composer.dart';
+import 'package:seek_chat/features/chat/speech/player.dart';
+import 'package:seek_chat/features/chat/speech/read_aloud_button.dart';
+import 'package:seek_chat/features/chat/speech/recorder.dart';
+import 'package:seek_chat/features/chat/speech/speech_api.dart';
+import 'package:seek_chat/features/chat/speech/speech_controller.dart';
+import 'package:seek_chat/features/sessions/session_drawer.dart';
+import 'package:seek_chat/features/settings/settings_page.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/prefs/chat_options_store.dart';
+import 'package:seek_chat/shared/prefs/font_scale_store.dart';
+import 'package:seek_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/shared/speech/permissions.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../support/fake_api_key_store.dart';
@@ -367,7 +367,7 @@ void main() {
       if (microphonePermissions != null)
         microphonePermissionsProvider.overrideWithValue(microphonePermissions),
     ],
-    child: const OpenChatApp(),
+    child: const SeekChatApp(),
   );
 
   testWidgets('creates a session and streams a reply into it', (tester) async {

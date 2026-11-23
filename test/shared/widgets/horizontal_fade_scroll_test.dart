@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/shared/widgets/horizontal_fade_scroll.dart';
+import 'package:seek_chat/shared/widgets/horizontal_fade_scroll.dart';
 
 void main() {
   Widget build({double itemWidth = 60, int itemCount = 5}) => MaterialApp(

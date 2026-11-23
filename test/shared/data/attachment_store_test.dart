@@ -2,10 +2,10 @@ import 'dart:io';
 
 import 'package:drift/native.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
 import 'package:path/path.dart' as p;
 
 void main() {
@@ -15,7 +15,7 @@ void main() {
   late AttachmentStore store;
 
   setUp(() async {
-    support = await Directory.systemTemp.createTemp('open_chat_attachments_');
+    support = await Directory.systemTemp.createTemp('seek_chat_attachments_');
     db = AppDatabase(NativeDatabase.memory());
     repository = ChatRepository(db);
     store = AttachmentStore(supportDirectory: () async => support);

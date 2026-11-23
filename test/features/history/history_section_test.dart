@@ -6,16 +6,16 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/app/theme.dart';
-import 'package:open_chat/features/history/history_files.dart';
-import 'package:open_chat/features/history/history_section.dart';
-import 'package:open_chat/features/history/history_service.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/app/theme.dart';
+import 'package:seek_chat/features/history/history_files.dart';
+import 'package:seek_chat/features/history/history_section.dart';
+import 'package:seek_chat/features/history/history_service.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 void main() {
   late Directory support;
@@ -27,7 +27,7 @@ void main() {
   var stopped = 0;
 
   setUp(() async {
-    support = await Directory.systemTemp.createTemp('open_chat_history_ui_');
+    support = await Directory.systemTemp.createTemp('seek_chat_history_ui_');
     db = AppDatabase(NativeDatabase.memory());
     repository = ChatRepository(db);
     store = AttachmentStore(supportDirectory: () async => support);
