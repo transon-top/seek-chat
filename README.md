@@ -1,4 +1,4 @@
-# Open Chat
+# SeekChat
 
 Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
 `.scratch/flutter-deepseek-chat/`，架构见
@@ -42,4 +42,4 @@ flutter run
 ```
 
 API 源默认 `https://api.deepseek.com`，可用
-`--dart-define=OPEN_CHAT_API_ORIGIN=<origin>` 覆盖。
+`--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。

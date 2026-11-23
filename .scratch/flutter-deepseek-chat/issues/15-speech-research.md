@@ -19,7 +19,7 @@ Status: resolved
 
 调研完成（2026-11-18）。完整结论见 `research/speech` 分支：
 `docs/research/speech.md`（commit `2ef5b5c373167898bb943b11522b92c100e92612`，未合并）。
-https://github.com/transon-top/open-chat/blob/2ef5b5c373167898bb943b11522b92c100e92612/docs/research/speech.md
+https://github.com/transon-top/seek-chat/blob/2ef5b5c373167898bb943b11522b92c100e92612/docs/research/speech.md
 
 **协议归属**：`POST /v1/tools/asr` 与 `POST /v1/tools/tts` 是 DeepSeek 公开 API（2026-11-13 公告），不是 chat-demo 私有扩展。
 

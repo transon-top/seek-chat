@@ -24,7 +24,7 @@ Flutter 端渲染 LLM 输出的 Markdown，有哪些可用方案？重点评估 
 
 调研完成（2026-11-18）。完整结论见 `research/markdown-rendering` 分支：
 `docs/research/markdown-rendering.md`（commit `fb899688e392768f3e27d98ae7efcbeff5a90516`，未合并）。
-https://github.com/transon-top/open-chat/blob/fb899688e392768f3e27d98ae7efcbeff5a90516/docs/research/markdown-rendering.md
+https://github.com/transon-top/seek-chat/blob/fb899688e392768f3e27d98ae7efcbeff5a90516/docs/research/markdown-rendering.md
 
 **主选：`gpt_markdown` 1.4.1**
 

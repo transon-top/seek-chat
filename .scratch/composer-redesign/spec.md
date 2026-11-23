@@ -36,7 +36,7 @@ dependencies:
   - `READ_MEDIA_IMAGES`
   - `READ_MEDIA_VISUAL_USER_SELECTED`
   - `READ_EXTERNAL_STORAGE`（`android:maxSdkVersion="32"`）
-- 构建开关：`--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 只关闭 Android 照片横条
+- 构建开关：`--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 只关闭 Android 照片横条
   及其权限申请；面板只剩三宫格，高度随内容收缩。
 - 不新增动效 / 渐变库；浮层用 `CustomPainter` 自绘。
 
@@ -174,7 +174,7 @@ dependencies:
 
 - 无数据库迁移、无持久化字段新增：草稿与 `sourceAssetId` 只在内存，
   回滚不丢用户数据；已发送附件与消息不受影响。
-- Android 横条：构建开关 `OPEN_CHAT_PHOTO_STRIP=false` 即可关闭，无需回滚代码。
+- Android 横条：构建开关 `SEEK_CHAT_PHOTO_STRIP=false` 即可关闭，无需回滚代码。
 - 代码回滚：按 §3 的文件分组 revert；`recording_status.dart` 的删除与
   `voice_overlay.dart` 的加入同组回滚，ARB 与生成物一起回滚。
 - 语音回归：若新状态机阻塞发布，可先回滚 `speech_controller.dart` /

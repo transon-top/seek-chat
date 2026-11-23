@@ -30,7 +30,7 @@ Flutter 端渲染 LLM 输出中的数学公式，有哪些可用方案？重点�
 
 调研完成（2026-11-18）。完整结论见 `research/math-rendering` 分支：
 `docs/research/math-rendering.md`（commit `0e86989f2d59dc050bc2bf1d7d9019782fb7f842`，未合并）。
-https://github.com/transon-top/open-chat/blob/0e86989f2d59dc050bc2bf1d7d9019782fb7f842/docs/research/math-rendering.md
+https://github.com/transon-top/seek-chat/blob/0e86989f2d59dc050bc2bf1d7d9019782fb7f842/docs/research/math-rendering.md
 
 **主选：`val_latex_flutter` 0.1.4**
 

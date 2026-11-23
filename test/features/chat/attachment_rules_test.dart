@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/features/chat/attachment_rules.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/features/chat/attachment_rules.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 void main() {
   group('扩展名', () {

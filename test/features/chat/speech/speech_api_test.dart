@@ -5,10 +5,10 @@ import 'dart:typed_data';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:open_chat/features/chat/speech/speech_api.dart';
-import 'package:open_chat/shared/api/errors.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/shared/prefs/speech_store.dart';
+import 'package:seek_chat/features/chat/speech/speech_api.dart';
+import 'package:seek_chat/shared/api/errors.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/prefs/speech_store.dart';
 
 const origin = 'https://api.test';
 

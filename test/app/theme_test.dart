@@ -1,7 +1,7 @@
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/theme.dart';
+import 'package:seek_chat/app/theme.dart';
 
 void main() {
   test('builds light and dark themes with readable status bars', () {

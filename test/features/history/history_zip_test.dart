@@ -3,8 +3,8 @@ import 'dart:typed_data';
 
 import 'package:archive/archive.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/features/history/history_zip.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/features/history/history_zip.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 DateTime at(int second) => DateTime.utc(2026, 1, 2, 3, 4, second);
 

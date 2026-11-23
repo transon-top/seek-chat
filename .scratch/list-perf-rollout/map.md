@@ -10,12 +10,12 @@
 - 执行进入地图：每票 = 实施切片，写码 + 测试 + 复测 + 一次提交。提交在 `v1-dev`，Conventional Commits 中文，scope `perf(list)`。
 - 每票关票只需测试通过 + 复测数字回填票内，不强制该步达到 §7 阈值。硬门禁只有两处：第 1–2 步复测决定 P1 是否启动；《总验收与收图》按 §7 判定。
 - 复测环境：日常用 Android 模拟器 `Medium_Phone_API_37.0 -gpu host` 跑 `integration_test/list_perf_test.dart`（每票 1 轮）；总验收用 Android 真机 profile，3 轮取波动范围。
-- 真机接入：USB 调试 + `flutter devices` 取 device id，复测命令替换 `-d <id>`；手动查看可用 `flutter run --profile -d <id> --dart-define=OPEN_CHAT_STRESS_SEED=true`。
+- 真机接入：USB 调试 + `flutter devices` 取 device id，复测命令替换 `-d <id>`；手动查看可用 `flutter run --profile -d <id> --dart-define=SEEK_CHAT_STRESS_SEED=true`。
 - 测试要求：窗口计算、缓存失效等逻辑必须有 widget/unit 测试；纯视觉项（表格列宽、mermaid 延迟渲染）以人工验收 + 压测为准。
 - 视觉验收：表格列宽与 mermaid 延迟渲染需用户看模拟器截图/预览确认后才能关票。
 - 每个会话先读 `GLOSSARY.md`（`Initial Window`、`Sticky Bottom` 已定义）与 `docs/agents/domain.md`；按需调用 grilling、domain-modeling。
 - 同一时刻只跑一张票；先改 `Status: claimed` 再动代码。
-- 压测数据入口：`OPEN_CHAT_STRESS_SEED`（`lib/dev/mock_seed.dart` 的 `seedStressSamples`）；`flutter drive` 每轮会清空数据并重新播种（30–35s，不计入首屏计时）。
+- 压测数据入口：`SEEK_CHAT_STRESS_SEED`（`lib/dev/mock_seed.dart` 的 `seedStressSamples`）；`flutter drive` 每轮会清空数据并重新播种（30–35s，不计入首屏计时）。
 
 ## Decisions so far
 

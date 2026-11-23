@@ -1,4 +1,4 @@
-# Open Chat v1 子版本路线图
+# SeekChat v1 子版本路线图
 
 票：`19-subversions`。状态：定稿（2026-11-19）。
 依据：[`spec.md`](spec.md) §10–§11、[`ui.md`](ui.md) §9–§10、[`architecture.md`](architecture.md) §10–§12。

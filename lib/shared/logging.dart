@@ -13,5 +13,5 @@ import 'package:flutter/foundation.dart';
 /// Never pass API Keys, request headers, full request bodies, or attachment contents.
 void debugLog(String message, [Object? error]) {
   if (!kDebugMode) return;
-  developer.log(message, name: 'open_chat', error: error);
+  developer.log(message, name: 'seek_chat', error: error);
 }

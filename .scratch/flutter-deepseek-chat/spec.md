@@ -1,4 +1,4 @@
-# Open Chat v1 规格
+# SeekChat v1 规格
 
 状态：定稿（票 11，2026-11-19）。
 行为契约：`https://github.com/deepseek-ai/chat-demo`（React 18 + rspack 纯静态应用）。
@@ -65,7 +65,7 @@ v1 交付 iOS + Android 的 DeepSeek 聊天应用，界面用 `shadcn_ui`，行�
 | 数据库 schema | `schemaVersion 1` |
 | 历史归档格式 | `export_format_version 3` |
 | 模型 | 固定 `deepseek-flash`；`deepseek-v4-pro` 仅保留类型扩展位 |
-| API 源 | 默认 `https://api.deepseek.com`，`--dart-define=OPEN_CHAT_API_ORIGIN` 覆盖 |
+| API 源 | 默认 `https://api.deepseek.com`，`--dart-define=SEEK_CHAT_API_ORIGIN` 覆盖 |
 | 主题种子 | `#4D6BFE` |
 | 品牌显示名 | 占位 `Fleepseek`；`DeepSeek API Key` 保留原文 |
 
@@ -108,7 +108,7 @@ lib/
 ### 2.3 启动顺序
 
 1. `WidgetsFlutterBinding.ensureInitialized()`。
-2. 打开 `open_chat.sqlite`，执行 `PRAGMA foreign_keys = ON`。
+2. 打开 `seek_chat.sqlite`，执行 `PRAGMA foreign_keys = ON`。
 3. `resetInterruptedReplies()`。
 4. 附件孤儿清理；失败只记日志，不阻塞启动。
 5. 同步读取 `SharedPreferences`（语言 / 主题首帧无闪烁）。

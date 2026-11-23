@@ -26,7 +26,7 @@
       `thumbnailDataWithSize`；Android 直接 `thumbnailDataWithSize`。输出仍非 JPEG
       提示 `photoUnreadable`，超过 64 MB 提示 `uploadMaxMBSize`，均不入草稿；
       草稿文件名 `.jpg`、mime `image/jpeg`。
-- [x] `--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 在 Android 上不查询、不申请照片
+- [x] `--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 在 Android 上不查询、不申请照片
       权限，面板只剩三宫格并按内容收缩；iOS 不受影响。
 - [x] 新增 ARB：`photoPermissionDenied`、`photoLimitedManage`、
       `photoLimitedManageSemantics`、`photoStripEmpty`、`photoStripLoadFailed`。
@@ -55,7 +55,7 @@
   超过 64 MB → `uploadMaxMBSize`，均不入草稿。JPEG 原件按直通处理，不做重编码。
 - `AttachmentPanel` 新增 `photoStrip` 插槽；`ChatPage` 在
   `photoStripEnabledFor(defaultTargetPlatform)` 为真时挂载。Android 以
-  `--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 构建时不查询、不申请照片权限，
+  `--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 构建时不查询、不申请照片权限，
   面板只剩三宫格并随内容收缩；iOS 不受开关影响。
 - ARB 新增 `photoPermissionDenied`、`photoLimitedManage`、
   `photoLimitedManageSemantics`、`photoStripEmpty`、`photoStripLoadFailed`、

@@ -735,7 +735,7 @@ Sheet / Dialog 使用无动画切换。不以动画承载必要信息。
   长边 ≤2560；草稿文件名 `.jpg`、mime `image/jpeg`。转码失败或仍非 JPEG：
   Toast「无法读取这张照片」，不入草稿、勾选保持未选。`heic` / `heif` 不加入白名单。
   转码后超过 64 MB 按 `uploadMaxMBSize` 处理。
-- Android 构建开关：`--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 只关闭 Android
+- Android 构建开关：`--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 只关闭 Android
   照片横条及其权限申请，面板只剩三宫格并随内容收缩；iOS 不受影响。
 
 ### 5.8 语音

@@ -111,7 +111,18 @@ class AppDatabase extends _$AppDatabase {
   static AppDatabase open() => AppDatabase(
         LazyDatabase(() async {
           final directory = await getApplicationSupportDirectory();
-          final file = File(p.join(directory.path, 'open_chat.sqlite'));
+          final file = File(p.join(directory.path, 'seek_chat.sqlite'));
+          // ZH
+          // 兼容改名前创建的数据库：新文件不存在时把旧文件改名，保留本机会话。
+          //
+          // EN
+          // Migrate databases created before the rename: rename the legacy file when the
+          // new one is absent, preserving local sessions.
+          // shortcut: one-time legacy DB rename, remove after v1 ships.
+          final legacy = File(p.join(directory.path, 'open_chat.sqlite'));
+          if (!await file.exists() && await legacy.exists()) {
+            await legacy.rename(file.path);
+          }
           return NativeDatabase(file);
         }),
       );

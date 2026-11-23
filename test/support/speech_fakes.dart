@@ -1,11 +1,11 @@
 import 'dart:async';
 import 'dart:typed_data';
 
-import 'package:open_chat/features/chat/speech/player.dart';
-import 'package:open_chat/features/chat/speech/recorder.dart';
-import 'package:open_chat/features/chat/speech/speech_api.dart';
-import 'package:open_chat/shared/prefs/speech_store.dart';
-import 'package:open_chat/shared/speech/permissions.dart';
+import 'package:seek_chat/features/chat/speech/player.dart';
+import 'package:seek_chat/features/chat/speech/recorder.dart';
+import 'package:seek_chat/features/chat/speech/speech_api.dart';
+import 'package:seek_chat/shared/prefs/speech_store.dart';
+import 'package:seek_chat/shared/speech/permissions.dart';
 
 class FakeMicrophonePermissions implements MicrophonePermissions {
   bool granted = true;
@@ -47,7 +47,7 @@ class FakeRecordingSession implements RecordingSession {
   final levelsController = StreamController<double>.broadcast();
   final interruptionsController = StreamController<void>.broadcast();
 
-  String? path = '/tmp/open_chat_fake_recording.wav';
+  String? path = '/tmp/seek_chat_fake_recording.wav';
   bool stopped = false;
   bool cancelled = false;
   Completer<void>? stopGate;

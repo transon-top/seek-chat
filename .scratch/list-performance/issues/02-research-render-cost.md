@@ -23,7 +23,7 @@ Status: resolved
 
 调研完成（2026-11-20）。完整笔记在 `research/render-cost` 分支：
 `docs/research/render-cost.md`（commit `a0dd58f90ca1383eb28cc88528347d1b1e32cf03`，未合并）。
-https://github.com/transon-top/open-chat/blob/a0dd58f90ca1383eb28cc88528347d1b1e32cf03/docs/research/render-cost.md
+https://github.com/transon-top/seek-chat/blob/a0dd58f90ca1383eb28cc88528347d1b1e32cf03/docs/research/render-cost.md
 
 **成本排序（按聊天页实际影响）**
 1. **流式重解析**：每个 SSE 事件，视口 + cacheExtent 内所有带 `sources` 的助手正文整篇重解析、重渲染。原因链：`markdown_view.dart:144-146` 每次 build 新建 `InlinePattern` → `markdown_config.dart:1213-1218` 按实例身份比较 → `incremental.dart:247-249` 清空分段缓存 → `messages_view.dart:128-159` + `scroll_delegate.dart:580` 让所有活动 item 跟父级重建。即流式时不是只算尾段，而是全文 × 可见回答数。

@@ -6,10 +6,10 @@
 
 ## Notes
 
-- 仓库：`transon-top/open-chat`，当前私有，计划公开；公开后 GitHub-hosted runner 分钟数不再是约束。
+- 仓库：`transon-top/seek-chat`，当前私有，计划公开；公开后 GitHub-hosted runner 分钟数不再是约束。
 - 当前分支 `v1-dev`，稳定分支 `main`；正式发版只基于 `main` 的 tag，`v1-dev` 上的 tag 仅用于测试，不计入发布。
 - 工具链：Flutter 3.50.0 stable、Dart SDK `^3.14.0`、Gradle 9.5.0、AGP 9.3.1、Kotlin 2.4.20、`compileSdk 37`；本机已验证。
-- Android：`applicationId` 仍是 `com.example.open_chat`；release 当前用 debug 签名；`pubspec` 版本 `0.5.0+1`；构建命令 `flutter build apk --release --split-per-abi`。
+- Android：`applicationId` 已定为 `com.transon_top.seekchat`（原 `com.example.open_chat`）；release 当前用 debug 签名；`pubspec` 版本 `0.5.0+1`；构建命令 `flutter build apk --release --split-per-abi`。
 - 既有计划：`.scratch/flutter-deepseek-chat/roadmap.md` 的 S6 要求 CI 在 `v1-dev` 执行 `build_runner`、`gen-l10n`、`analyze`、`test`；本图把该测试线扩展到 tag 发版线，不另起炉灶。两条线如何合并见票 05。
 - 已定：tag `v*` 为唯一发版触发；workflow 用祖先校验确保 tag 落在 `main`；构建前跑 `analyze` + `test`；新建正式 release keystore 经 GitHub Secrets 注入；产物为 `arm64-v8a` / `armeabi-v7a` / `x86_64` 三个 split APK。
 - 待票 04 决定：Release 此前定为自动 published；票 02 建议改为 draft + `git-cliff` notes。tag 与 `pubspec` 版本一致性校验此前预留；票 02 建议恢复为硬校验。
@@ -33,7 +33,7 @@
 - 版本说明的读者、语言（中 / 英 / 双语）与内容分类（待票 04）
 - CI 是否校验 `build_runner` / `gen-l10n` 生成物无 diff（事实已由票 01 确认可用 `git diff --exit-code`，待票 05 决定）
 - 是否额外提供 universal APK 作为 Release 资产（待票 05）
-- 签名与应用身份的迁移：`com.example.open_chat` 是否在首次公开发版前更换（待票 03）
+- 签名与应用身份的迁移：`applicationId` 已定为 `com.transon_top.seekchat`，旧安装需卸载；keystore 与 secrets 仍待票 03
 
 ## Out of scope
 

@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/api/request.dart';
-import 'package:open_chat/shared/models/reply_rules.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/api/request.dart';
+import 'package:seek_chat/shared/models/reply_rules.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 UserMessage user(
   String id,

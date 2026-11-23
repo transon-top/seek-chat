@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/shared/models/latest_reminder.dart';
-import 'package:open_chat/shared/models/location.dart';
+import 'package:seek_chat/shared/models/latest_reminder.dart';
+import 'package:seek_chat/shared/models/location.dart';
 
 void main() {
   final now = DateTime(2026, 11, 18, 9, 30);

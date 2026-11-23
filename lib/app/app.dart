@@ -105,14 +105,14 @@ final appScrollBehavior = const ShadScrollBehavior().copyWith(
 /// App shell: theme, bilingual localization, routing and lifecycle wiring.
 ///
 /// Settings drive language and theme (ticket 18); prefs load synchronously, so frame one is final.
-class OpenChatApp extends ConsumerStatefulWidget {
-  const OpenChatApp({super.key});
+class SeekChatApp extends ConsumerStatefulWidget {
+  const SeekChatApp({super.key});
 
   @override
-  ConsumerState<OpenChatApp> createState() => _OpenChatAppState();
+  ConsumerState<SeekChatApp> createState() => _SeekChatAppState();
 }
 
-class _OpenChatAppState extends ConsumerState<OpenChatApp>
+class _SeekChatAppState extends ConsumerState<SeekChatApp>
     with WidgetsBindingObserver {
   @override
   void initState() {

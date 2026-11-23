@@ -4,7 +4,7 @@
 - 设备：vivo V2608DA（产品 PD2608），Android 17（API 37）
 - 屏幕：1216×2660 物理，560 dpi（逻辑约 347×760 dp），系统字号 1.12
 - 构建：`flutter build apk --debug`（HEAD `6eefa77`）；横条关闭项单独用
-  `flutter build apk --debug --dart-define=OPEN_CHAT_PHOTO_STRIP=false`
+  `flutter build apk --debug --dart-define=SEEK_CHAT_PHOTO_STRIP=false`
 - 主题：应用内设置切换浅 / 深色，未改系统夜间模式
 
 ## 截图索引
@@ -19,7 +19,7 @@
 | `panel-full-light.png` | 完全访问：照片横条 + 三宫格 |
 | `panel-dark.png` | 深色面板（完全访问） |
 | `panel-denied-dark.png` | 深色面板拒绝横条 |
-| `panel-photo-strip-off.png` | `OPEN_CHAT_PHOTO_STRIP=false`：只剩三宫格，未申请照片权限 |
+| `panel-photo-strip-off.png` | `SEEK_CHAT_PHOTO_STRIP=false`：只剩三宫格，未申请照片权限 |
 | `draft-image-light.png` / `draft-file-light.png` | 草稿：图片 / PDF + 失败原因 |
 | `draft-no-text-light.png` | 无文本有附件（上传失败）：`+` / 语音 / 发送共存，发送禁用 |
 | `draft-file-uploaded-light.png` | 附件全部 done：发送可用（ui.md §5.2） |

@@ -35,7 +35,7 @@ Future<void> main() async {
       //
       // EN
       // Stress samples are written only when explicitly enabled, keeping daily dev data clean.
-      if (const bool.fromEnvironment('OPEN_CHAT_STRESS_SEED')) {
+      if (const bool.fromEnvironment('SEEK_CHAT_STRESS_SEED')) {
         await seedStressSamples(database, preferences);
       }
       // ZH
@@ -76,13 +76,13 @@ Future<void> main() async {
         //
         // EN
         // Slow-network streaming sample: replace the transport with a paced SSE mock, nothing else.
-        if (kDebugMode && const bool.fromEnvironment('OPEN_CHAT_MOCK_STREAM'))
+        if (kDebugMode && const bool.fromEnvironment('SEEK_CHAT_MOCK_STREAM'))
           apiClientProvider.overrideWith((ref) {
             final client = DeepSeekApiClient(
               httpClient: MockStreamClient(
                 chunkDelay: Duration(
                   milliseconds: const int.fromEnvironment(
-                    'OPEN_CHAT_MOCK_STREAM_DELAY_MS',
+                    'SEEK_CHAT_MOCK_STREAM_DELAY_MS',
                     defaultValue: 150,
                   ),
                 ),
@@ -92,7 +92,7 @@ Future<void> main() async {
             return client;
           }),
       ],
-      child: const OpenChatApp(),
+      child: const SeekChatApp(),
     ),
   );
 }

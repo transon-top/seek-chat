@@ -26,7 +26,7 @@ Status: resolved
 
 调研完成（2026-11-23）。完整结论见 `research/github-actions-flutter-android` 分支：
 `docs/research/github-actions-flutter-android.md`（commit `5fd195c658a3e6c008ff5d88cda19227198e11c7`，未合并）。
-https://github.com/transon-top/open-chat/blob/5fd195c658a3e6c008ff5d88cda19227198e11c7/docs/research/github-actions-flutter-android.md
+https://github.com/transon-top/seek-chat/blob/5fd195c658a3e6c008ff5d88cda19227198e11c7/docs/research/github-actions-flutter-android.md
 
 关键事实：
 
@@ -40,4 +40,4 @@ https://github.com/transon-top/open-chat/blob/5fd195c658a3e6c008ff5d88cda1922719
 - tag 来源校验：`on.push.tags` 无原生分支过滤；`checkout` 用 `fetch-depth: 0`，再 `git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main`，用 `git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main`；返回 1 表示不在 main 上，其他非零是错误，需区分。
 - 其他：`-Xmx8G` 在私有 8 GB runner 有 OOM 风险（`android/gradle.properties`）；job 上限 6 小时；split APK 自动加 `ABI_VERSION * 1000`；生成物已入库，可用 `git diff --exit-code` 防漂移；`flutter test` 依赖宿主 libsqlite3（runner 已装）。
 
-最大风险：debug 签名 + `com.example.open_chat`（票 03）；AGP 9.3.1 在 JDK 17 的 lint 崩溃；私有 runner 内存；NDK 版本错位；缺少 tag 来源 guard。所有耗时与 NDK 自动下载行为需首次实跑确认。
+最大风险：debug 签名 + `com.transon_top.seekchat`（票 03）；AGP 9.3.1 在 JDK 17 的 lint 崩溃；私有 runner 内存；NDK 版本错位；缺少 tag 来源 guard。所有耗时与 NDK 自动下载行为需首次实跑确认。

@@ -6,11 +6,11 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/shared/providers.dart';
-import 'package:open_chat/shared/security/api_key_store.dart';
-import 'package:open_chat/features/chat/upload_tasks.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/shared/security/api_key_store.dart';
+import 'package:seek_chat/features/chat/upload_tasks.dart';
 
 import '../../support/fake_api_key_store.dart';
 

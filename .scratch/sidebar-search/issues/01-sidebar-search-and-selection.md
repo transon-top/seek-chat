@@ -48,7 +48,7 @@ Status: resolved
 - `flutter analyze` 无问题。
 - `flutter test` 全绿，至少覆盖 `spec.md` §9 的自动化项。
 - 双主题、中英文、字号 0.8–2.0 手动检查搜索页、骨架、长按菜单、勾选、底部操作栏。
-- 300 条以上会话（`OPEN_CHAT_STRESS_SEED=true`）下搜索无明显卡顿。
+- 300 条以上会话（`SEEK_CHAT_STRESS_SEED=true`）下搜索无明显卡顿。
 - 导出 → 导入后置顶状态保持；导入旧归档时全部未置顶。
 
 ## Answer

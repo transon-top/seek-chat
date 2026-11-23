@@ -85,7 +85,7 @@ Blocked by: 01
 ### 7. Android 分发
 
 - 默认构建保留照片横条，侧载 APK 全功能。
-- 构建开关：`--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 仅关闭 Android 横条；面板只保留三宫格，高度随内容收缩；iOS 不受影响。
+- 构建开关：`--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 仅关闭 Android 横条；面板只保留三宫格，高度随内容收缩；iOS 不受影响。
 - 上 Google Play 时先提交 `READ_MEDIA_IMAGES` broad-access 声明；被拒则以该开关关闭的构建发布，不临时改代码。
 - 若确定永不上 Play，可省去该开关，保持横条常开。
 

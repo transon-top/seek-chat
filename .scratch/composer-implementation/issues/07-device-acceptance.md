@@ -28,7 +28,7 @@
 - [x] 双语（中 / 英）× 320 宽 × 动态字体 2.0 无文本溢出。
 - [ ] 人工确认：Android 预测性返回「先收面板、再退页面」；输入法与面板同时收起
       的空窗；iOS 受限授权后「管理」返回重载；HEIC 转码成功率与方向正常。
-- [x] 确认无数据库迁移、无新增持久化字段；`OPEN_CHAT_PHOTO_STRIP=false` 构建
+- [x] 确认无数据库迁移、无新增持久化字段；`SEEK_CHAT_PHOTO_STRIP=false` 构建
       在 Android 上只剩三宫格且不申请照片权限。
 - [x] 验收证据（截图、设备与系统版本、失败项）记录在本票 Answer 中。
 
@@ -61,7 +61,7 @@ flutter test integration_test/composer_test.dart -d <device>
 真实来电中断；双端真机 10 状态 × 深浅色对图；双语 × 320 宽 × 动态字体 2.0；
 四种横条降级；预测性返回；输入法与面板同时收起的空窗；iOS 受限授权后
 「管理」返回重载；HEIC 转码成功率与方向；确认无数据库迁移、无新增持久化
-字段；`OPEN_CHAT_PHOTO_STRIP=false` 构建只剩三宫格且不申请照片权限；
+字段；`SEEK_CHAT_PHOTO_STRIP=false` 构建只剩三宫格且不申请照片权限；
 截图、设备与系统版本证据。
 
 自动化补充（2026-11-22）：
@@ -74,11 +74,11 @@ flutter test integration_test/composer_test.dart -d <device>
   仅卡内文字封顶 1.3 倍（`attachments_view.dart` 的
   `_draftDocumentTextScaleMax`），并断言封顶值生效；取舍记录在票 08，行高、卡片
   尺寸与图标不变。
-- `photo_strip_test.dart` 增加按 `OPEN_CHAT_PHOTO_STRIP` 互斥的两条：默认构建断言
+- `photo_strip_test.dart` 增加按 `SEEK_CHAT_PHOTO_STRIP` 互斥的两条：默认构建断言
   双端启用；关闭构建断言 Android 关闭、iOS 仍启用。验证：
-  `flutter test test/features/chat/photo_strip_test.dart --dart-define=OPEN_CHAT_PHOTO_STRIP=false`
+  `flutter test test/features/chat/photo_strip_test.dart --dart-define=SEEK_CHAT_PHOTO_STRIP=false`
   → 12 通过、1 跳过；默认全量套件 → 481 通过、1 跳过。
-- `flutter build apk --debug --dart-define=OPEN_CHAT_PHOTO_STRIP=false` 成功
+- `flutter build apk --debug --dart-define=SEEK_CHAT_PHOTO_STRIP=false` 成功
   （51.6s，`build/app/outputs/flutter-apk/app-debug.apk`）。无横条时面板只剩三宫格
   由 `attachment_panel_test.dart` 覆盖；真机运行时权限申请仍需人工确认。
 - 数据层：`git diff 6ff2d1c..HEAD -- lib/shared/data` 为空；`types.dart` 只新增
@@ -119,7 +119,7 @@ V2608DA（PD2608），Android 17 / API 37，1216×2660 @560 dpi（逻辑宽约
 - 搜索页返回：命中区 168×168 px（48 dp，Material 最小触控目标把 44 撑到
   48），与搜索框命中区相接无间距；点击回列表，未误触搜索框。
 - 照片权限三态（受限「管理」/ 完全 / 拒绝横条）均按规格呈现；拒绝态
-  深浅色无溢出；`OPEN_CHAT_PHOTO_STRIP=false` 构建只剩三宫格且未申请
+  深浅色无溢出；`SEEK_CHAT_PHOTO_STRIP=false` 构建只剩三宫格且未申请
   照片权限。
 - 相机 → 系统相机 → 确定 → 返回：草稿行末尾新增附件（行不自动滚动，
   首屏需左滑才能看到）；相机照片未写入系统相册。

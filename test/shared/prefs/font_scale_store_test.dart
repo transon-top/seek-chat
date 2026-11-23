@@ -1,8 +1,8 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/shared/prefs/font_scale_store.dart';
-import 'package:open_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/prefs/font_scale_store.dart';
+import 'package:seek_chat/shared/prefs/preferences_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {

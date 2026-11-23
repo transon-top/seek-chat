@@ -30,7 +30,7 @@ Flutter 端渲染 Mermaid 图，有哪些真实可用的方案？用户提供了
 
 调研完成（2026-11-18）。完整结论见 `research/mermaid-rendering` 分支：
 `docs/research/mermaid-rendering.md`（commit `b873e0bef099b116c1f41d56570d8c70de8aef2a`，未合并）。
-https://github.com/transon-top/open-chat/blob/b873e0bef099b116c1f41d56570d8c70de8aef2a/docs/research/mermaid-rendering.md
+https://github.com/transon-top/seek-chat/blob/b873e0bef099b116c1f41d56570d8c70de8aef2a/docs/research/mermaid-rendering.md
 
 **用户清单逐项核实：7 个名字全部真实存在（pub.dev 200），没有 404。** 问题在能力描述被夸大，不在包名。
 

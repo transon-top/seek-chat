@@ -2,18 +2,18 @@ import 'dart:async';
 
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/app/theme.dart';
-import 'package:open_chat/features/chat/photo_import.dart';
-import 'package:open_chat/features/chat/photo_strip.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/app/theme.dart';
+import 'package:seek_chat/features/chat/photo_import.dart';
+import 'package:seek_chat/features/chat/photo_strip.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 import '../../support/photo_fakes.dart';
 
 void main() {
   const buildEnabled = bool.fromEnvironment(
-    'OPEN_CHAT_PHOTO_STRIP',
+    'SEEK_CHAT_PHOTO_STRIP',
     defaultValue: true,
   );
 

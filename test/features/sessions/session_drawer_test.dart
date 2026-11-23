@@ -3,16 +3,16 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/app/theme.dart';
-import 'package:open_chat/features/sessions/session_drawer.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
-import 'package:open_chat/shared/data/attachment_store.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/shared/providers.dart';
-import 'package:open_chat/shared/widgets/push_menu.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/app/theme.dart';
+import 'package:seek_chat/features/sessions/session_drawer.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/shared/data/attachment_store.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/shared/widgets/push_menu.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 SessionSummary session(String id, DateTime updatedAt) => SessionSummary(

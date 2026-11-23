@@ -20,7 +20,7 @@
 | 12 | 删除时序 | 先数据库事务，提交后删文件；启动清理孤儿 |
 | 13 | 导出覆盖 | 字段齐全即可，ZIP 映射由票 17 决定 |
 
-数据库文件：`open_chat.sqlite`，打开后执行 `PRAGMA foreign_keys = ON`。
+数据库文件：`seek_chat.sqlite`，打开后执行 `PRAGMA foreign_keys = ON`。
 
 ## 1. DDL 草案（schemaVersion 1）
 

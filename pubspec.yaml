@@ -1,5 +1,5 @@
-name: open_chat
-description: "Open Chat: a Flutter DeepSeek chat app for iOS and Android."
+name: seek_chat
+description: "SeekChat: a Flutter DeepSeek chat app for iOS and Android."
 publish_to: 'none'
 version: 0.5.0+1
 

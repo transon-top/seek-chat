@@ -3,10 +3,10 @@ import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/features/chat/attachments_view.dart';
-import 'package:open_chat/shared/models/types.dart';
-import 'package:open_chat/features/chat/upload_tasks.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/features/chat/attachments_view.dart';
+import 'package:seek_chat/shared/models/types.dart';
+import 'package:seek_chat/features/chat/upload_tasks.dart';
 
 void main() {
   Widget wrap(Widget child) => MaterialApp(

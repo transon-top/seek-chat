@@ -1,7 +1,7 @@
 # 语音输入与朗读行为
 
 票：`21-speech-behavior`。方案选型与协议事实见票 15 与其研究分支
-[`docs/research/speech.md`](https://github.com/transon-top/open-chat/blob/2ef5b5c373167898bb943b11522b92c100e92612/docs/research/speech.md)；
+[`docs/research/speech.md`](https://github.com/transon-top/seek-chat/blob/2ef5b5c373167898bb943b11522b92c100e92612/docs/research/speech.md)；
 数据模型见 [`data-model.md`](data-model.md)，错误文案总则见 [`architecture.md`](architecture.md) §5。
 
 - 关联：`api.md` 的客户端只覆盖 Messages / Files；ASR 与 TTS 是独立的

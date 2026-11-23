@@ -1,9 +1,9 @@
 import 'dart:ui' show Locale;
 
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/features/chat/reply_view.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/features/chat/reply_view.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 const _toolUse = 'toolu_1';
 

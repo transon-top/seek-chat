@@ -180,14 +180,14 @@ Future<void> seedHistorySamples(
 /// ZH
 /// 写入压测样本：一个 1000 条消息的长会话与 1000 条会话。
 ///
-/// 供列表性能基线测量使用；由 `OPEN_CHAT_STRESS_SEED` 或集成测试显式调用，
+/// 供列表性能基线测量使用；由 `SEEK_CHAT_STRESS_SEED` 或集成测试显式调用，
 /// 默认启动不写，避免污染日常开发数据。样本内容哈希不变时跳过，变化时按
 /// 前缀整体重建。
 ///
 /// EN
 /// Seed stress samples: one 1000-message long session and 1000 sessions.
 ///
-/// For list performance baselines; called explicitly by `OPEN_CHAT_STRESS_SEED` or
+/// For list performance baselines; called explicitly by `SEEK_CHAT_STRESS_SEED` or
 /// integration tests, never at default startup, to keep daily dev data clean. Skip when
 /// the sample hash is unchanged; otherwise rebuild the whole set by prefix.
 Future<void> seedStressSamples(

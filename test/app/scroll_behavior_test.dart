@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/app.dart';
+import 'package:seek_chat/app/app.dart';
 
 void main() {
   testWidgets('全局滚动：Android 不画光晕，统一回弹物理', (tester) async {

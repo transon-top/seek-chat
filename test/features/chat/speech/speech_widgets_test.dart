@@ -2,13 +2,13 @@ import 'package:flutter/semantics.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/app/localization.dart';
-import 'package:open_chat/app/theme.dart';
-import 'package:open_chat/features/chat/speech/read_aloud_button.dart';
-import 'package:open_chat/features/chat/speech/speech_controller.dart';
-import 'package:open_chat/features/chat/speech/voice_button.dart';
-import 'package:open_chat/features/chat/speech/recording_overlay.dart';
-import 'package:open_chat/l10n/generated/app_localizations.dart';
+import 'package:seek_chat/app/localization.dart';
+import 'package:seek_chat/app/theme.dart';
+import 'package:seek_chat/features/chat/speech/read_aloud_button.dart';
+import 'package:seek_chat/features/chat/speech/speech_controller.dart';
+import 'package:seek_chat/features/chat/speech/voice_button.dart';
+import 'package:seek_chat/features/chat/speech/recording_overlay.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 
 void main() {

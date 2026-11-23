@@ -5,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.open_chat"
+    namespace = "com.transon_top.seekchat"
     // permission_handler_android 14.x 要求客户端至少编译到 API 37。
     compileSdk = 37
     ndkVersion = flutter.ndkVersion
@@ -17,7 +17,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.open_chat"
+        applicationId = "com.transon_top.seekchat"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

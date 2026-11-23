@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/shared/widgets/scroll_edge_fade.dart';
+import 'package:seek_chat/shared/widgets/scroll_edge_fade.dart';
 
 void main() {
   Widget build(

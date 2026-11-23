@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:open_chat/dev/mock_stream_client.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/api/reply_accumulator.dart';
-import 'package:open_chat/shared/api/request.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/dev/mock_stream_client.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/api/reply_accumulator.dart';
+import 'package:seek_chat/shared/api/request.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 void main() {
   test('mock 流产出思考块、正文块与标题', () async {

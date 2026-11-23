@@ -26,7 +26,7 @@
 ## 测量方法
 
 - 测量入口：`integration_test/list_perf_test.dart`，用 `flutter drive --profile` 在真实渲染管线上驱动 App。
-- 数据：测试内 `OPEN_CHAT_STRESS_SEED` 对应的压测样本（`lib/dev/mock_seed.dart` 的 `seedStressSamples`）：1 个 1000 条消息的长会话 + 1000 条会话；内容循环覆盖 Markdown 段落/图片链接、代码块、表格、mermaid、LaTeX。
+- 数据：测试内 `SEEK_CHAT_STRESS_SEED` 对应的压测样本（`lib/dev/mock_seed.dart` 的 `seedStressSamples`）：1 个 1000 条消息的长会话 + 1000 条会话；内容循环覆盖 Markdown 段落/图片链接、代码块、表格、mermaid、LaTeX。
 - 帧耗时：`SchedulerBinding.instance.addTimingsCallback` 收集 `FrameTiming`，按场景切片统计 build、raster 与合计（build+raster）的 p50/p90/max；`slow_over_16_7_pct` = 合计 >16.7ms 的帧占比。
 - 打开耗时：Stopwatch 计时，从点击会话行到目标消息组件进入树（长会话取最后一条消息的 `ValueKey`）。
 - 内存：`ProcessInfo.currentRss`（MB）。
@@ -113,7 +113,7 @@ flutter drive --profile -d emulator-5554 \
   --target=integration_test/list_perf_test.dart
 ```
 
-结果行以 `BASELINE ` 前缀输出。手动造数据：debug 启动时加 `--dart-define=OPEN_CHAT_STRESS_SEED=true`（仅写入一次，哈希不变时跳过）。
+结果行以 `BASELINE ` 前缀输出。手动造数据：debug 启动时加 `--dart-define=SEEK_CHAT_STRESS_SEED=true`（仅写入一次，哈希不变时跳过）。
 
 ## 原始数据
 

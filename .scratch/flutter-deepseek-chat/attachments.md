@@ -69,7 +69,7 @@
   - `READ_MEDIA_VISUAL_USER_SELECTED`
   - `READ_EXTERNAL_STORAGE`（`android:maxSdkVersion="32"`）
 - 系统相册（PHPicker / Android Photo Picker）与文件选择器不需要存储权限。
-- `--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 只关闭 Android 照片横条及其权限申请；
+- `--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 只关闭 Android 照片横条及其权限申请；
   iOS 不受影响（§1.6）。
 
 ### 1.5 HEIC 与转码
@@ -89,7 +89,7 @@
 
 - 默认构建保留照片横条，侧载 APK 全功能。
 - 上 Google Play 时先提交 `READ_MEDIA_IMAGES` broad-access 声明；被拒则以
-  `--dart-define=OPEN_CHAT_PHOTO_STRIP=false` 构建发布，不临时改代码。
+  `--dart-define=SEEK_CHAT_PHOTO_STRIP=false` 构建发布，不临时改代码。
   关闭后不查询、不申请照片权限，面板只剩三宫格。
 - 若确定永不上 Play，可省去该开关，保持横条常开。
 

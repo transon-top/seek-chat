@@ -32,7 +32,7 @@ class DeepSeekApiClient {
 
   static final Uri _defaultOrigin = Uri.parse(
     const String.fromEnvironment(
-      'OPEN_CHAT_API_ORIGIN',
+      'SEEK_CHAT_API_ORIGIN',
       defaultValue: 'https://api.deepseek.com',
     ),
   );

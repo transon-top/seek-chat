@@ -22,14 +22,14 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:integration_test/integration_test.dart';
-import 'package:open_chat/app/app.dart';
-import 'package:open_chat/dev/mock_seed.dart';
-import 'package:open_chat/shared/api/client.dart';
-import 'package:open_chat/shared/data/chat_repository.dart';
-import 'package:open_chat/shared/data/database.dart';
-import 'package:open_chat/shared/prefs/preferences_provider.dart';
-import 'package:open_chat/shared/providers.dart';
-import 'package:open_chat/shared/security/api_key_store.dart';
+import 'package:seek_chat/app/app.dart';
+import 'package:seek_chat/dev/mock_seed.dart';
+import 'package:seek_chat/shared/api/client.dart';
+import 'package:seek_chat/shared/data/chat_repository.dart';
+import 'package:seek_chat/shared/data/database.dart';
+import 'package:seek_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/shared/security/api_key_store.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../test/support/pump.dart';
@@ -67,7 +67,7 @@ void main() {
 
     final apiClient = DeepSeekApiClient(
       httpClient: MockClient.streaming(_respondWithStream),
-      origin: Uri.parse('https://mock.open-chat.test'),
+      origin: Uri.parse('https://mock.seek-chat.test'),
     );
 
     final startWatch = Stopwatch()..start();
@@ -80,7 +80,7 @@ void main() {
           apiKeyStoreProvider.overrideWithValue(_TestApiKeyStore()),
           apiClientProvider.overrideWithValue(apiClient),
         ],
-        child: const OpenChatApp(),
+        child: const SeekChatApp(),
       ),
     );
     // 冷启动直接打开最近会话（长会话）：等首屏消息出现。

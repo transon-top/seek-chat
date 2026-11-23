@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:material_ui/material_ui.dart';
-import 'package:open_chat/dev/markdown_samples.dart';
-import 'package:open_chat/features/chat/markdown_view.dart';
-import 'package:open_chat/shared/models/types.dart';
+import 'package:seek_chat/dev/markdown_samples.dart';
+import 'package:seek_chat/features/chat/markdown_view.dart';
+import 'package:seek_chat/shared/models/types.dart';
 
 void main() {
   Future<void> pumpText(

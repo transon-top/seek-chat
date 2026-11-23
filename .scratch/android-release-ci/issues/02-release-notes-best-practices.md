@@ -28,7 +28,7 @@ Status: resolved
 
 调研完成（2026-11-23）。完整结论见 `research/release-notes-best-practices` 分支：
 `docs/research/release-notes-best-practices.md`（commit `948725af1a796d82e8b0cfba1f37384474f68fda`，未合并）。
-https://github.com/transon-top/open-chat/blob/948725af1a796d82e8b0cfba1f37384474f68fda/docs/research/release-notes-best-practices.md
+https://github.com/transon-top/seek-chat/blob/948725af1a796d82e8b0cfba1f37384474f68fda/docs/research/release-notes-best-practices.md
 
 关键结论：
 

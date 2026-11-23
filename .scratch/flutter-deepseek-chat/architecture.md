@@ -13,7 +13,7 @@ ARB、安全项），第 7 步 shadcn_ui 随票 09 / 10 接入；每一步保持
 ```
 lib/
   main.dart          # 启动、数据库打开、残留状态收尾、ProviderScope
-  app/               # OpenChatApp、路由表、主题、locale 接线、错误文案映射
+  app/               # SeekChatApp、路由表、主题、locale 接线、错误文案映射
   features/
     chat/            # 聊天页、消息控件、ChatController
     sessions/        # 会话列表
@@ -107,7 +107,7 @@ lib/
 ## 6. 配置与设置
 
 - `AppConfig` 只读编译期常量：API origin 来自
-  `--dart-define=OPEN_CHAT_API_ORIGIN`，默认 `https://api.deepseek.com`；
+  `--dart-define=SEEK_CHAT_API_ORIGIN`，默认 `https://api.deepseek.com`；
   模型固定 `deepseek-flash`。
 - 不建 Feature flag 框架，也没有远程配置。行为差异由用户设置或票内常量控制。
 - 本机设置对齐 `chat-demo`：语言、主题偏好、所在地、朗读音色、深度思考、

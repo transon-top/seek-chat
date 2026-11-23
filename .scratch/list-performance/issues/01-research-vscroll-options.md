@@ -23,7 +23,7 @@ Flutter 中高性能列表/虚拟滚动的可选方案有哪些，各自边界�
 
 调研完成（2026-11-20）。完整笔记在 `research/vscroll-options` 分支：
 `docs/research/vscroll-options.md`（commit `0e8c4c3bd142b310677c5bde22f63edf8cde949c`，未合并）。
-https://github.com/transon-top/open-chat/blob/0e8c4c3bd142b310677c5bde22f63edf8cde949c/docs/research/vscroll-options.md
+https://github.com/transon-top/seek-chat/blob/0e8c4c3bd142b310677c5bde22f63edf8cde949c/docs/research/vscroll-options.md
 
 **结论：内置方案够用，维持现状。**
 - `ListView.builder` 本身已是虚拟化；3.50 冒烟场景 10000 条变高 item、600px 视口，首帧只构建约 12 条。会话列表同理由 `SliverList.builder` 承担。
