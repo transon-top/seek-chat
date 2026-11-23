@@ -20,6 +20,12 @@
 
 ## 2. 索引
 
+### 启动
+
+| 文档 | 内容 |
+| --- | --- |
+| [启动与失败恢复](startup.md) | 启动顺序、阻塞与非阻塞失败、启动失败页、重试、清除本地数据、可访问性 |
+
 ### 聊天
 
 | 文档 | 内容 |
@@ -53,8 +59,6 @@
 
 以下内容不属于本目录，避免被误认为漏写：
 
-- **启动失败错误界面**：未实现。决策票在
-  [`../../.scratch/startup-failure/issues/01-startup-failure.md`](../../.scratch/startup-failure/issues/01-startup-failure.md)。
 - **Android 发版流水线（GitHub Actions）**：属 CI 与发布流程，不属功能规格。
   决策在 [`../../.scratch/android-release-ci/`](../../.scratch/android-release-ci/)。
 - **研究与原型记录**：`list-performance` 的测量数字、原型截图与视觉验收记录

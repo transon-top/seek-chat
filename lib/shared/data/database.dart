@@ -8,6 +8,21 @@ import 'package:path_provider/path_provider.dart';
 part 'database.g.dart';
 
 /// ZH
+/// 应用支持目录下的数据库文件名；清除本地数据时按它删除主库与附属文件。
+///
+/// EN
+/// Database file name in the app support directory; clearing local data deletes it
+/// and its sidecar files by this name.
+const String databaseFileName = 'seek_chat.sqlite';
+
+/// ZH
+/// 改名前使用的旧库文件名；清除本地数据时一并删除。
+///
+/// EN
+/// Legacy database file name from before the rename; cleared together with the current one.
+const String legacyDatabaseFileName = 'open_chat.sqlite';
+
+/// ZH
 /// `data-model.md` 的四张表；回复块存在 `messages.blocks` JSON 列中，
 /// 不单独建表。
 ///
@@ -111,7 +126,7 @@ class AppDatabase extends _$AppDatabase {
   static AppDatabase open() => AppDatabase(
         LazyDatabase(() async {
           final directory = await getApplicationSupportDirectory();
-          final file = File(p.join(directory.path, 'seek_chat.sqlite'));
+          final file = File(p.join(directory.path, databaseFileName));
           // ZH
           // 兼容改名前创建的数据库：新文件不存在时把旧文件改名，保留本机会话。
           //
@@ -119,7 +134,7 @@ class AppDatabase extends _$AppDatabase {
           // Migrate databases created before the rename: rename the legacy file when the
           // new one is absent, preserving local sessions.
           // shortcut: one-time legacy DB rename, remove after v1 ships.
-          final legacy = File(p.join(directory.path, 'open_chat.sqlite'));
+          final legacy = File(p.join(directory.path, legacyDatabaseFileName));
           if (!await file.exists() && await legacy.exists()) {
             await legacy.rename(file.path);
           }
@@ -142,10 +157,19 @@ class AppDatabase extends _$AppDatabase {
         onCreate: (m) async {
           await m.createAll();
         },
+        // ZH
+        // 整个升级步骤在一个事务里执行：中途失败时回滚，schema version 不前进，
+        // 同一库文件可以再次打开重试迁移。
+        //
+        // EN
+        // Run the whole upgrade in one transaction: a failure rolls back, the schema
+        // version does not advance, and the same file can be reopened to retry.
         onUpgrade: (m, from, to) async {
-          if (from < 2) {
-            await m.addColumn(sessions, sessions.pinned);
-          }
+          await transaction(() async {
+            if (from < 2) {
+              await m.addColumn(sessions, sessions.pinned);
+            }
+          });
         },
         beforeOpen: (details) async {
           await customStatement('PRAGMA foreign_keys = ON');

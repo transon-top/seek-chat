@@ -297,6 +297,28 @@ class AppLocalizationsZh extends AppLocalizations {
   String get sessionsLoadFailed => '无法加载会话';
 
   @override
+  String get startupFailedTitle => '无法打开 SeekChat';
+
+  @override
+  String get startupFailedBody => '本地数据读取失败。可以重试；若持续失败，可清除本地会话与附件后重新开始。';
+
+  @override
+  String get startupClearData => '清除本地会话与附件';
+
+  @override
+  String get startupClearDataConfirmTitle => '清除本地会话与附件？';
+
+  @override
+  String get startupClearDataConfirmBody =>
+      '将永久删除全部会话、消息与附件原件。设置与 API Key 保留。此操作无法撤销。';
+
+  @override
+  String get startupClearDataConfirm => '清除';
+
+  @override
+  String get startupClearDataFailed => '清除失败，请重试。';
+
+  @override
   String get chatEmptyTitle => '嗨! 今天想聊些什么?';
 
   @override

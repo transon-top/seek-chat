@@ -301,6 +301,30 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sessionsLoadFailed => 'Could not load chats';
 
   @override
+  String get startupFailedTitle => 'Cannot open SeekChat';
+
+  @override
+  String get startupFailedBody =>
+      'Local data could not be read. Try again; if the problem persists, clear local chats and attachments to start over.';
+
+  @override
+  String get startupClearData => 'Clear local chats and attachments';
+
+  @override
+  String get startupClearDataConfirmTitle =>
+      'Clear local chats and attachments?';
+
+  @override
+  String get startupClearDataConfirmBody =>
+      'All chats, messages, and attachment originals will be permanently deleted. Settings and the API key are kept. This cannot be undone.';
+
+  @override
+  String get startupClearDataConfirm => 'Clear';
+
+  @override
+  String get startupClearDataFailed => 'Could not clear data. Try again.';
+
+  @override
   String get chatEmptyTitle => 'How can I help you?';
 
   @override
