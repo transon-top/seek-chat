@@ -23,17 +23,17 @@
 
 - [GitHub Actions 构建 Flutter Android 的事实与限制](issues/01-github-actions-flutter-android.md): `ubuntu-24.04` 预装 API 37 可直接构建；固定 JDK 21 + Flutter 3.50.0；NDK 28.2 需显式处理；用 `gh release create --generate-notes`；tag 来源用 merge-base guard；参考耗时首次 12–20 分钟、有缓存 6–10 分钟。
 - [版本说明与整套发版流程的最佳实践](issues/02-release-notes-best-practices.md): GitHub 原生 notes 基于 merged PR、直接 push 不收录，不适合本项目；最小方案用 `git-cliff`（加 emoji 预处理）+ `CHANGELOG.md` 同源 + `v1-dev`→`main` merge commit + CI 校验 tag 与 `pubspec` + draft Release + SHA256SUMS + immutable releases。
+- [发布签名与应用身份](issues/03-signing-and-app-identity.md): PKCS12 + RSA 4096 + 10000 天 + alias `seekchat`；本机 `android/key.properties`、两份加密离线备份、单一密码；CI 只存 `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 于 `release` environment；release 缺 keystore 即失败；首次公开发版前做一次备份恢复演练。
 
 ## Not yet specified
 
 - 版本说明的最终形态：票 02 推荐 `git-cliff` + emoji 预处理 + `CHANGELOG.md` 同源；待票 04 确认
 - `tag` 与 `pubspec` 版本一致性校验：票 02 建议恢复为硬校验；待票 04 决定（此前预留）
 - Release 发布形态：票 02 建议 draft；此前定为自动 published；待票 04 决定
-- 公开仓库后的分支保护、tag 保护与 PR 流程：票 02 建议 `refs/tags/v*` + main 规则集 + `release` environment；待票 04 定稿
+- 公开仓库后的分支保护、tag 保护与 PR 流程：票 02 建议 `refs/tags/v*` + main 规则集；`release` environment 已由票 03 定案；分支 / tag 保护待票 04 定稿
 - 版本说明的读者、语言（中 / 英 / 双语）与内容分类（待票 04）
 - CI 是否校验 `build_runner` / `gen-l10n` 生成物无 diff（事实已由票 01 确认可用 `git diff --exit-code`，待票 05 决定）
 - 是否额外提供 universal APK 作为 Release 资产（待票 05）
-- 签名与应用身份的迁移：`applicationId` 已定为 `com.transon_top.seekchat`，旧安装需卸载；keystore 与 secrets 仍待票 03
 
 ## Out of scope
 
