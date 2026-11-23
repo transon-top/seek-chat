@@ -1,34 +1,25 @@
 # SeekChat
 
-Flutter 版 DeepSeek 聊天应用（iOS + Android）。规格与票在
-`.scratch/flutter-deepseek-chat/`，架构见
-`.scratch/flutter-deepseek-chat/architecture.md`，领域术语见 `GLOSSARY.md`。
+Flutter 版 DeepSeek 聊天应用（iOS + Android）。v1 固定模型 `deepseek-flash`，
+API 源默认 `https://api.deepseek.com`，可用
+`--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
 
-## 当前实现
+已实现功能的行为规格见 [docs/features/](docs/features/README.md)；领域术语见
+[GLOSSARY.md](GLOSSARY.md)，架构决策见 [docs/adr/](docs/adr/)。
 
-- 应用壳与启动兜底：残留的 `pending`/`streaming` 回复置为 `stopped`；
-  进入后台时补写所有存活控制器的流式回复。
-- 架构：功能优先目录 + `shared/` 核心；`flutter_riverpod` 手写 Provider，
-  会话列表走 `watchSessions()` + `StreamProvider`，聊天控制器按会话
-  `autoDispose.family` 并在流式期间 `keepAlive`。
-- 数据层：drift 四表（`sessions`、`messages`、`attachments`、
-  `message_attachments`），分支、版本切换、续写、附件引用与清理。
-- API 客户端：请求构造、WHATWG SSE 解析、事件合并、错误分类、Key 校验、
-  按请求取消。v1 固定模型 `deepseek-flash`。
-- 最小聊天闭环：会话列表（新建、重命名、删除）、聊天页（发送、流式、
-  停止、重新生成、续写、自动标题）、设置页（API Key 校验与安全存储）。
-- 回复渲染：`gpt_markdown` 渲染 Markdown、代码高亮与复制、链接外部打开；
-  `val_latex_flutter` 渲染 `\(...\)` 与 `\[...\]`；`mermaid` 围栏由
-  `mermaid_flutter` 绘制，解析失败降级为源码。
-- 联网搜索：深度思考与智能搜索开关持久化并随回复快照；工具步骤时间线、
-  `[citation:N]` 引用角标、「N 个网页」胶囊与来源抽屉。
-- 附件：回形针入口（相册 / 文件），选中即上传（并发 3），发送时把原件复制到
-  应用支持目录；扩展名白名单、32/64 MB 与 50 个上限；补传与 `file_id` 失效
-  自动重传；输入区附件条、消息附件展示与图片全屏查看。
-- 双语：错误文案与错误映射走 `gen_l10n`（`lib/l10n/`），中英各一份；
-  其余界面文案与主题设置在票 18 收口。
+## 功能文档
 
-界面为临时最简实现；语音、导入导出、全量双语与主题由后续票实现。
+- 聊天：[回复](docs/features/chat/replies.md) ·
+  [渲染](docs/features/chat/rendering.md) ·
+  [联网搜索](docs/features/chat/web-search.md) ·
+  [内容安全](docs/features/chat/safety.md)
+- 输入：[输入区与附件](docs/features/input/composer-attachments.md) ·
+  [按住说话与朗读](docs/features/input/speech.md)
+- 会话：[会话抽屉](docs/features/sessions/session-drawer.md)
+- 设置与数据：[设置与用户元信息](docs/features/settings/settings-metadata.md) ·
+  [历史导入导出](docs/features/settings/history-archive.md)
+
+未实现功能与进行中的决策记录在 `.scratch/<feature>/`。
 
 ## 开发命令
 
@@ -41,5 +32,10 @@ flutter test
 flutter run
 ```
 
-API 源默认 `https://api.deepseek.com`，可用
-`--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
+构建 Android APK：
+
+```bash
+flutter build apk --release --split-per-abi
+```
+
+产物在 `build/app/outputs/flutter-apk/`。
