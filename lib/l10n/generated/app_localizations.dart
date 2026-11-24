@@ -177,18 +177,6 @@ abstract class AppLocalizations {
   /// **'Something went wrong. Please try again.'**
   String get apiErrorOther;
 
-  /// No description provided for @replyFailed.
-  ///
-  /// In en, this message translates to:
-  /// **'Generation failed: {error}'**
-  String replyFailed(String error);
-
-  /// No description provided for @replyFailedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Generation failed'**
-  String get replyFailedTitle;
-
   /// No description provided for @replyRefused.
   ///
   /// In en, this message translates to:
@@ -417,12 +405,6 @@ abstract class AppLocalizations {
   /// **'Clear saved key'**
   String get settingsClearKey;
 
-  /// No description provided for @settingsApiKeySaved.
-  ///
-  /// In en, this message translates to:
-  /// **'Saved'**
-  String get settingsApiKeySaved;
-
   /// No description provided for @settingsApiKeyPrompt.
   ///
   /// In en, this message translates to:
@@ -512,12 +494,6 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Open chat list'**
   String get openSessionList;
-
-  /// No description provided for @sessionActions.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat actions'**
-  String get sessionActions;
 
   /// No description provided for @sessionGroupToday.
   ///

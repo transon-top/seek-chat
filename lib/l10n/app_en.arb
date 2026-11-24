@@ -20,15 +20,6 @@
   "apiErrorNetwork": "Network error. Check your connection.",
   "apiErrorContentRejected": "The content did not pass safety review. Edit it and try again.",
   "apiErrorOther": "Something went wrong. Please try again.",
-  "replyFailed": "Generation failed: {error}",
-  "replyFailedTitle": "Generation failed",
-  "@replyFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
   "replyRefused": "Sorry, that's beyond my current scope. Let's talk about something else.",
   "replyImageBlocked": "The image was blocked by content safety review. Remove it and try again.",
   "errorSaveAttachmentFailed": "Could not save the attachment: {error}",
@@ -109,7 +100,6 @@
   "settingsFontSizeLarger": "Larger",
   "settingsFontSizeLargest": "Largest",
   "settingsClearKey": "Clear saved key",
-  "settingsApiKeySaved": "Saved",
   "settingsApiKeyPrompt": "Enter an API key to get started",
   "settingsApiKeyPlaceholder": "Enter API key",
   "settingsApiKeyConfirm": "Confirm",
@@ -125,7 +115,6 @@
   "settingsLocationDescription": "Sent only with messages to your configured API. Location access is not requested.",
   "newChat": "New chat",
   "openSessionList": "Open chat list",
-  "sessionActions": "Chat actions",
   "sessionGroupToday": "Today",
   "sessionGroupYesterday": "Yesterday",
   "sessionGroupLast7Days": "Last 7 days",
