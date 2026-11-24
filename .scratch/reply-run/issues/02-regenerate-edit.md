@@ -1,6 +1,6 @@
-# 02: Regenerate 与 Edit 走 ReplyRun
+# 02: Regenerate 与 Edit 的 Reply 部分走 ReplyRun
 
-**What to build:** 重新生成与编辑提问改经 Reply Run 模块。重新生成在同一 user Message 下创建新的 Reply 版本并选中；编辑创建一个新的 user Message 版本、复制附件引用并在同一事务里创建 pending Reply。两条路径的流式、标题与结算都由模块完成，controller 只做路由与状态镜像。
+**What to build:** 重新生成与编辑提问的 Reply 执行改经 ReplyRun。重新生成由 controller 找到 user message，Run 在同一 user 下创建新的 Reply 版本并流式结算；编辑由 controller 完成 `editUserMessage` 事务（新 user 版本、附件引用、pending Reply），Run 接管已创建的 Reply 行。user message、附件复制与上传任务仍由 controller 负责。
 
 **Blocked by:** 01
 
@@ -10,5 +10,6 @@
 - [ ] 编辑产生同父的新提问版本与新 Reply，旧回答不进入请求上下文
 - [ ] 空白编辑复用原附件，不丢附件引用
 - [ ] stop、flush、标题采纳行为与现状一致
-- [ ] 现有 controller 测试原样通过；新增 seam 测试覆盖编辑事务与重新生成的版本选中
+- [ ] `ReplyRejected` 只在 Reply 未创建/未发出时出现；编辑事务失败由 controller 处理
+- [ ] 现有 controller 测试原样通过；新增 seam 测试覆盖编辑事务后的接管与重新生成
 - [ ] `flutter analyze` 与 `flutter test` 通过
