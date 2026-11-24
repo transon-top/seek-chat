@@ -38,9 +38,9 @@ flutter run
 dart run build_runner build --delete-conflicting-outputs   # drift
 flutter gen-l10n                                           # ARB
 
-# 构建：只打 Android，按 ABI 分包
-flutter build apk --release --split-per-abi
-# 产物：build/app/outputs/flutter-apk/app-{arm64-v8a,armeabi-v7a,x86_64}-release.apk
+# 构建：只打 Android，按 ABI 分包，产物重命名为 SeekChat-<abi>-release.apk
+./tool/build_android_apk.sh
+# 产物：build/app/outputs/flutter-apk/SeekChat-{arm64-v8a,armeabi-v7a,x86_64}-release.apk
 
 # 性能基线（需模拟器/真机，不属默认测试）
 flutter drive --profile -d <device> \
