@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -8,6 +9,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/error_text.dart';
 import '../../shared/models/types.dart';
 import '../../shared/toast.dart';
+import '../../shared/widgets/app_dialogs.dart';
 import 'history_files.dart';
 import 'history_service.dart';
 import 'history_zip.dart';
@@ -56,22 +58,12 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     }
     if (!mounted || bytes == null) return;
 
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.historyImportConfirmTitle),
-        content: Text(l10n.historyImportConfirmDescription),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.historyImportConfirm),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: l10n.historyImportConfirmTitle,
+      description: l10n.historyImportConfirmDescription,
+      cancelLabel: l10n.cancel,
+      confirmLabel: l10n.historyImportConfirm,
     );
     if (confirmed != true || !mounted) return;
 
@@ -158,27 +150,7 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
       };
 
   void _showProgress(String text) {
-    showDialog<void>(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => PopScope(
-        canPop: false,
-        child: AlertDialog(
-          content: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                width: 20,
-                height: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
-              ),
-              const SizedBox(width: 16),
-              Flexible(child: Text(text)),
-            ],
-          ),
-        ),
-      ),
-    );
+    unawaited(showAppProgressDialog(context, message: text));
   }
 
   void _closeProgress() {
@@ -191,22 +163,13 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
 
   Future<void> _deleteAll() async {
     final l10n = AppLocalizations.of(context)!;
-    final confirmed = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(l10n.historyDeleteConfirmTitle),
-        content: Text(l10n.historyDeleteConfirmDescription),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text(l10n.cancel),
-          ),
-          FilledButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: Text(l10n.delete),
-          ),
-        ],
-      ),
+    final confirmed = await showAppConfirmDialog(
+      context,
+      title: l10n.historyDeleteConfirmTitle,
+      description: l10n.historyDeleteConfirmDescription,
+      cancelLabel: l10n.cancel,
+      confirmLabel: l10n.delete,
+      destructive: true,
     );
     if (confirmed != true || !mounted) return;
 
@@ -234,18 +197,27 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
       required String label,
       required VoidCallback? onPressed,
       required bool destructive,
-    }) => OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: destructive ? colors.destructive : colors.foreground,
-        side: BorderSide(
-          color: destructive ? colors.destructive : colors.border,
-        ),
-        shape: const StadiumBorder(),
-        minimumSize: const Size(0, 36),
-        padding: const EdgeInsets.symmetric(horizontal: 18),
+    }) => ShadTheme(
+      data: ShadTheme.of(context).copyWith(
+        radius: const BorderRadius.all(Radius.circular(999)),
       ),
-      child: Text(label),
+      child: ShadButton.outline(
+        onPressed: onPressed,
+        height: 36,
+        padding: const EdgeInsets.symmetric(horizontal: 18),
+        foregroundColor: destructive ? colors.destructive : colors.foreground,
+        textStyle: const TextStyle(fontSize: 14, height: 20 / 14),
+        decoration: ShadDecoration(
+          border: ShadBorder.fromBorderSide(
+            ShadBorderSide(
+              width: 1,
+              color: destructive ? colors.destructive : colors.border,
+            ),
+            radius: const BorderRadius.all(Radius.circular(999)),
+          ),
+        ),
+        child: Text(label),
+      ),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

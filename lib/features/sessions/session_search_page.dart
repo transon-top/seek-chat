@@ -136,21 +136,20 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                         child: Semantics(
                           button: true,
                           label: l10n.searchBack,
-                          child: IconButton(
-                            key: const Key('search-back'),
-                            onPressed: widget.onBack,
-                            icon: Icon(
-                              LucideIcons.chevronLeft,
-                              size: 20,
-                              color: colors.labelPrimary,
-                            ),
-                            constraints: const BoxConstraints.tightFor(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: ShadIconButton.ghost(
+                              key: const Key('search-back'),
+                              onPressed: widget.onBack,
+                              icon: Icon(
+                                LucideIcons.chevronLeft,
+                                size: 20,
+                                color: colors.labelPrimary,
+                              ),
                               width: 44,
                               height: 44,
-                            ),
-                            padding: EdgeInsets.zero,
-                            style: IconButton.styleFrom(
-                              shape: const CircleBorder(),
+                              padding: EdgeInsets.zero,
+                              foregroundColor: colors.labelPrimary,
                             ),
                           ),
                         ),
@@ -164,7 +163,7 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                       // Same height as the sidebar search pill; expands in width only, no jump.
                       child: SizedBox(
                         height: 44,
-                        child: TextField(
+                        child: ShadInput(
                           key: const Key('search-field'),
                           controller: _controller,
                           focusNode: widget.focusNode,
@@ -176,68 +175,57 @@ class _SessionSearchPageState extends ConsumerState<SessionSearchPage> {
                             color: colors.labelPrimary,
                           ),
                           cursorColor: colors.brand,
-                          decoration: InputDecoration(
-                            isDense: true,
-                            hintText: l10n.searchChatsPlaceholder,
-                            hintStyle: TextStyle(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                          // ZH
+                          // 官方搜索框为无描边灰底胶囊。
+                          //
+                          // EN
+                          // The official search box is a borderless gray pill.
+                          decoration: ShadDecoration(
+                            color: colors.inputFill,
+                            border: ShadBorder.fromBorderSide(
+                              const ShadBorderSide(width: 0),
+                              radius: BorderRadius.circular(999),
+                            ),
+                            focusedBorder: ShadBorder.fromBorderSide(
+                              const ShadBorderSide(width: 0),
+                              radius: BorderRadius.circular(999),
+                            ),
+                            secondaryBorder: ShadBorder.none,
+                            secondaryFocusedBorder: ShadBorder.none,
+                            disableSecondaryBorder: true,
+                          ),
+                          placeholder: Text(
+                            l10n.searchChatsPlaceholder,
+                            style: TextStyle(
                               fontSize: 16,
                               height: 22 / 16,
                               color: colors.labelTertiary,
                             ),
-                            filled: true,
-                            fillColor: colors.inputFill,
-                            // ZH
-                            // 与侧栏搜索胶囊同高（44）。
-                            //
-                            // EN
-                            // Same height as the sidebar search pill (44).
-                            contentPadding: const EdgeInsets.symmetric(
-                              vertical: 11.5,
-                            ),
-                            prefixIcon: Icon(
-                              LucideIcons.search,
-                              size: 16,
-                              color: colors.labelTertiary,
-                            ),
-                            prefixIconConstraints: const BoxConstraints(
-                              minWidth: 40,
-                              minHeight: 36,
-                            ),
-                            suffixIcon: _controller.text.isEmpty
-                                ? null
-                                : IconButton(
-                                    key: const Key('search-clear'),
-                                    onPressed: _clear,
-                                    tooltip: l10n.clearSearch,
-                                    icon: Icon(
-                                      LucideIcons.x,
-                                      size: 14,
-                                      color: colors.labelTertiary,
-                                    ),
-                                    constraints: const BoxConstraints.tightFor(
-                                      width: 36,
-                                      height: 36,
-                                    ),
-                                    padding: EdgeInsets.zero,
-                                  ),
-                            suffixIconConstraints: const BoxConstraints(
-                              minWidth: 40,
-                              minHeight: 36,
-                            ),
-                            // ZH
-                            // 官方搜索框为无描边灰底胶囊。
-                            //
-                            // EN
-                            // The official search box is a borderless gray pill.
-                            enabledBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(999),
-                              borderSide: BorderSide.none,
-                            ),
-                            focusedBorder: OutlineInputBorder(
-                              borderRadius: BorderRadius.circular(999),
-                              borderSide: BorderSide.none,
-                            ),
                           ),
+                          leading: Icon(
+                            LucideIcons.search,
+                            size: 16,
+                            color: colors.labelTertiary,
+                          ),
+                          trailing: _controller.text.isEmpty
+                              ? null
+                              : ShadIconButton.ghost(
+                                  key: const Key('search-clear'),
+                                  onPressed: _clear,
+                                  icon: Icon(
+                                    LucideIcons.x,
+                                    size: 14,
+                                    color: colors.labelTertiary,
+                                  ),
+                                  width: 28,
+                                  height: 28,
+                                  padding: EdgeInsets.zero,
+                                  foregroundColor: colors.labelTertiary,
+                                ),
                         ),
                       ),
                     ),

@@ -101,7 +101,7 @@ void main() {
     await seed();
     await pumpSection(tester);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, '下载'));
+    await tester.tap(find.widgetWithText(ShadButton, '下载'));
     await tester.pumpAndSettle();
 
     expect(files.savedName, endsWith('.zip'));
@@ -120,11 +120,11 @@ void main() {
     var imported = 0;
 
     await pumpSection(tester, onImported: () => imported++);
-    await tester.tap(find.widgetWithText(OutlinedButton, '上传'));
+    await tester.tap(find.widgetWithText(ShadButton, '上传'));
     await tester.pumpAndSettle();
     expect(find.text('确认导入历史对话？'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, '确认导入'));
+    await tester.tap(find.widgetWithText(ShadButton, '确认导入'));
     await tester.pumpAndSettle();
 
     expect(stopped, 1);
@@ -142,9 +142,9 @@ void main() {
     files.pickBytes = exported.bytes;
 
     await pumpSection(tester);
-    await tester.tap(find.widgetWithText(OutlinedButton, '上传'));
+    await tester.tap(find.widgetWithText(ShadButton, '上传'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(TextButton, '取消'));
+    await tester.tap(find.widgetWithText(ShadButton, '取消'));
     await tester.pumpAndSettle();
 
     expect(stopped, 0);
@@ -155,11 +155,11 @@ void main() {
     await seed();
     await pumpSection(tester);
 
-    await tester.tap(find.widgetWithText(OutlinedButton, '删除'));
+    await tester.tap(find.widgetWithText(ShadButton, '删除'));
     await tester.pumpAndSettle();
     expect(find.text('删除所有对话？'), findsOneWidget);
 
-    await tester.tap(find.widgetWithText(FilledButton, '删除'));
+    await tester.tap(find.widgetWithText(ShadButton, '删除').last);
     await tester.pumpAndSettle();
 
     expect(stopped, 1);
@@ -174,7 +174,7 @@ void main() {
     files.throwPick = true;
 
     await pumpSection(tester);
-    await tester.tap(find.widgetWithText(OutlinedButton, '上传'));
+    await tester.tap(find.widgetWithText(ShadButton, '上传'));
     await tester.pumpAndSettle();
 
     expect(find.text('文件导入失败，可能是格式错误或使用了旧版导出文件。'), findsOneWidget);
@@ -186,7 +186,7 @@ void main() {
     files.saveResult = false;
 
     await pumpSection(tester);
-    await tester.tap(find.widgetWithText(OutlinedButton, '下载'));
+    await tester.tap(find.widgetWithText(ShadButton, '下载'));
     await tester.pumpAndSettle();
 
     expect(find.text('导出文件已保存'), findsNothing);
@@ -199,7 +199,7 @@ void main() {
     files.throwSave = true;
 
     await pumpSection(tester);
-    await tester.tap(find.widgetWithText(OutlinedButton, '下载'));
+    await tester.tap(find.widgetWithText(ShadButton, '下载'));
     await tester.pumpAndSettle();
 
     expect(find.text('导出失败，请重试'), findsOneWidget);
@@ -212,9 +212,9 @@ void main() {
     files.pickBytes = Uint8List.fromList([1, 2, 3, 4]);
 
     await pumpSection(tester);
-    await tester.tap(find.widgetWithText(OutlinedButton, '上传'));
+    await tester.tap(find.widgetWithText(ShadButton, '上传'));
     await tester.pumpAndSettle();
-    await tester.tap(find.widgetWithText(FilledButton, '确认导入'));
+    await tester.tap(find.widgetWithText(ShadButton, '确认导入'));
     await tester.pumpAndSettle();
 
     expect(stopped, 0);

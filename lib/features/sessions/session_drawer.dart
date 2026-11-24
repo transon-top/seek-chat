@@ -11,6 +11,7 @@ import '../../l10n/generated/app_localizations.dart';
 import '../../shared/logging.dart';
 import '../../shared/models/types.dart';
 import '../../shared/providers.dart';
+import '../../shared/widgets/app_dialogs.dart';
 import '../../shared/widgets/push_menu.dart';
 import '../../shared/widgets/scroll_edge_fade.dart';
 import 'session_search_page.dart';
@@ -303,80 +304,13 @@ class _SessionDrawerState extends ConsumerState<SessionDrawer> {
 
   Future<bool?> _confirmDelete(BuildContext context, String title) {
     final l10n = AppLocalizations.of(context)!;
-    final theme = ShadTheme.of(context);
-    final colors = theme.colorScheme;
-    final sidebar = _sidebarColorsOf(context);
-    final dark = theme.brightness == Brightness.dark;
-    final width = math.min(380.0, MediaQuery.sizeOf(context).width - 32);
-    return showShadDialog<bool>(
-      context: context,
-      // ZH
-      // 照搬 chat-demo：遮罩浅色 36%、深色 60%。
-      //
-      // EN
-      // Copied from chat-demo: scrim is 36% in light, 60% in dark.
-      barrierColor: dark ? const Color(0x99000000) : const Color(0x5C000000),
-      builder: (context) => ShadTheme(
-        // ZH
-        // 只把弹窗内按钮改成 chat-demo 的胶囊形。
-        //
-        // EN
-        // Only dialog buttons become chat-demo pill shapes.
-        data: ShadTheme.of(context)
-            .copyWith(radius: const BorderRadius.all(Radius.circular(999))),
-        child: ShadDialog.alert(
-          title: Text(title),
-          description: Padding(
-            // ZH
-            // chat-demo 标题与描述间距 12、描述与按钮间距 20。
-            //
-            // EN
-            // chat-demo gaps: 12 between title and description, 20 between description and buttons.
-            padding: const EdgeInsets.only(bottom: 8),
-            child: Text(l10n.deleteSessionDescription),
-          ),
-          actions: [
-            ShadButton.outline(
-              onPressed: () => Navigator.of(context).pop(false),
-              foregroundColor: colors.foreground,
-              child: Text(l10n.cancel),
-            ),
-            ShadButton.destructive(
-              onPressed: () => Navigator.of(context).pop(true),
-              backgroundColor: sidebar.danger,
-              foregroundColor: const Color(0xFFFFFFFF),
-              child: Text(l10n.delete),
-            ),
-          ],
-          constraints: BoxConstraints(minWidth: width, maxWidth: width),
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
-          radius: const BorderRadius.all(Radius.circular(24)),
-          removeBorderRadiusWhenTiny: false,
-          backgroundColor: colors.card,
-          border: Border.all(
-            color: dark ? const Color(0x0FFFFFFF) : const Color(0x00000000),
-          ),
-          shadows: _overlayShadows,
-          gap: 12,
-          titleStyle: TextStyle(
-            fontSize: 16,
-            height: 24 / 16,
-            fontWeight: FontWeight.w500,
-            color: colors.foreground,
-          ),
-          descriptionStyle: TextStyle(
-            fontSize: 14,
-            height: 22 / 14,
-            color: colors.mutedForeground,
-          ),
-          titleTextAlign: TextAlign.start,
-          descriptionTextAlign: TextAlign.start,
-          actionsAxis: Axis.horizontal,
-          actionsMainAxisAlignment: MainAxisAlignment.end,
-          actionsGap: 8,
-          expandActionsWhenTiny: false,
-        ),
-      ),
+    return showAppConfirmDialog(
+      context,
+      title: title,
+      description: l10n.deleteSessionDescription,
+      cancelLabel: l10n.cancel,
+      confirmLabel: l10n.delete,
+      destructive: true,
     );
   }
 
@@ -1146,43 +1080,36 @@ class _SessionRowState extends State<_SessionRow> {
     final l10n = AppLocalizations.of(context)!;
     final colors = _sidebarColorsOf(context);
     if (_editing) {
-      return SizedBox(
+      return Container(
         height: 44,
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          color: colors.inputFill,
+          border: Border.all(color: colors.brand),
+          borderRadius: BorderRadius.circular(16),
+        ),
         child: CallbackShortcuts(
           bindings: {
             const SingleActivator(LogicalKeyboardKey.escape): () =>
                 _finishEditing(commit: false),
           },
-          child: TextField(
-            key: ValueKey('session-rename-${widget.session.id}'),
-            controller: _rename,
-            focusNode: _renameFocus,
-            autofocus: true,
-            style: TextStyle(
-              fontSize: 16,
-              height: 22 / 16,
-              color: colors.labelPrimary,
+          child: Center(
+            child: ShadInput(
+              key: ValueKey('session-rename-${widget.session.id}'),
+              controller: _rename,
+              focusNode: _renameFocus,
+              autofocus: true,
+              style: TextStyle(
+                fontSize: 16,
+                height: 22 / 16,
+                color: colors.labelPrimary,
+              ),
+              cursorColor: colors.brand,
+              padding: EdgeInsets.zero,
+              decoration: ShadDecoration.none,
+              onSubmitted: (_) => _finishEditing(),
+              onPressedOutside: (_) => _finishEditing(),
             ),
-            cursorColor: colors.brand,
-            decoration: InputDecoration(
-              isDense: true,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 12,
-                vertical: 10,
-              ),
-              filled: true,
-              fillColor: colors.inputFill,
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.brand),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(16),
-                borderSide: BorderSide(color: colors.brand),
-              ),
-            ),
-            onSubmitted: (_) => _finishEditing(),
-            onTapOutside: (_) => _finishEditing(),
           ),
         ),
       );

@@ -1328,7 +1328,7 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
             child: Row(
               children: [
                 Expanded(
-                  child: TextField(
+                  child: ShadInput(
                     key: const Key('settings-api-key-input'),
                     controller: _controller,
                     focusNode: _focusNode,
@@ -1344,9 +1344,11 @@ class _DataSettingsState extends ConsumerState<_DataSettings> {
                     ),
                     cursorColor: colors.primary,
                     onSubmitted: (_) => _save(),
-                    decoration: InputDecoration.collapsed(
-                      hintText: l10n.settingsApiKeyPlaceholder,
-                      hintStyle: TextStyle(
+                    padding: EdgeInsets.zero,
+                    decoration: ShadDecoration.none,
+                    placeholder: Text(
+                      l10n.settingsApiKeyPlaceholder,
+                      style: TextStyle(
                         fontSize: 14,
                         height: 22 / 14,
                         color: colors.mutedForeground,

@@ -70,7 +70,7 @@ void main() {
     tester,
   ) async {
     final (db, _) = await pumpPage(tester);
-    expect(find.byType(TextField), findsOneWidget);
+    expect(find.byType(ShadInput), findsOneWidget);
 
     await tester.enterText(find.byKey(const Key('search-field')), 'quick');
     await tester.pump();

@@ -709,7 +709,7 @@ void main() {
     expect(find.byType(SettingsSheet), findsOneWidget);
     final input = find.byKey(const Key('settings-api-key-input'));
     expect(input, findsOneWidget);
-    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+    expect(tester.widget<ShadInput>(input).focusNode!.hasFocus, isTrue);
 
     await unmountApp(tester);
   });
@@ -757,7 +757,7 @@ void main() {
     expect(find.byType(SettingsSheet), findsOneWidget);
     final input = find.byKey(const Key('settings-api-key-input'));
     expect(input, findsOneWidget);
-    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+    expect(tester.widget<ShadInput>(input).focusNode!.hasFocus, isTrue);
     // ZH
     // 发送失败时保留输入内容，与 chat-demo 一致。
     //
