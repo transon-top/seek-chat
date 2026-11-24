@@ -1,0 +1,321 @@
+{
+  "@@locale": "zh",
+  "errorNoApiKey": "未设置 API Key，请先在设置中填写。",
+  "keyPromptMessage": "未设置 API Key，填写后即可开始对话",
+  "keyPromptAction": "去填写",
+  "errorSaveReplyFailed": "保存回复失败：{error}",
+  "errorApiKeyEmpty": "请输入 API Key",
+  "apiErrorUnauthorized": "API Key 无效",
+  "apiErrorInsufficientBalance": "余额不足",
+  "apiErrorTooLarge": "请求内容过大",
+  "apiErrorRateLimited": "请求过于频繁，请稍后再试",
+  "apiErrorServerBusy": "服务器繁忙，请稍后再试",
+  "apiErrorNetwork": "网络错误，请检查连接",
+  "apiErrorContentRejected": "内容未通过安全审核，请修改后重试",
+  "apiErrorOther": "发生错误，请重试",
+  "replyRefused": "你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。",
+  "replyImageBlocked": "图片未通过内容安全审核，请移除后重试。",
+  "errorSaveAttachmentFailed": "保存附件失败：{error}",
+  "@errorSaveAttachmentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFile": "上传文件",
+  "uploadFromPhotos": "从相册选择",
+  "uploadFromFiles": "选择文件",
+  "uploadUnsupportedFormat": "上传的文件包含暂未支持的文件格式，请转换文件格式后重试。支持 PDF、DOC、XLSX、PPT、图片、文本、代码等。",
+  "uploadMaxMBSize": "单个文件大小超过限制（{size}MB），请调整后重试",
+  "@uploadMaxMBSize": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadMaxFiles": "上传文件最多支持 {count} 个",
+  "@uploadMaxFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadFileStatusUploading": "上传中...",
+  "uploadFileStatusFailed": "上传失败",
+  "uploadRetry": "{message}，点击重试",
+  "@uploadRetry": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadServerBusy": "服务器繁忙",
+  "uploadParseFailed": "解析失败",
+  "uploadFileCountLimit": "已上传文件数达到上限（{limit} 个）",
+  "@uploadFileCountLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadStorageLimit": "已上传文件占用空间达到上限（{limit}GB）",
+  "@uploadStorageLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadDeleteFiles": "删除文件",
+  "removeAttachment": "移除附件",
+  "retry": "重试",
+  "previewImage": "查看图片",
+  "missingAttachment": "原件已丢失",
+  "settingsTitle": "设置",
+  "settingsEntry": "设置",
+  "settingsGeneral": "通用设置",
+  "settingsTheme": "主题",
+  "settingsThemeSystem": "跟随系统",
+  "settingsThemeLight": "浅色",
+  "settingsThemeDark": "深色",
+  "settingsFontSize": "字体大小",
+  "settingsFontSizeSystem": "跟随系统",
+  "settingsFontSizeStandard": "标准",
+  "settingsFontSizeSmallest": "最小",
+  "settingsFontSizeSmall": "小",
+  "settingsFontSizeMedium": "较小",
+  "settingsFontSizeLarge": "较大",
+  "settingsFontSizeLarger": "大",
+  "settingsFontSizeLargest": "最大",
+  "settingsClearKey": "清除已保存的 Key",
+  "settingsApiKeyPrompt": "输入 API Key 开始使用",
+  "settingsApiKeyPlaceholder": "请输入 API Key",
+  "settingsApiKeyConfirm": "确定",
+  "settingsApiKeyVerifying": "正在验证…",
+  "settingsLanguage": "语言",
+  "settingsLanguageSystem": "跟随系统",
+  "settingsLanguageZh": "简体中文",
+  "settingsLanguageEn": "English",
+  "settingsProvincePlaceholder": "请选择省份",
+  "settingsCityPlaceholder": "请选择市",
+  "settingsLocation": "位置信息",
+  "settingsLocationNone": "不指定",
+  "settingsLocationDescription": "只随消息发送给你配置的 API，不申请定位权限。",
+  "newChat": "开启新对话",
+  "openSessionList": "打开会话列表",
+  "sessionGroupToday": "今天",
+  "sessionGroupYesterday": "昨天",
+  "sessionGroupLast7Days": "7 天内",
+  "sessionGroupEarlier": "更早",
+  "sessionGroupPinned": "置顶",
+  "searchChatsPlaceholder": "搜索对话内容…",
+  "searchBack": "返回会话列表",
+  "clearSearch": "清空搜索",
+  "searchNoResults": "暂无相关结果",
+  "selectChats": "多选",
+  "selectionTitle": "选择对话",
+  "selectionCount": "已选择 {count} 个对话",
+  "exitSelection": "退出多选",
+  "pinSession": "置顶",
+  "unpinSession": "取消置顶",
+  "deleteSessionsTitle": "删除 {count} 个对话",
+  "sessionLoading": "正在加载会话…",
+  "sessionsLoadFailed": "无法加载会话",
+  "startupFailedTitle": "无法打开 SeekChat",
+  "startupFailedBody": "本地数据读取失败。可以重试；若持续失败，可清除本地会话与附件后重新开始。",
+  "startupClearData": "清除本地会话与附件",
+  "startupClearDataConfirmTitle": "清除本地会话与附件？",
+  "startupClearDataConfirmBody": "将永久删除全部会话、消息与附件原件。设置与 API Key 保留。此操作无法撤销。",
+  "startupClearDataConfirm": "清除",
+  "startupClearDataFailed": "清除失败，请重试。",
+  "chatEmptyTitle": "嗨! 今天想聊些什么?",
+  "noSessions": "还没有会话",
+  "untitledChat": "新对话",
+  "renameSession": "重命名会话",
+  "rename": "重命名",
+  "delete": "删除",
+  "deleteSession": "永久删除对话",
+  "deleteSessionDescription": "删除后，该对话及其中上传的文件将不可恢复。确认删除吗？",
+  "save": "保存",
+  "close": "关闭",
+  "copy": "复制",
+  "edit": "编辑",
+  "userMessage": "你的消息",
+  "assistantReply": "助手回复",
+  "messageActions": "消息操作",
+  "versionPosition": "第 {current} 个，共 {total} 个",
+  "@versionPosition": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sourceNumber": "来源 {index}",
+  "@sourceNumber": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "openSource": "打开来源",
+  "stopGeneration": "停止生成",
+  "regenerate": "重新生成",
+  "continueGeneration": "继续生成",
+  "editMessage": "编辑提问",
+  "messageVersions": "消息版本",
+  "previousVersion": "上一个版本",
+  "nextVersion": "下一个版本",
+  "deepThinking": "深度思考",
+  "thoughtForSeconds": "已思考（用时 {seconds} 秒）",
+  "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "thinkingForSeconds": "思考中… {seconds} 秒",
+  "@thinkingForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "stopped": "已停止",
+  "imageSearching": "图像搜索中...",
+  "searching": "正在搜索",
+  "browsingWeb": "正在浏览网页",
+  "reading": "正在阅读",
+  "thinking": "正在思考",
+  "searchingQuery": "搜索 {query}",
+  "@searchingQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchingDots": "搜索中...",
+  "searchStopped": "搜索已停止",
+  "searchUnavailable": "联网搜索暂不可用",
+  "noSuitableResults": "未搜索到合适内容",
+  "noRelevantResults": "未搜索到相关内容",
+  "searchedPages": "搜索到 {count} 个网页",
+  "readPages": "已阅读 {count} 个网页",
+  "browsePageFailed": "浏览页面失败",
+  "browsingPages": "浏览 {count} 个页面",
+  "browseFailed": "浏览失败",
+  "viewAll": "查看全部",
+  "findFailed": "查找失败",
+  "findKeywords": "查找关键词",
+  "noMatchingContent": "未查找到相关内容",
+  "pagesCount": "{count} 个网页",
+  "searchResults": "搜索结果",
+  "composerHint": "发消息或按住说话",
+  "composerHintWithAttachments": "发消息",
+  "composerPlaceholder": "给 Fleepseek 发送消息",
+  "addAttachment": "添加附件",
+  "closeAttachmentPanel": "收起附件面板",
+  "takePhoto": "拍照",
+  "photoUnreadable": "无法读取这张照片",
+  "photoPermissionDenied": "无法访问照片",
+  "photoLimitedManage": "管理",
+  "photoLimitedManageSemantics": "管理可访问照片",
+  "photoStripEmpty": "没有最近照片",
+  "photoStripLoadFailed": "无法读取照片",
+  "photoTileSelected": "照片，第 {index} 张，已选",
+  "@photoTileSelected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "photoTileUnselected": "照片，第 {index} 张，未选",
+  "@photoTileUnselected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "send": "发送",
+  "smartSearch": "智能搜索",
+  "settingsData": "数据管理",
+  "historyImport": "导入历史对话",
+  "historyImportAction": "上传",
+  "historyImportDescription": "导入历史对话会覆盖全部本地对话和附件，支持 DeepSeek 导出的 ZIP 文件。",
+  "historyImportConfirmTitle": "确认导入历史对话？",
+  "historyImportConfirmDescription": "上传的历史对话会覆盖当前所有对话和附件。如需保留，请先导出备份。",
+  "historyImportConfirm": "确认导入",
+  "historyImporting": "正在导入…",
+  "historyImportedOne": "已导入 1 个对话",
+  "historyImported": "已导入 {count} 个对话",
+  "historyImportFailed": "文件导入失败，可能是格式错误或使用了旧版导出文件。",
+  "historyExport": "导出所有历史对话",
+  "historyExportAction": "下载",
+  "historyExportDescription": "包含所有历史对话及本地图片原件；其他附件仅保留文件信息，不包含 API Key。",
+  "historyExporting": "正在导出…",
+  "historyExported": "导出文件已保存",
+  "historyExportFailed": "导出失败，请重试",
+  "historyDelete": "删除所有对话",
+  "historyDeleteConfirmTitle": "删除所有对话？",
+  "historyDeleteConfirmDescription": "本机全部对话与附件将被永久删除，且无法恢复。",
+  "historyDeleted": "已删除全部对话",
+  "historyDeleteFailed": "删除失败，请重试",
+  "historyErrorUnrecognized": "无法识别该文件，请选择 DeepSeek 导出的历史对话 ZIP 文件",
+  "historyErrorNewerVersion": "文件版本过新，请升级应用后再导入",
+  "historyErrorInvalidVersion": "文件版本无效，无法导入",
+  "historyErrorInvalidJson": "文件不是有效的 JSON",
+  "historyErrorIncomplete": "文件内容不完整，无法导入",
+  "historyErrorInvalidBranches": "文件中的消息分支已损坏，无法导入",
+  "historyErrorInvalidFiles": "文件中的附件数据已损坏，无法导入",
+  "historyErrorTooLarge": "文件过大，无法导入",
+  "cancel": "取消",
+  "historyErrorExportTooLarge": "文件过大，无法导出",
+  "voiceInputPermissionDenied": "无法使用麦克风，请在系统设置中允许访问",
+  "voiceInputNoDevice": "未检测到麦克风",
+  "voiceInputFailed": "语音识别失败，请稍后再试",
+  "voiceInputEmpty": "未识别到内容",
+  "voiceInputLimitReached": "已达到单次录音时长上限",
+  "voiceInputInterrupted": "录音已中断",
+  "holdToTalk": "按住说话",
+  "voiceHoldToSend": "松手发送，上滑取消",
+  "voiceReleaseToCancel": "松开取消",
+  "voiceRecognizing": "识别中",
+  "voiceMicGrantedRetry": "已授权麦克风，请再按住说话",
+  "voiceRecordSemantics": "录音中，双击结束并发送",
+  "voiceCancelRecording": "取消录音",
+  "voiceCancelled": "已取消",
+  "voiceRecognizingSemantics": "正在识别",
+  "voiceSendFailedInserted": "发送失败，已放入输入框",
+  "voiceInsertedGenerating": "生成中，转写内容已插入输入框",
+  "voiceInsertedUploading": "附件上传中，转写内容已插入输入框",
+  "voiceInsertedNotSent": "转写内容已插入输入框，未自动发送",
+  "ttsPlay": "朗读",
+  "ttsStop": "停止朗读",
+  "ttsUnavailable": "这条回答暂时无法朗读",
+  "ttsFailed": "朗读失败，请稍后再试",
+  "settingsTtsVoice": "朗读音色",
+  "settingsTtsVoiceStella": "Stella · 女声",
+  "settingsTtsVoiceTide": "Tide · 男声",
+  "settingsSpeech": "语音",
+  "settingsMicPermission": "麦克风权限",
+  "settingsMicNotRequested": "未请求",
+  "settingsMicGranted": "已允许",
+  "settingsMicDenied": "已拒绝",
+  "settingsSpeechDescription": "语音输入需要麦克风权限；朗读不需要。v1 只在前台工作。",
+  "settingsOpenSystemSettings": "打开系统设置",
+  "scrollToBottom": "回到底部"
+}

@@ -1,0 +1,34 @@
+.DS_Store
+
+# Dart / Flutter
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.pub-cache/
+.pub/
+build/
+coverage/
+**/doc/api/
+**/ios/Flutter/.last_build_id
+
+# IntelliJ / Android Studio
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Android 构建产物
+/android/app/debug
+/android/app/profile
+/android/app/release
+/android/.kotlin/
+
+# 混淆与符号表
+app.*.symbols
+app.*.map.json
+# Widget Preview related
+.widget_preview/
+
+# 本地工具配置
+.claude/
+.codegraph/
