@@ -1,0 +1,377 @@
+{
+  "@@locale": "en",
+  "errorNoApiKey": "No API key set. Add one in Settings first.",
+  "keyPromptMessage": "No API key set. Add one to start chatting.",
+  "keyPromptAction": "Add key",
+  "errorSaveReplyFailed": "Could not save the reply: {error}",
+  "@errorSaveReplyFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "errorApiKeyEmpty": "Enter an API key",
+  "apiErrorUnauthorized": "Invalid API key",
+  "apiErrorInsufficientBalance": "Insufficient balance",
+  "apiErrorTooLarge": "The request is too large",
+  "apiErrorRateLimited": "Too many requests. Try again later.",
+  "apiErrorServerBusy": "The server is busy. Try again later.",
+  "apiErrorNetwork": "Network error. Check your connection.",
+  "apiErrorContentRejected": "The content did not pass safety review. Edit it and try again.",
+  "apiErrorOther": "Something went wrong. Please try again.",
+  "replyRefused": "Sorry, that's beyond my current scope. Let's talk about something else.",
+  "replyImageBlocked": "The image was blocked by content safety review. Remove it and try again.",
+  "errorSaveAttachmentFailed": "Could not save the attachment: {error}",
+  "@errorSaveAttachmentFailed": {
+    "placeholders": {
+      "error": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadFile": "Upload files",
+  "uploadFromPhotos": "Choose from Photos",
+  "uploadFromFiles": "Choose Files",
+  "uploadUnsupportedFormat": "The selected files include an unsupported format. Convert them and try again. Supported: PDF, DOC, XLSX, PPT, images, text, and code.",
+  "uploadMaxMBSize": "Each file must be at most {size} MB. Adjust the file and try again",
+  "@uploadMaxMBSize": {
+    "placeholders": {
+      "size": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadMaxFiles": "You can attach at most {count} files",
+  "@uploadMaxFiles": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "uploadFileStatusUploading": "Uploading...",
+  "uploadFileStatusFailed": "Upload failed",
+  "uploadRetry": "{message}. Click to retry",
+  "@uploadRetry": {
+    "placeholders": {
+      "message": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadServerBusy": "The server is busy",
+  "uploadParseFailed": "Could not parse the file",
+  "uploadFileCountLimit": "Uploaded file limit reached ({limit} files)",
+  "@uploadFileCountLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadStorageLimit": "Storage quota reached ({limit} GB)",
+  "@uploadStorageLimit": {
+    "placeholders": {
+      "limit": {
+        "type": "String"
+      }
+    }
+  },
+  "uploadDeleteFiles": "Delete files",
+  "removeAttachment": "Remove attachment",
+  "retry": "Retry",
+  "previewImage": "View image",
+  "missingAttachment": "The original file is missing",
+  "settingsTitle": "Settings",
+  "settingsEntry": "Settings",
+  "settingsGeneral": "General",
+  "settingsTheme": "Theme",
+  "settingsThemeSystem": "System",
+  "settingsThemeLight": "Light",
+  "settingsThemeDark": "Dark",
+  "settingsFontSize": "Text size",
+  "settingsFontSizeSystem": "Follow system",
+  "settingsFontSizeStandard": "Default",
+  "settingsFontSizeSmallest": "Smallest",
+  "settingsFontSizeSmall": "Small",
+  "settingsFontSizeMedium": "Medium",
+  "settingsFontSizeLarge": "Large",
+  "settingsFontSizeLarger": "Larger",
+  "settingsFontSizeLargest": "Largest",
+  "settingsClearKey": "Clear saved key",
+  "settingsApiKeyPrompt": "Enter an API key to get started",
+  "settingsApiKeyPlaceholder": "Enter API key",
+  "settingsApiKeyConfirm": "Confirm",
+  "settingsApiKeyVerifying": "Verifying…",
+  "settingsLanguage": "Language",
+  "settingsLanguageSystem": "System",
+  "settingsLanguageZh": "Simplified Chinese",
+  "settingsLanguageEn": "English",
+  "settingsProvincePlaceholder": "Select province",
+  "settingsCityPlaceholder": "Select city",
+  "settingsLocation": "Location",
+  "settingsLocationNone": "Not specified",
+  "settingsLocationDescription": "Sent only with messages to your configured API. Location access is not requested.",
+  "newChat": "New chat",
+  "openSessionList": "Open chat list",
+  "sessionGroupToday": "Today",
+  "sessionGroupYesterday": "Yesterday",
+  "sessionGroupLast7Days": "Last 7 days",
+  "sessionGroupEarlier": "Earlier",
+  "sessionGroupPinned": "Pinned",
+  "searchChatsPlaceholder": "Search chats…",
+  "searchBack": "Back to chats",
+  "clearSearch": "Clear search",
+  "searchNoResults": "No results",
+  "selectChats": "Select",
+  "selectionTitle": "Select chats",
+  "selectionCount": "{count} selected",
+  "@selectionCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "exitSelection": "Exit selection",
+  "pinSession": "Pin",
+  "unpinSession": "Unpin",
+  "deleteSessionsTitle": "Delete {count} chats",
+  "@deleteSessionsTitle": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "sessionLoading": "Loading chats…",
+  "sessionsLoadFailed": "Could not load chats",
+  "startupFailedTitle": "Cannot open SeekChat",
+  "startupFailedBody": "Local data could not be read. Try again; if the problem persists, clear local chats and attachments to start over.",
+  "startupClearData": "Clear local chats and attachments",
+  "startupClearDataConfirmTitle": "Clear local chats and attachments?",
+  "startupClearDataConfirmBody": "All chats, messages, and attachment originals will be permanently deleted. Settings and the API key are kept. This cannot be undone.",
+  "startupClearDataConfirm": "Clear",
+  "startupClearDataFailed": "Could not clear data. Try again.",
+  "chatEmptyTitle": "How can I help you?",
+  "noSessions": "No chats yet",
+  "untitledChat": "New chat",
+  "renameSession": "Rename chat",
+  "rename": "Rename",
+  "delete": "Delete",
+  "deleteSession": "Delete chat?",
+  "deleteSessionDescription": "This chat and its uploaded files will be permanently deleted and cannot be recovered. Delete this chat?",
+  "save": "Save",
+  "close": "Dismiss",
+  "copy": "Copy",
+  "edit": "Edit",
+  "userMessage": "Your message",
+  "assistantReply": "Assistant reply",
+  "messageActions": "Message actions",
+  "versionPosition": "Version {current} of {total}",
+  "@versionPosition": {
+    "placeholders": {
+      "current": {
+        "type": "int"
+      },
+      "total": {
+        "type": "int"
+      }
+    }
+  },
+  "sourceNumber": "Source {index}",
+  "@sourceNumber": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "openSource": "Open source",
+  "stopGeneration": "Stop generating",
+  "regenerate": "Regenerate",
+  "continueGeneration": "Continue",
+  "editMessage": "Edit message",
+  "messageVersions": "Message versions",
+  "previousVersion": "Previous version",
+  "nextVersion": "Next version",
+  "deepThinking": "DeepThink",
+  "thoughtForSeconds": "Thought for {seconds}s",
+  "@thoughtForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "thinkingForSeconds": "Thinking… {seconds}s",
+  "@thinkingForSeconds": {
+    "placeholders": {
+      "seconds": {
+        "type": "int"
+      }
+    }
+  },
+  "stopped": "Stopped",
+  "imageSearching": "Searching images...",
+  "searching": "Searching",
+  "browsingWeb": "Browsing the web",
+  "reading": "Reading",
+  "thinking": "Thinking",
+  "searchingQuery": "Searching {query}",
+  "@searchingQuery": {
+    "placeholders": {
+      "query": {
+        "type": "String"
+      }
+    }
+  },
+  "searchingDots": "Searching...",
+  "searchStopped": "Search stopped",
+  "searchUnavailable": "Web search is unavailable",
+  "noSuitableResults": "No suitable results found",
+  "noRelevantResults": "No relevant results found",
+  "searchedPages": "{count, plural, =1{Found 1 page} other{Found {count} pages}}",
+  "@searchedPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "readPages": "{count, plural, =1{Read 1 page} other{Read {count} pages}}",
+  "@readPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "browsePageFailed": "Could not load the page",
+  "browsingPages": "{count, plural, =1{Browsing 1 page} other{Browsing {count} pages}}",
+  "@browsingPages": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "browseFailed": "Load failed",
+  "viewAll": "View all",
+  "findFailed": "Find failed",
+  "findKeywords": "Find keywords",
+  "noMatchingContent": "No matching content found",
+  "pagesCount": "{count, plural, =1{1 page} other{{count} pages}}",
+  "@pagesCount": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "searchResults": "Search results",
+  "composerHint": "Message or hold to talk",
+  "composerHintWithAttachments": "Message",
+  "composerPlaceholder": "Enter a message",
+  "addAttachment": "Add attachment",
+  "closeAttachmentPanel": "Close attachment panel",
+  "takePhoto": "Take photo",
+  "photoUnreadable": "Couldn't read this photo",
+  "photoPermissionDenied": "Can't access photos",
+  "photoLimitedManage": "Manage",
+  "photoLimitedManageSemantics": "Manage accessible photos",
+  "photoStripEmpty": "No recent photos",
+  "photoStripLoadFailed": "Couldn't load photos",
+  "photoTileSelected": "Photo {index}, selected",
+  "@photoTileSelected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "photoTileUnselected": "Photo {index}, not selected",
+  "@photoTileUnselected": {
+    "placeholders": {
+      "index": {
+        "type": "int"
+      }
+    }
+  },
+  "send": "Send",
+  "smartSearch": "Search",
+  "settingsData": "Data",
+  "historyImport": "Import chat history",
+  "historyImportAction": "Upload",
+  "historyImportDescription": "Importing chat history replaces all local chats and attachments. Supports ZIP files exported from DeepSeek.",
+  "historyImportConfirmTitle": "Import chat history?",
+  "historyImportConfirmDescription": "The uploaded chat history will replace all your current chats and attachments. Export a backup first if you need to keep them.",
+  "historyImportConfirm": "Import",
+  "historyImporting": "Importing...",
+  "historyImportedOne": "Imported 1 chat",
+  "historyImported": "Imported {count} chats",
+  "historyImportFailed": "Import failed. The file may be invalid or use an old export format.",
+  "historyExport": "Export all chats",
+  "historyExportAction": "Download",
+  "historyExportDescription": "Includes all chat history and locally stored images. Other attachments keep file details only. Your API key is not included.",
+  "historyExporting": "Exporting...",
+  "historyExported": "Export saved",
+  "historyExportFailed": "Export failed. Please try again.",
+  "historyDelete": "Delete all chats",
+  "historyDeleteConfirmTitle": "Delete all chats?",
+  "historyDeleteConfirmDescription": "All chats and attachments on this device will be permanently deleted and cannot be recovered.",
+  "historyDeleted": "All chats deleted",
+  "historyDeleteFailed": "Delete failed. Please try again.",
+  "historyErrorUnrecognized": "File not recognized. Choose a DeepSeek chat history ZIP.",
+  "historyErrorNewerVersion": "This file uses a newer version. Update the app before importing.",
+  "historyErrorInvalidVersion": "The file version is invalid and cannot be imported.",
+  "historyErrorInvalidJson": "The file is not valid JSON.",
+  "historyErrorIncomplete": "The file is incomplete and cannot be imported.",
+  "historyErrorInvalidBranches": "The message branches in this file are corrupted and cannot be imported.",
+  "historyErrorInvalidFiles": "The attachment data in this file is corrupted and cannot be imported.",
+  "historyErrorTooLarge": "The file is too large to import.",
+  "cancel": "Cancel",
+  "@historyImported": {
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "historyErrorExportTooLarge": "The file is too large to export.",
+  "voiceInputPermissionDenied": "Microphone access is denied. Allow it in system settings.",
+  "voiceInputNoDevice": "No microphone detected",
+  "voiceInputFailed": "Speech recognition failed. Please try again later.",
+  "voiceInputEmpty": "No speech detected",
+  "voiceInputLimitReached": "Maximum recording length reached",
+  "voiceInputInterrupted": "Recording interrupted",
+  "holdToTalk": "Hold to talk",
+  "voiceHoldToSend": "Release to send, slide up to cancel",
+  "voiceReleaseToCancel": "Release to cancel",
+  "voiceRecognizing": "Recognizing",
+  "voiceMicGrantedRetry": "Microphone access granted. Hold to talk again.",
+  "voiceRecordSemantics": "Recording. Double-tap to finish and send.",
+  "voiceCancelRecording": "Cancel recording",
+  "voiceCancelled": "Recording cancelled",
+  "voiceRecognizingSemantics": "Recognizing speech",
+  "voiceSendFailedInserted": "Couldn't send. The text is in the message field.",
+  "voiceInsertedGenerating": "Generating. Transcription inserted.",
+  "voiceInsertedUploading": "Attachments uploading. Transcription inserted.",
+  "voiceInsertedNotSent": "Transcription inserted. Not sent automatically.",
+  "ttsPlay": "Read aloud",
+  "ttsStop": "Stop reading",
+  "ttsUnavailable": "This answer cannot be read aloud right now",
+  "ttsFailed": "Read-aloud failed. Please try again later.",
+  "settingsTtsVoice": "Read-aloud voice",
+  "settingsTtsVoiceStella": "Stella · female",
+  "settingsTtsVoiceTide": "Tide · male",
+  "settingsSpeech": "Speech",
+  "settingsMicPermission": "Microphone access",
+  "settingsMicNotRequested": "Not requested",
+  "settingsMicGranted": "Allowed",
+  "settingsMicDenied": "Denied",
+  "settingsSpeechDescription": "Voice input needs microphone access; read-aloud does not. Works in the foreground only.",
+  "settingsOpenSystemSettings": "Open system settings",
+  "scrollToBottom": "Back to bottom"
+}
