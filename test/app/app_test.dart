@@ -402,6 +402,46 @@ void main() {
     await unmountApp(tester);
   });
 
+  testWidgets('clears the composer as soon as the message is sent', (
+    tester,
+  ) async {
+    final body = StreamController<List<int>>();
+    final client = DeepSeekApiClient(
+      origin: Uri.parse(origin),
+      httpClient: MockClient.streaming(
+        (_, _) async => sseResponse(body.stream),
+      ),
+    );
+    await tester.pumpWidget(appWith(apiKey: 'sk-good', client: client));
+    await tester.pumpAndSettle();
+
+    String composerText() => tester
+        .widget<ShadInput>(find.byKey(const Key('composer-input')))
+        .controller!
+        .text;
+
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Hello');
+    await tester.pump();
+    await tester.tap(find.byTooltip('发送'));
+    await tester.pump();
+    await tester.pump();
+
+    // 流还没结束，但消息已落库：输入框应立即清空。
+    expect(find.byKey(const Key('stop-button')), findsOneWidget);
+    expect(composerText(), isEmpty);
+
+    // 生成中可继续输入下一条；流结束后不清掉这段新输入。
+    await tester.enterText(find.byKey(const Key('composer-input')), 'Next');
+    await tester.pump();
+    body.add(utf8.encode(replyFixture));
+    await body.close();
+    await tester.pumpAndSettle();
+    expect(find.text('Hi there'), findsOneWidget);
+    expect(composerText(), 'Next');
+
+    await unmountApp(tester);
+  });
+
   testWidgets('holding the microphone inserts and sends the transcript', (
     tester,
   ) async {

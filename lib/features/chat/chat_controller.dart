@@ -168,17 +168,20 @@ class ChatController extends Notifier<ChatState> {
 
   /// ZH
   /// 追加提问并流式生成回复。附件原件在写入数据库前复制到应用支持目录；
-  /// 返回是否已创建提问与回复（界面据此清空输入区）。
+  /// 返回是否已创建提问与回复。提问与回复落库后、流开始前调用
+  /// [onSubmitted]，界面据此立即清空输入区。
   ///
   /// EN
   /// Append a question and stream a reply; copy attachment originals to app
   /// support before persisting; returns whether the question and reply were
-  /// created (the UI clears the composer based on this).
+  /// created. [onSubmitted] fires after both rows are persisted and before the
+  /// stream starts, so the UI can clear the composer immediately.
   Future<bool> send({
     required String text,
     required bool thinking,
     required bool search,
     List<DraftAttachment> attachments = const [],
+    void Function()? onSubmitted,
   }) async {
     if (state.busy) return false;
     final trimmed = text.trim();
@@ -233,6 +236,7 @@ class ChatController extends Notifier<ChatState> {
       for (final attachment in stored) {
         ref.read(uploadTasksProvider.notifier).remove(attachment.id);
       }
+      onSubmitted?.call();
 
       await _stream(
         reply: reply,

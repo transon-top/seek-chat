@@ -255,23 +255,25 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           thinking: _thinking,
           search: _search,
           attachments: List.of(_attachments),
+          onSubmitted: () {
+            if (!mounted) return;
+            _deletePhotoDrafts(_attachments);
+            _input.clear();
+            setState(() {
+              _attachments.clear();
+              // ZH
+              // 有文本发送后收起面板；纯附件发送保持展开供继续选照片（ui.md §5.2）。
+              //
+              // EN
+              // Close the panel after a text send; attachment-only sends stay open for more photos (ui.md §5.2).
+              if (hadText) _panelOpen = false;
+            });
+          },
         );
     if (!sent) {
       if (createdHere) await _discardEmptySession(sessionId);
       return false;
     }
-    if (!mounted) return true;
-    _deletePhotoDrafts(_attachments);
-    _input.clear();
-    setState(() {
-      _attachments.clear();
-      // ZH
-      // 有文本发送后收起面板；纯附件发送保持展开供继续选照片（ui.md §5.2）。
-      //
-      // EN
-      // Close the panel after a text send; attachment-only sends stay open for more photos (ui.md §5.2).
-      if (hadText) _panelOpen = false;
-    });
     return true;
   }
 
