@@ -19,7 +19,8 @@ API 源默认 `https://api.deepseek.com`，可用
 `--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
 
 已实现功能的行为规格在 `docs/features/`（权威，迭代时同步更新）；未实现或
-进行中的决策与票在 `.scratch/<feature>/`（`spec.md` + `issues/NN-*.md`）。
+进行中的决策与票在 `.scratch/<feature>/`（`spec.md` 或 wayfinder 的
+`map.md`，加 `issues/NN-*.md`）。
 领域术语见根目录 `GLOSSARY.md`，架构决策见 `docs/adr/`。写票、命名领域概念时
 先读 `GLOSSARY.md` 并沿用其中词汇。
 
@@ -45,6 +46,12 @@ flutter build apk --release --split-per-abi
 flutter drive --profile -d <device> \
   --driver=test_driver/integration_test.dart \
   --target=integration_test/list_perf_test.dart
+
+# 输入区端到端集成测试（需模拟器/真机）
+flutter test integration_test/composer_test.dart -d <device>
+
+# CI：.github/workflows/ci.yml 在 push/PR 跑 analyze + test（Flutter 3.50.0）
+# 本地 act 镜像构建命令见 .github/act/Dockerfile
 ```
 
 Debug 构建会自动写入 Markdown 样本与历史样本（`lib/dev/mock_seed.dart`）；
@@ -55,7 +62,8 @@ Release 不写样本。
 
 **分层与依赖方向**：`main → app → features → shared`。功能优先目录，
 只有被两个以上功能复用的代码才进 `shared/`。`shared/` 不得 import
-`features/`，功能之间不直接 import（先下沉到 `shared/`）。
+`features/`，功能之间不直接 import（先下沉到 `shared/`）。功能目录：
+`features/chat`（含 `chat/speech`）、`sessions`、`history`、`settings`。
 
 **启动顺序**（`lib/app/startup.dart`，`main()` 只组装依赖并 `runApp`）：读
 `SharedPreferences` → 打开 drift 数据库并 `resetInterruptedReplies()` 把残留
@@ -83,7 +91,10 @@ attachmentStore / preferences 四个实例。偏好、数据库与收尾失败�
 WHATWG SSE 解析（`api/sse.dart`）、事件类型化（`api/stream_events.dart`）、
 错误分类（`api/errors.dart`）。错误统一为 `ApiException`；
 `shared/error_text.dart` 是把 `ApiErrorCondition` 映射为 ARB 文案的唯一入口。
-服务端原始错误文本仅 debug 显示。
+服务端原始错误文本仅 debug 显示。附件上传走同一客户端的 `uploadFile`
+（`/anthropic/v1/files`）；语音 ASR/TTS 在
+`features/chat/speech/speech_api.dart`（`/v1/tools/*`，与 Messages 端点
+分开，`Bearer` 鉴权）。
 
 **UI**：导入 `package:material_ui/material_ui.dart`（不是 `flutter/material.dart`，
 后者在 Flutter 3.50 起废弃），`shadcn_ui` 用于目标组件库，两者并存。
