@@ -53,14 +53,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get apiErrorOther => '发生错误，请重试';
 
   @override
-  String replyFailed(String error) {
-    return '生成失败：$error';
-  }
-
-  @override
-  String get replyFailedTitle => '生成失败';
-
-  @override
   String get replyRefused => '你好，这个问题我暂时无法回答，让我们换个话题再聊聊吧。';
 
   @override
@@ -188,9 +180,6 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsClearKey => '清除已保存的 Key';
 
   @override
-  String get settingsApiKeySaved => '已保存';
-
-  @override
   String get settingsApiKeyPrompt => '输入 API Key 开始使用';
 
   @override
@@ -234,9 +223,6 @@ class AppLocalizationsZh extends AppLocalizations {
 
   @override
   String get openSessionList => '打开会话列表';
-
-  @override
-  String get sessionActions => '会话操作';
 
   @override
   String get sessionGroupToday => '今天';

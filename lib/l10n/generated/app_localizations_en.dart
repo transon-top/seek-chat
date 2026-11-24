@@ -54,14 +54,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get apiErrorOther => 'Something went wrong. Please try again.';
 
   @override
-  String replyFailed(String error) {
-    return 'Generation failed: $error';
-  }
-
-  @override
-  String get replyFailedTitle => 'Generation failed';
-
-  @override
   String get replyRefused =>
       'Sorry, that\'s beyond my current scope. Let\'s talk about something else.';
 
@@ -191,9 +183,6 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsClearKey => 'Clear saved key';
 
   @override
-  String get settingsApiKeySaved => 'Saved';
-
-  @override
   String get settingsApiKeyPrompt => 'Enter an API key to get started';
 
   @override
@@ -238,9 +227,6 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get openSessionList => 'Open chat list';
-
-  @override
-  String get sessionActions => 'Chat actions';
 
   @override
   String get sessionGroupToday => 'Today';
