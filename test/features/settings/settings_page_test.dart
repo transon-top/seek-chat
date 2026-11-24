@@ -121,7 +121,7 @@ void main() {
 
     final input = find.byKey(const Key('settings-api-key-input'));
     expect(input, findsOneWidget);
-    expect(tester.widget<TextField>(input).focusNode!.hasFocus, isTrue);
+    expect(tester.widget<ShadInput>(input).focusNode!.hasFocus, isTrue);
   });
 
   testWidgets('validates and stores a working key', (tester) async {

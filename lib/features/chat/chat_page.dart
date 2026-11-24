@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:uuid/uuid.dart';
 
 import 'attachment_panel.dart';
@@ -960,7 +961,7 @@ class _EmptyGreeting extends StatelessWidget {
                 fontSize: 20,
                 height: 28 / 20,
                 fontWeight: FontWeight.w500,
-                color: Theme.of(context).colorScheme.onSurface,
+                color: ShadTheme.of(context).colorScheme.foreground,
               ),
             ),
           ),
@@ -979,9 +980,9 @@ class _ErrorBanner extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final colors = Theme.of(context).colorScheme;
-    return Material(
-      color: colors.errorContainer,
+    final colors = ShadTheme.of(context).colorScheme;
+    return ColoredBox(
+      color: colors.destructive.withValues(alpha: 0.10),
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 8, 8),
         child: Row(
@@ -989,13 +990,28 @@ class _ErrorBanner extends StatelessWidget {
             Expanded(
               child: Text(
                 message,
-                style: TextStyle(color: colors.onErrorContainer),
+                style: TextStyle(
+                  fontSize: 14,
+                  height: 22 / 14,
+                  color: colors.destructive,
+                ),
               ),
             ),
-            IconButton(
-              onPressed: onDismiss,
-              icon: const Icon(Icons.close, size: 18),
-              tooltip: l10n.close,
+            Semantics(
+              button: true,
+              label: l10n.close,
+              child: ShadIconButton.ghost(
+                onPressed: onDismiss,
+                icon: Icon(
+                  LucideIcons.x,
+                  size: 18,
+                  color: colors.destructive,
+                ),
+                width: 40,
+                height: 40,
+                padding: EdgeInsets.zero,
+                foregroundColor: colors.destructive,
+              ),
             ),
           ],
         ),

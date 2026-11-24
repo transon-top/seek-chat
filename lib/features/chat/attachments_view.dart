@@ -601,6 +601,7 @@ void _showImage(BuildContext context, String path, String name) {
   showDialog<void>(
     context: context,
     builder: (context) => Dialog.fullscreen(
+      backgroundColor: Colors.black,
       child: Stack(
         children: [
           Positioned.fill(
@@ -619,10 +620,23 @@ void _showImage(BuildContext context, String path, String name) {
             top: 0,
             right: 0,
             child: SafeArea(
-              child: IconButton(
-                tooltip: l10n.previewImage,
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
+              child: Semantics(
+                button: true,
+                label: l10n.previewImage,
+                child: ShadIconButton.ghost(
+                  onPressed: () => Navigator.of(context).pop(),
+                  icon: const Icon(
+                    LucideIcons.x,
+                    size: 22,
+                    color: Colors.white,
+                  ),
+                  width: 44,
+                  height: 44,
+                  padding: EdgeInsets.zero,
+                  foregroundColor: Colors.white,
+                  hoverBackgroundColor: const Color(0x1FFFFFFF),
+                  hoverForegroundColor: Colors.white,
+                ),
               ),
             ),
           ),
