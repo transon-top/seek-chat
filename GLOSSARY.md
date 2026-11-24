@@ -38,6 +38,10 @@
 
 assistant 消息的运行时概念，带状态机：`pending → streaming → done | stopped | error`。续写把状态改回 `pending` 并追加块，不新建消息。状态只在创建、请求发出前、结束/停止/出错时落盘；流式期间只在内存中合并。
 
+## Reply Run（回复执行）
+
+一次驱动 Reply 从创建或续写开始、到结算为止的执行。新建、重新生成与编辑产生新的 Reply，也产生新的 Run；续写与附件重试不新建 Reply，而是同一条 Reply 的新 Run。Run 持有本轮流式中间态，结算时收尾状态、合并块并采纳标题；未完成的 Run 在会话重开或启动兜底时按 stopped 结算。
+
 ## ReplyBlock（回复块）
 
 assistant 回复中的一个有序内容单元，存在 `messages.blocks` JSON 列中。类型包括思考块、文本块、`server_tool_use`、`web_search_tool_result`、`web_fetch_tool_result`。按协议字段原样保存；续写产生的块追加在末尾。
