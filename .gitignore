@@ -28,3 +28,7 @@ app.*.symbols
 app.*.map.json
 # Widget Preview related
 .widget_preview/
+
+# 本地工具配置
+.claude/
+.codegraph/
