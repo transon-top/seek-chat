@@ -442,10 +442,15 @@ Widget _unorderedListItem(
 }
 
 /// ZH
-/// 任务复选框：官方 app 用的是 `☑`/`□` 字形，与正文同色、贴着文案。
+/// 任务复选框：选中与未选中都自绘同一方框（`☑` 在 Android 会回退成彩色
+/// emoji，`□` 字形又与自绘盒尺寸对不上），按字号与系统文字缩放推导尺寸。
+/// 方框右侧留 5 与文案分开，垂直位置由方框上报的基线决定（见 [_TaskBox]）。
 ///
 /// EN
-/// Task checkbox: the official app uses `☑`/`□` glyphs, body-colored and tight to the text.
+/// Task checkbox: both states use the same drawn square (`☑` falls back to
+/// color emoji on Android and the `□` glyph does not match a drawn box), sized
+/// from the font size and text scaler. A 5px gap separates it from the label;
+/// its vertical position comes from the baseline the box reports (see [_TaskBox]).
 Widget _taskCheckbox(
   BuildContext context,
   bool checked,
@@ -453,6 +458,10 @@ Widget _taskCheckbox(
   TextStyle style,
 ) {
   final colors = AppMarkdownColors.of(context);
+  final fontSize =
+      style.fontSize ?? DefaultTextStyle.of(context).style.fontSize ?? 16;
+  // 13 at the 16px body size, so the box keeps the previous visual weight.
+  final boxSize = MediaQuery.textScalerOf(context).scale(fontSize) * 13 / 16;
   return Padding(
     padding: const EdgeInsets.only(bottom: _listItemGap),
     child: Row(
@@ -460,22 +469,14 @@ Widget _taskCheckbox(
       textBaseline: TextBaseline.alphabetic,
       crossAxisAlignment: CrossAxisAlignment.baseline,
       children: [
-        // ZH
-        // `□` 用字形；`☑` 在 Android 会回退成彩色 emoji（VS15 也拦不住），
-        // 所以选中态自绘，保持与 `□` 同形的单色方框。
-        //
-        // EN
-        // Use the glyph for `□`; `☑` falls back to color emoji on Android (VS15
-        // cannot stop it). So draw the checked state to keep a monochrome square
-        // shaped like `□`.
-        checked
-            ? Text.rich(
-                WidgetSpan(
-                  alignment: PlaceholderAlignment.middle,
-                  child: _CheckedBox(color: colors.labelPrimary),
-                ),
-              )
-            : Text('□', style: style.copyWith(color: colors.labelPrimary)),
+        Padding(
+          padding: const EdgeInsetsDirectional.only(end: 5),
+          child: _TaskBox(
+            checked: checked,
+            size: boxSize,
+            color: colors.labelPrimary,
+          ),
+        ),
         Flexible(child: content),
       ],
     ),
@@ -483,29 +484,90 @@ Widget _taskCheckbox(
 }
 
 /// ZH
-/// 已勾选任务项：13×13 直角方框 + 勾，笔触点与 `□` 字形相当。
+/// 13×13 直角方框，选中时加勾；尺寸由外部按字号推导后等比缩放。
+///
+/// 自绘 RenderBox 把底边报告为基线，由 `Row` 的基线对齐钉在首行文字
+/// 基线上。位置不依赖字体的 ascent/descent（Android 与 iOS 不同），
+/// 否则方框在两端的垂直位置不一致。
 ///
 /// EN
-/// Checked task item: 13×13 square box + check, stroke weight matching the `□` glyph.
-class _CheckedBox extends StatelessWidget {
-  const _CheckedBox({required this.color});
+/// 13×13 square box with a check when selected; the caller scales it from the font size.
+///
+/// The drawn RenderBox reports its bottom edge as the baseline, so the Row's
+/// baseline alignment pins it to the first line's text baseline. The position
+/// then does not depend on font ascent/descent, which differs between Android
+/// and iOS.
+class _TaskBox extends LeafRenderObjectWidget {
+  const _TaskBox({
+    required this.checked,
+    required this.size,
+    required this.color,
+  });
 
+  final bool checked;
+  final double size;
   final Color color;
 
   @override
-  Widget build(BuildContext context) =>
-      CustomPaint(size: const Size(13, 13), painter: _CheckedBoxPainter(color));
+  RenderObject createRenderObject(BuildContext context) =>
+      _RenderTaskBox(checked, size, color);
+
+  @override
+  void updateRenderObject(BuildContext context, _RenderTaskBox renderObject) {
+    renderObject
+      ..checked = checked
+      ..side = size
+      ..color = color;
+  }
 }
 
-class _CheckedBoxPainter extends CustomPainter {
-  const _CheckedBoxPainter(this.color);
+class _RenderTaskBox extends RenderBox {
+  _RenderTaskBox(this._checked, this._side, this._color);
 
-  final Color color;
+  bool _checked;
+  double _side;
+  Color _color;
+
+  set checked(bool value) {
+    if (value == _checked) return;
+    _checked = value;
+    markNeedsPaint();
+  }
+
+  set side(double value) {
+    if (value == _side) return;
+    _side = value;
+    markNeedsLayout();
+  }
+
+  set color(Color value) {
+    if (value == _color) return;
+    _color = value;
+    markNeedsPaint();
+  }
 
   @override
-  void paint(Canvas canvas, Size size) {
+  void performLayout() {
+    size = constraints.constrain(Size.square(_side));
+  }
+
+  /// ZH
+  /// 底边即基线：方框像 `□` 字形一样坐在文字基线上。
+  ///
+  /// EN
+  /// The bottom edge is the baseline, so the box sits on the text baseline like a `□` glyph.
+  @override
+  double computeDistanceToActualBaseline(TextBaseline baseline) => size.height;
+
+  @override
+  void paint(PaintingContext context, Offset offset) {
+    final canvas = context.canvas;
+    // Draw in the original 13px space, then scale to the requested size.
+    canvas.save();
+    canvas.translate(offset.dx, offset.dy);
+    canvas.scale(size.width / 13);
     final stroke = Paint()
-      ..color = color
+      ..color = _color
       ..style = PaintingStyle.stroke
       ..strokeCap = StrokeCap.round
       ..strokeJoin = StrokeJoin.round;
@@ -513,16 +575,15 @@ class _CheckedBoxPainter extends CustomPainter {
       const Rect.fromLTWH(0.55, 0.55, 11.9, 11.9),
       stroke..strokeWidth = 1.1,
     );
-    final check = Path()
-      ..moveTo(2.8, 6.9)
-      ..lineTo(5.4, 9.4)
-      ..lineTo(10.4, 3.6);
-    canvas.drawPath(check, stroke..strokeWidth = 1.5);
+    if (_checked) {
+      final check = Path()
+        ..moveTo(2.8, 6.9)
+        ..lineTo(5.4, 9.4)
+        ..lineTo(10.4, 3.6);
+      canvas.drawPath(check, stroke..strokeWidth = 1.5);
+    }
+    canvas.restore();
   }
-
-  @override
-  bool shouldRepaint(_CheckedBoxPainter oldDelegate) =>
-      oldDelegate.color != color;
 }
 
 /// ZH

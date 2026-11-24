@@ -112,16 +112,16 @@ void main() {
 
     expect(find.byType(Checkbox), findsNothing);
     // ZH
-    // 选中态自绘（☑ 在 Android 会变成彩色 emoji），未选中用 □ 字形。
+    // 两种状态共用同一个自绘方框（☑ 在 Android 会变成彩色 emoji，□ 字形尺寸对不上）。
     //
     // EN
-    // Draw checks by hand (☑ becomes color emoji on Android); unchecked uses the □ glyph.
-    expect(find.text('□'), findsOneWidget);
+    // Both states use the same drawn box (☑ becomes color emoji on Android; the □
+    // glyph does not match a drawn box).
     expect(
       find.byWidgetPredicate(
-        (widget) => widget.runtimeType.toString() == '_CheckedBox',
+        (widget) => widget.runtimeType.toString() == '_TaskBox',
       ),
-      findsOneWidget,
+      findsNWidgets(2),
     );
     expect(find.textContaining('[x]', findRichText: true), findsNothing);
     expect(find.textContaining('已完成任务', findRichText: true), findsWidgets);
