@@ -33,4 +33,7 @@
 - 恢复演练通过：用 keystore 副本构建三个 split APK，`apksigner` 输出
   `CN=SeekChat, OU=Android, O=Transon Top, C=CN`。
 - 证书指纹（apksigner）：`12042e1e58594c4eef6c71e51c8656a91aff2097e86ec43afc1ed9e596caf38b`
-- 仍待用户执行：两份离线介质备份、密码管理器与离线恢复码、GitHub secrets。
+- 2026-11-25：密码已存入用户密码管理器；keystore 备份与校验值已放到
+  `/Users/transon/Downloads/同步空间/配置备份/keystores/`，附换机手册 `README.md`。
+- 仍待用户执行：删除 `~/keystores/seekchat-release.password` 明文副本；两块离线
+  介质备份；纸质离线恢复码；GitHub secrets。
