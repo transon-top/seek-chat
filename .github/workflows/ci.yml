@@ -1,14 +1,20 @@
 name: CI
 
-# 分支与 PR 跑测试线；tag push 只走 release.yml，避免重复。
+# main push 与 PR 跑测试线；功能分支交给 PR，避免同一提交重复运行。
+# tag push 只走 release.yml，避免重复。
 on:
   push:
     branches:
-      - '**'
+      - main
   pull_request:
 
 permissions:
   contents: read
+
+# 同一 PR 连续推送时取消旧运行；main 的 push 运行不取消，避免发版 tag 对应的 CI 被后来的提交取消。
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   analyze-and-test:
