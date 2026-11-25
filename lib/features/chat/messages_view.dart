@@ -301,14 +301,26 @@ class _ChatMessageListState extends State<ChatMessageList> {
     // `maxScrollExtent` 已扣除视口高度；再减 viewportDimension 会让判断
     // 恒为真，用户一旦上滑也会被流式更新拉回底部。
     //
+    // 方向判定优先：手势刚起时位移常小于阈值，先判贴底会一直跟随，
+    // 每帧被拉回底部，列表看起来滑不动。回弹与下拉同样向后移动，
+    // 只有严格位于范围内才取消跟随。
+    //
     // EN
     // The `maxScrollExtent` value already excludes viewport height. Subtracting
     // viewportDimension makes the check always true, so streaming pulls users back
     // down after they scroll up.
-    if (position.maxScrollExtent - offset < _stickyThreshold) {
-      _setSticky(true);
-    } else if (offset < _lastOffset) {
+    //
+    // Direction wins: the first drag frames often move less than the threshold;
+    // checking at-bottom first keeps following and pulls back every frame,
+    // making the list look unscrollable. Overscroll bounce and pull-to-reveal
+    // also move backwards, so only strictly in-range movement cancels following.
+    final inRange =
+        offset >= position.minScrollExtent &&
+        offset < position.maxScrollExtent - 0.5;
+    if (inRange && offset < _lastOffset - 0.5) {
       _setSticky(false);
+    } else if (position.maxScrollExtent - offset < _stickyThreshold) {
+      _setSticky(true);
     }
     _lastOffset = offset;
     if (offset <= _loadMoreDistance) _expandWindow();
