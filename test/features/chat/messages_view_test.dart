@@ -830,4 +830,50 @@ void main() {
     expect(find.byIcon(LucideIcons.globe), findsNothing);
     expect(find.text('Page A'), findsNothing);
   });
+
+  testWidgets(
+    'a small drag away from the bottom stops following immediately',
+    (tester) async {
+      final messages = <Message>[
+        for (var i = 0; i < 24; i++) ...[
+          UserMessage(id: 'u$i', createdAt: DateTime(2026), text: 'Q$i'),
+          _reply(
+            const [TextBlock(text: 'Answer\n\nAnswer\n\nAnswer\n\nAnswer')],
+            id: 'r$i',
+            thinking: false,
+            search: false,
+          ),
+        ],
+      ];
+      await pumpMessages(tester, messages, width: 390);
+      final position = tester.state<ScrollableState>(_listScrollable).position;
+      expect(
+        position.pixels,
+        moreOrLessEquals(position.maxScrollExtent, epsilon: 1),
+      );
+      expect(find.byKey(const Key('scroll-to-bottom')), findsNothing);
+
+      // ZH
+      // 首步位移小于 40 的贴底阈值：必须立即停止跟随；否则后续的
+      // 跟随跳转会把手势拉回底部，快速滑动看起来完全没反应。
+      //
+      // EN
+      // The first step is under the 40 at-bottom threshold; following must stop
+      // immediately, otherwise the follow jump pulls the drag back to the
+      // bottom and a quick swipe looks dead.
+      final gesture = await tester.startGesture(
+        tester.getCenter(find.byType(ListView)),
+      );
+      await gesture.moveBy(const Offset(0, 20));
+      await tester.pump();
+      await tester.pump();
+      expect(find.byKey(const Key('scroll-to-bottom')), findsOneWidget);
+
+      await gesture.moveBy(const Offset(0, 200));
+      await tester.pump();
+      expect(position.pixels, lessThan(position.maxScrollExtent - 100));
+      await gesture.up();
+      await tester.pump();
+    },
+  );
 }
