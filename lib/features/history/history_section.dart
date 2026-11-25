@@ -53,7 +53,9 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     try {
       bytes = await ref.read(historyFilesProvider).pickZip();
     } on Object {
-      if (mounted) _showMessage(l10n.historyImportFailed, destructive: true);
+      if (mounted) {
+        _showMessage(l10n.historyImportFailed, tone: AppToastTone.error);
+      }
       return;
     }
     if (!mounted || bytes == null) return;
@@ -78,15 +80,16 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
       _closeProgress();
       _showMessage(
         count == 1 ? l10n.historyImportedOne : l10n.historyImported(count),
+        tone: AppToastTone.success,
       );
     } on HistoryException catch (error) {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(_errorText(l10n, error.code), destructive: true);
+      _showMessage(_errorText(l10n, error.code), tone: AppToastTone.error);
     } on Object {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(l10n.historyImportFailed, destructive: true);
+      _showMessage(l10n.historyImportFailed, tone: AppToastTone.error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -105,7 +108,9 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
           .saveZip(fileName: exported.fileName, bytes: exported.bytes);
       if (!mounted) return;
       _closeProgress();
-      if (saved) _showMessage(l10n.historyExported);
+      if (saved) {
+        _showMessage(l10n.historyExported, tone: AppToastTone.success);
+      }
     } on HistoryException catch (error) {
       if (!mounted) return;
       _closeProgress();
@@ -113,12 +118,12 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
         error.code == HistoryError.tooLarge
             ? l10n.historyErrorExportTooLarge
             : _errorText(l10n, error.code),
-        destructive: true,
+        tone: AppToastTone.error,
       );
     } on Object {
       if (!mounted) return;
       _closeProgress();
-      _showMessage(l10n.historyExportFailed, destructive: true);
+      _showMessage(l10n.historyExportFailed, tone: AppToastTone.error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }
@@ -157,8 +162,8 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     Navigator.of(context, rootNavigator: true).pop();
   }
 
-  void _showMessage(String message, {bool destructive = false}) {
-    showAppToast(context, message, destructive: destructive);
+  void _showMessage(String message, {AppToastTone tone = AppToastTone.info}) {
+    showAppToast(context, message, tone: tone);
   }
 
   Future<void> _deleteAll() async {
@@ -179,10 +184,10 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
           .read(historyServiceProvider)
           .deleteAll(stopGeneration: widget.stopGeneration);
       if (!mounted) return;
-      _showMessage(l10n.historyDeleted);
+      _showMessage(l10n.historyDeleted, tone: AppToastTone.success);
     } on Object {
       if (!mounted) return;
-      _showMessage(l10n.historyDeleteFailed, destructive: true);
+      _showMessage(l10n.historyDeleteFailed, tone: AppToastTone.error);
     } finally {
       if (mounted) setState(() => _busy = false);
     }

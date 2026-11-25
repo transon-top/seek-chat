@@ -70,5 +70,7 @@
 - 用户可见文案全部走 `gen_l10n` 的 ARB（`zh` / `en`）；模型正文不翻译。
 - 错误文案的唯一映射点是 `lib/shared/error_text.dart`；服务端原始错误文本
   只在 debug 构建显示。
+- Toast 颜色只由语义决定（`AppToastTone`：info / success / warning / error，
+  见 `lib/shared/toast.dart`）；调用方传语义，不自行指定颜色。
 - API Key 只存安全存储，不写数据库、不进日志、不进导出包。
 - 日志只记录 debug 级诊断信息；不记录 Key、请求头、完整请求体与附件内容。
