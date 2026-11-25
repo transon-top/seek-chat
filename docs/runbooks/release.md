@@ -2,7 +2,7 @@
 
 发版入口：在 `main` 的合并提交上打 `vX.Y.Z` tag 并 push。`.github/workflows/release.yml`
 负责校验、签名构建三个 split APK、生成版本说明初稿并创建 **draft** Release；
-人工核对并 publish。`v1-dev` 等非 `main` 分支上的 tag 只构建、不发布。
+人工核对并 publish。非 `main` 分支上的 tag 只构建、不发布。
 
 工作流细节与决策见 `.scratch/android-release-ci/`。
 
@@ -107,25 +107,27 @@ keystore 与密码另存一份到密码管理器。
 ```bash
 git fetch --tags
 git tag -l 'v*'                 # 确认测试 tag 已删、旧 tag 为空
-git switch v1-dev && git pull --ff-only
+git switch main && git pull --ff-only
 ```
 
 - `release` environment 两个 secret 存在。
 - 签名指纹已记录，备份可用。
 - 上次发版后是否改过签名材料；改过则必须先解决，不能直接发版。
 
-### 1. 在 v1-dev 最后一次提交 bump 版本
+### 1. 在发布分支最后一次提交 bump 版本
 
 ```bash
+git switch -c chore/release-1.0.0
 # 编辑 pubspec.yaml：version: 1.0.0+1
 git add pubspec.yaml
 git commit -m "🔧 chore(release): 发布 v1.0.0"
 ./tool/ci/check_release_version.sh v1.0.0   # bump 之后、打 tag 之前跑
-git push origin v1-dev
+git push origin chore/release-1.0.0
 ```
 
-只改 `pubspec.yaml`，不提交 `CHANGELOG.md`（本仓库不维护该文件）。确认 `v1-dev`
-的 CI 为绿。本地版本校验依赖完整 tag 历史，换过 clone 时先 `git fetch --tags`。
+只改 `pubspec.yaml`，不提交 `CHANGELOG.md`（本仓库不维护该文件）。合并前在本地跑
+`flutter analyze` 与 `flutter test`，或开 PR 等 CI 为绿。本地版本校验依赖完整 tag
+历史，换过 clone 时先 `git fetch --tags`。
 
 ### 2. 生成版本说明初稿（可选，发布后也可在 draft 里改）
 
@@ -142,7 +144,7 @@ git cliff --config cliff.toml --unreleased --tag v1.0.0 > /tmp/release-notes-v1.
 
 ```bash
 git switch main && git pull --ff-only
-git merge --no-ff v1-dev -m "Merge v1-dev into main for v1.0.0"
+git merge --no-ff chore/release-1.0.0 -m "Merge chore/release-1.0.0 into main for v1.0.0"
 git push origin main
 git tag v1.0.0
 git push origin v1.0.0
@@ -199,7 +201,7 @@ immutable releases 会锁定 tag 与资产，不能再改。
 | 现象 | 处置 |
 | --- | --- |
 | tag 与 `pubspec.yaml` 不一致 | 本地修正后 **bump 到下一个补丁版本** 重新打 tag；已开启的 tag 规则集禁止重打同一 tag。 |
-| `+n` 未递增 | 同上：改 `+n`（必要时升补丁版本），在 `v1-dev` 提交后重新合并、打新 tag。 |
+| `+n` 未递增 | 同上：改 `+n`（必要时升补丁版本），在发布分支提交后重新合并、打新 tag。 |
 | 缺少 signing material | 检查 `release` environment 的两个 secret 与 tag 是否匹配 `v*`；补好后重跑 workflow（同一 tag）。 |
 | draft 不出现 | 看 build job 的 `on_main` 输出是否为 `true`；tag 不在 `main` 祖先链时只构建不发布。 |
 | 构建中途失败 | 修代码后 bump 补丁版本打新 tag；未创建 Release，不会留下半成品。 |
@@ -211,7 +213,7 @@ immutable releases 会锁定 tag 与资产，不能再改。
 ## 回滚与补丁发版
 
 - 已 publish 的 Release 与 tag 受 immutable releases 保护，不能改资产、删 tag 或重打。
-- 有问题的版本：在 `v1-dev` 修复 → bump 补丁版本（如 `1.0.1+2`）→ 合并 `main`
+- 有问题的版本：在发布分支修复 → bump 补丁版本（如 `1.0.1+2`）→ 合并 `main`
   → 打 `v1.0.1` → 走同一流程创建 draft、验证后 publish。这是唯一可复用的回滚路径。
 - 若问题仅限说明文案，可在 Release 页面编辑说明（不改资产）；tag 保持不动。
 - 紧急下线：删除外部渠道的下载链接，同时尽快发布补丁版本。
@@ -219,10 +221,10 @@ immutable releases 会锁定 tag 与资产，不能再改。
 ## 首次 v1.0.0 额外注意
 
 - 旧 tag 已清空，git-cliff 初稿会覆盖全部历史；需要人工精选到 10 条以内。
-- 首次发布前完成测试 tag 演练：在 `v1-dev` 打一个与当前 `pubspec` 一致的 tag
-  （当前为 `v0.5.0`，`+1`，且无上一个 tag），确认 Actions 构建成功但
-  `on_main=false`、没有创建 Release，然后删除该 tag。**演练必须在开启
-  `refs/tags/v*` 规则集之前完成。**
-- 若 `v1-dev` 头部提交已经在 `main` 祖先链上（例如刚合并过），演练 tag 会被判定
-  为可发布；换一个未合并的提交或临时提交再演练。
+- 首次发布前完成测试 tag 演练：在一个未合并到 `main` 的提交（如发布分支）上打
+  一个与当前 `pubspec` 一致的 tag（当前为 `v0.5.0`，`+1`，且无上一个 tag），
+  确认 Actions 构建成功但 `on_main=false`、没有创建 Release，然后删除该 tag。
+  **演练必须在开启 `refs/tags/v*` 规则集之前完成。**
+- 若所选提交已经在 `main` 祖先链上（例如刚合并过），演练 tag 会被判定为可发布；
+  换一个未合并的提交或临时提交再演练。
 - 首次安装正式签名包前卸载 debug 签名包。
