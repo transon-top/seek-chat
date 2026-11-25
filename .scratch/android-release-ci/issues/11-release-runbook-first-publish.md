@@ -23,5 +23,8 @@
   checklist、失败处置、回滚与首次 v1.0.0 注意事项。`AGENTS.md`（`CLAUDE.md` 符号链接）
   已同步构建/发版命令与 CI 说明。workflow 的第三方 action 已全部固定 SHA。
 - 核对：远端无任何 tag，旧 tag 清理项已满足。
-- 待办（用户执行）：GitHub 规则集/environment/immutable releases 设置；测试 tag
-  演练；`v1.0.0` 发布与发布后验证。
+- 2026-11-25：GitHub 侧已完成：`release` environment（仅 `v*` tag）、两个 secret、
+  Actions 默认只读、immutable releases。规则集与分支保护在私有 Free 仓库不可用
+  （API 403，需 GitHub Pro 或公开仓库）；已写入手册，公开后补上。
+- 待办（用户执行）：仓库公开后配置 main / tag 规则集；测试 tag 演练；
+  `v1.0.0` 发布与发布后验证。

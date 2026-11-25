@@ -35,5 +35,7 @@
 - 证书指纹（apksigner）：`12042e1e58594c4eef6c71e51c8656a91aff2097e86ec43afc1ed9e596caf38b`
 - 2026-11-25：密码已存入用户密码管理器；keystore 备份与校验值已放到
   `/Users/transon/Downloads/同步空间/配置备份/keystores/`，附换机手册 `README.md`。
-- 仍待用户执行：删除 `~/keystores/seekchat-release.password` 明文副本；两块离线
-  介质备份；纸质离线恢复码；GitHub secrets。
+- 2026-11-25：`~/keystores/seekchat-release.password` 已用 keytool 验证可打开
+  keystore 后删除；`~/keystores/` 只剩 `.p12`。GitHub `release` environment 的两个
+  secret 已写入。
+- 仍待用户执行：两块离线介质备份；纸质离线恢复码。

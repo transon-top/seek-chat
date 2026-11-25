@@ -79,6 +79,8 @@ keystore 与密码另存一份到密码管理器。
 - `main` 规则集：禁止 force push、禁止删除（单人开发不强制 PR）。
 - `refs/tags/v*` 规则集：禁止更新、禁止删除。**先完成 6 的测试 tag 演练再开启**，
   否则测试 tag 无法删除。
+- 规则集与经典分支保护在私有 Free 仓库不可用（API 返回 403，需 GitHub Pro
+  或仓库公开）。仓库公开后立即补上；开启顺序仍是先删测试 tag、再开 tag 保护。
 - 开启 **immutable releases**（Settings → General 或 Releases 设置）。
 - Actions 默认权限设为只读；workflow 已按 job 最小化声明。
 - 第三方 action 全部固定完整 commit SHA；升级时同时改版本注释并重跑 CI。

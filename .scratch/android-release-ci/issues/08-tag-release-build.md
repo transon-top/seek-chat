@@ -29,5 +29,8 @@
   `tool/build_android_apk.sh`，上传三个 APK + `SHA256SUMS`；并发组按 tag 互斥、
   超时 60 分钟、默认只读权限；action 全部固定 SHA。
 - 核对：远端当前没有任何 tag，旧 `v0.3.0` / `v0.4.0` / `v0.5.0` 已不存在，无需清理。
-- 待办（用户执行）：建 `release` environment 与两个 secret；在 `v1-dev` 打测试 tag
-  实跑并确认 `on_main=false`、未创建 Release，然后删除测试 tag。
+- 2026-11-25：`release` environment 已建，部署策略只允许 `v*` tag；
+  `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 两个 environment secret
+  已写入；Actions 默认权限设为只读；immutable releases 已开启。
+- 待办（用户执行）：workflow 合并推送后，在 `v1-dev` 打测试 tag 实跑并确认
+  `on_main=false`、未创建 Release，然后删除测试 tag。
