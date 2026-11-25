@@ -35,3 +35,8 @@ Blocked by: 02
 核查事实（2026-11-23）：`pubspec` 当前 `0.5.0+1`；仓库无 `CHANGELOG.md`、`.github/`、`cliff.toml`；远端 `transon-top/seek-chat`。
 
 留给票 05 实现：`+n` 递增校验步骤、生成物无 diff 校验、universal APK 取舍、workflow 并发 / 超时 / runner。
+
+## Comments
+
+- 2026-11-25：第 8 条的 `CHANGELOG.md` 决策已被票 09 覆盖：仓库不生成、不提交
+  `CHANGELOG.md`；git-cliff 只生成 Release 说明初稿，技术细节不放进 Release body。

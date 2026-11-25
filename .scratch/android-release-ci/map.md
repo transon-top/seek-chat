@@ -2,7 +2,7 @@
 
 ## Destination
 
-一套可直接照做的 GitHub Actions Android 发版规格：只有 `main` 上的 `v*` tag 触发，先过生成物检查、`flutter analyze` 与 `flutter test`，再用正式 release keystore 签名构建三个 split APK，自动创建 published GitHub Release 并附带面向用户的版本说明。产出还包括签名、版本号、版本说明与发版检查清单的最佳实践。实现（提交 workflow 文件）不在本图内。
+一套可直接照做的 GitHub Actions Android 发版规格：只有 `main` 上的 `v*` tag 触发，先过生成物检查、`flutter analyze` 与 `flutter test`，再用正式 release keystore 签名构建三个 split APK，自动创建 draft GitHub Release（人工润色说明后手动 publish）并附带面向用户的版本说明。产出还包括签名、版本号、版本说明与发版检查清单的最佳实践。实现（提交 workflow 文件）不在本图内。
 
 ## Notes
 
@@ -24,6 +24,7 @@
 - [版本说明与整套发版流程的最佳实践](issues/02-release-notes-best-practices.md): GitHub 原生 notes 基于 merged PR、直接 push 不收录，不适合本项目；最小方案用 `git-cliff`（加 emoji 预处理）+ `CHANGELOG.md` 同源 + `v1-dev`→`main` merge commit + CI 校验 tag 与 `pubspec` + draft Release + SHA256SUMS + immutable releases。
 - [发布签名与应用身份](issues/03-signing-and-app-identity.md): PKCS12 + RSA 4096 + 10000 天 + alias `seekchat`；本机 `android/key.properties`、两份加密离线备份、单一密码；CI 只存 `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 于 `release` environment；release 缺 keystore 即失败；首次公开发版前做一次备份恢复演练。
 - [版本说明形态与版本号流程](issues/04-release-notes-and-versioning.md): git-cliff + `CHANGELOG.md` 同源（emoji 预处理）；面向用户、中英双语、四类、10 条以内；tag↔pubspec 硬校验且 `+n` 递增；bump 在 `v1-dev` 最后一次提交；`v1-dev`→`main` merge commit，tag 打 main；draft Release；最小保护集（main 规则集 + `refs/tags/v*` + release environment）；暂不引入 rc；现有 tag 清空，从 `v1.0.0+1` 起。
+- [git-cliff 生成 Release 说明](issues/09-release-notes-git-cliff.md): `cliff.toml` 四类分组、emoji 预处理；不落库 `CHANGELOG.md`（覆盖票 04 第 8 条），只生成 Release 说明初稿，发布前人工改写。
 
 ## Not yet specified
 
