@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../l10n/generated/app_localizations.dart';
 import '../shared/api/errors.dart';
 import '../shared/models/types.dart';
+import '../shared/toast.dart';
 
 /// ZH
 /// 错误文案的唯一映射点（architecture.md §5）。服务端原文只在 debug 构建、
@@ -69,6 +70,29 @@ String voiceInputErrorText(AppLocalizations l10n, VoiceInputFailure failure) =>
       VoiceInputFailure.insertedUploading => l10n.voiceInsertedUploading,
       VoiceInputFailure.insertedNotSent => l10n.voiceInsertedNotSent,
       VoiceInputFailure.sendFailedInserted => l10n.voiceSendFailedInserted,
+    };
+
+/// ZH
+/// 语音提示的色调：授权成功用 success，限制与中断用 warning，只插入未发送
+/// 用 info，其余失败用 error。
+///
+/// EN
+/// Tone for voice notices: success after a grant, warning for limits and
+/// interruptions, info when inserted but not sent, error for the rest.
+AppToastTone voiceInputFailureTone(VoiceInputFailure failure) =>
+    switch (failure) {
+      VoiceInputFailure.micGrantedRetry => AppToastTone.success,
+      VoiceInputFailure.limitReached ||
+      VoiceInputFailure.interrupted => AppToastTone.warning,
+      VoiceInputFailure.empty ||
+      VoiceInputFailure.insertedGenerating ||
+      VoiceInputFailure.insertedUploading ||
+      VoiceInputFailure.insertedNotSent => AppToastTone.info,
+      VoiceInputFailure.noApiKey ||
+      VoiceInputFailure.permissionDenied ||
+      VoiceInputFailure.noDevice ||
+      VoiceInputFailure.failed ||
+      VoiceInputFailure.sendFailedInserted => AppToastTone.error,
     };
 
 /// ZH

@@ -230,7 +230,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         if (widget.onOpenKeySettings != null) {
           _openKeySettings();
         } else {
-          _showToast(l10n.errorNoApiKey);
+          _showToast(l10n.errorNoApiKey, tone: AppToastTone.error);
         }
       }
       return false;
@@ -363,7 +363,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       await _addPickedPhotos([file]);
     } on Object catch (error) {
       debugLog('camera pick failed', error);
-      if (mounted) _showToast(l10n.uploadFileStatusFailed);
+      if (mounted) {
+        _showToast(l10n.uploadFileStatusFailed, tone: AppToastTone.error);
+      }
     } finally {
       if (mounted) setState(() => _pickerActive = false);
     }
@@ -373,7 +375,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final l10n = AppLocalizations.of(context)!;
     final remaining = maxAttachmentCount - _attachments.length;
     if (remaining <= 0) {
-      _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+      _showToast(
+        l10n.uploadMaxFiles(maxAttachmentCount),
+        tone: AppToastTone.warning,
+      );
       return;
     }
     setState(() => _pickerActive = true);
@@ -383,7 +388,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       await _addPickedPhotos(files);
     } on Object catch (error) {
       debugLog('photo picker failed', error);
-      if (mounted) _showToast(l10n.uploadFileStatusFailed);
+      if (mounted) {
+        _showToast(l10n.uploadFileStatusFailed, tone: AppToastTone.error);
+      }
     } finally {
       if (mounted) setState(() => _pickerActive = false);
     }
@@ -412,7 +419,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       }
     }
     if (!mounted) return;
-    if (unreadable) _showToast(l10n.photoUnreadable);
+    if (unreadable) _showToast(l10n.photoUnreadable, tone: AppToastTone.error);
     if (drafts.isEmpty) return;
 
     final error = validateAttachmentSelection(
@@ -423,7 +430,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       currentCount: _attachments.length,
     );
     if (error != null) {
-      _showToast(localMessageText(l10n, error));
+      _showToast(localMessageText(l10n, error), tone: AppToastTone.warning);
       return;
     }
 
@@ -446,7 +453,10 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       }
     }
     if (_attachments.length >= maxAttachmentCount) {
-      _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+      _showToast(
+        l10n.uploadMaxFiles(maxAttachmentCount),
+        tone: AppToastTone.warning,
+      );
       return;
     }
     final token = _pendingPhotoImports.toggle(asset.id);
@@ -470,18 +480,24 @@ class _ChatPageState extends ConsumerState<ChatPage> {
           failure == PhotoImportFailure.tooLarge
               ? l10n.uploadMaxMBSize(maxPhotoSizeMb)
               : l10n.photoUnreadable,
+          tone: failure == PhotoImportFailure.tooLarge
+              ? AppToastTone.warning
+              : AppToastTone.error,
         );
         return;
       }
       final draft = result.draft!;
       if (_attachments.length >= maxAttachmentCount) {
-        _showToast(l10n.uploadMaxFiles(maxAttachmentCount));
+        _showToast(
+          l10n.uploadMaxFiles(maxAttachmentCount),
+          tone: AppToastTone.warning,
+        );
         return;
       }
       _addDrafts([draft]);
     } on Object catch (error) {
       debugLog('photo strip import failed', error);
-      if (mounted) _showToast(l10n.photoUnreadable);
+      if (mounted) _showToast(l10n.photoUnreadable, tone: AppToastTone.error);
     } finally {
       _pendingPhotoImports.finish(asset.id, token);
     }
@@ -494,7 +510,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     try {
       files = await FilePicker.pickFiles(type: FileType.any);
     } on Object {
-      if (mounted) _showToast(l10n.uploadFileStatusFailed);
+      if (mounted) {
+        _showToast(l10n.uploadFileStatusFailed, tone: AppToastTone.error);
+      }
       return;
     } finally {
       if (mounted) setState(() => _pickerActive = false);
@@ -527,7 +545,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
       currentCount: _attachments.length,
     );
     if (error != null) {
-      _showToast(localMessageText(l10n, error));
+      _showToast(localMessageText(l10n, error), tone: AppToastTone.warning);
       return;
     }
 
@@ -616,12 +634,14 @@ class _ChatPageState extends ConsumerState<ChatPage> {
 
   void _showToast(
     String message, {
+    AppToastTone tone = AppToastTone.info,
     String? actionLabel,
     VoidCallback? onAction,
   }) {
     showAppToast(
       context,
       message,
+      tone: tone,
       actionLabel: actionLabel,
       onAction: onAction,
     );
@@ -670,6 +690,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
     final l10n = AppLocalizations.of(context)!;
     _showToast(
       localMessageText(l10n, quota),
+      tone: AppToastTone.warning,
       actionLabel: l10n.uploadDeleteFiles,
       onAction: () =>
           openExternalLink('https://api-docs.deepseek.com/api/delete-file', ''),
@@ -729,6 +750,7 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         final needsSettings = voice == VoiceInputFailure.permissionDenied;
         _showToast(
           voiceInputErrorText(strings, voice),
+          tone: voiceInputFailureTone(voice),
           actionLabel: needsSettings
               ? strings.settingsOpenSystemSettings
               : null,
@@ -739,7 +761,9 @@ class _ChatPageState extends ConsumerState<ChatPage> {
         return;
       }
       final tts = next.ttsFailure;
-      if (tts != null) _showToast(ttsErrorText(strings, tts));
+      if (tts != null) {
+        _showToast(ttsErrorText(strings, tts), tone: AppToastTone.error);
+      }
     });
     ref.listen<Map<String, UploadTask>>(uploadTasksProvider, (previous, next) {
       for (final entry in next.entries) {
@@ -775,15 +799,19 @@ class _ChatPageState extends ConsumerState<ChatPage> {
                 full: _attachments.length >= maxAttachmentCount,
                 reloadOnResume: !_pickerActive,
                 onToggle: _togglePhotoAsset,
-                onLimitReached: () =>
-                    _showToast(strings.uploadMaxFiles(maxAttachmentCount)),
+                onLimitReached: () => _showToast(
+                  strings.uploadMaxFiles(maxAttachmentCount),
+                  tone: AppToastTone.warning,
+                ),
               )
             : null,
         onTakePhoto: _takePhoto,
         onPickPhotos: _pickPhotos,
         onPickFiles: _pickFiles,
-        onLimitReached: () =>
-            _showToast(strings.uploadMaxFiles(maxAttachmentCount)),
+        onLimitReached: () => _showToast(
+          strings.uploadMaxFiles(maxAttachmentCount),
+          tone: AppToastTone.warning,
+        ),
       ),
       onThinkingChanged: _setThinking,
       onSearchChanged: _setSearch,

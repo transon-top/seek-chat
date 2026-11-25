@@ -9,6 +9,73 @@ import 'package:shadcn_ui/shadcn_ui.dart';
 const double chatHeaderHeight = 46;
 
 /// ZH
+/// Toast 语义。颜色只由语义推导，调用方不自己挑颜色：
+/// [info] 中性说明、[success] 操作成功、[warning] 达到限制或需要留意、
+/// [error] 操作失败。
+///
+/// EN
+/// Toast semantics. Colors derive from the tone alone; callers never pick colors:
+/// [info] neutral note, [success] completed action, [warning] a limit or attention
+/// needed, [error] failed action.
+enum AppToastTone { info, success, warning, error }
+
+/// ZH
+/// 每种语义在浅色 / 深色下的背景与前景；描边取前景色降低透明度。
+///
+/// EN
+/// Background and foreground per tone in light / dark; the border is the
+/// foreground at reduced opacity.
+class _ToastPalette {
+  const _ToastPalette(this.background, this.foreground);
+
+  final Color background;
+  final Color foreground;
+
+  Color get border => foreground.withValues(alpha: 0.28);
+
+  static _ToastPalette of(Brightness brightness, AppToastTone tone) {
+    if (brightness == Brightness.dark) {
+      return switch (tone) {
+        AppToastTone.info => const _ToastPalette(
+          Color(0xFF14203F),
+          Color(0xFFA4BDFF),
+        ),
+        AppToastTone.success => const _ToastPalette(
+          Color(0xFF10261B),
+          Color(0xFF75E0A7),
+        ),
+        AppToastTone.warning => const _ToastPalette(
+          Color(0xFF2A2010),
+          Color(0xFFFEC84B),
+        ),
+        AppToastTone.error => const _ToastPalette(
+          Color(0xFF2E1615),
+          Color(0xFFFDA29B),
+        ),
+      };
+    }
+    return switch (tone) {
+      AppToastTone.info => const _ToastPalette(
+        Color(0xFFEFF4FF),
+        Color(0xFF1D4ED8),
+      ),
+      AppToastTone.success => const _ToastPalette(
+        Color(0xFFECFDF3),
+        Color(0xFF067647),
+      ),
+      AppToastTone.warning => const _ToastPalette(
+        Color(0xFFFFFAEB),
+        Color(0xFFB54708),
+      ),
+      AppToastTone.error => const _ToastPalette(
+        Color(0xFFFEF3F2),
+        Color(0xFFB42318),
+      ),
+    };
+  }
+}
+
+/// ZH
 /// 未识别到语音内容：官方式屏幕居中深色胶囊，2 s 自动消失（参照 DeepSeek）。
 ///
 /// EN
@@ -40,34 +107,44 @@ void showVoiceEmptyToast(BuildContext context, String message) {
 
 /// ZH
 /// 全应用提示：`ShadToast`，顶部、聊天顶栏下方 8、最大宽 480，
-/// 默认 4 s、错误 5 s，同屏只显示一条（ui.md §1.6）。
+/// 同屏只显示一条。色调决定颜色：error 5 s，其余 4 s。
 ///
 /// EN
-/// App-wide toast: `ShadToast` at top, 8 below the chat header, max width 480;
-/// defaults to 4 s, errors 5 s, one on screen at a time (`ui.md` §1.6).
+/// App-wide toast: `ShadToast` at top, 8 below the chat header, max width 480,
+/// one on screen at a time. The tone picks the colors: error 5 s, others 4 s.
 void showAppToast(
   BuildContext context,
   String message, {
+  AppToastTone tone = AppToastTone.info,
   String? actionLabel,
   VoidCallback? onAction,
-  bool destructive = true,
 }) {
   final hasAction = actionLabel != null && onAction != null;
+  final theme = ShadTheme.of(context);
+  final palette = _ToastPalette.of(theme.brightness, tone);
   ShadToaster.of(context).show(
     ShadToast.raw(
-      variant: destructive
-          ? ShadToastVariant.destructive
-          : ShadToastVariant.primary,
+      variant: ShadToastVariant.primary,
       alignment: Alignment.topCenter,
       offset: Offset(
         16,
         MediaQuery.paddingOf(context).top + chatHeaderHeight + 8,
       ),
       constraints: const BoxConstraints(maxWidth: 480),
-      duration: Duration(seconds: destructive ? 5 : 4),
+      duration: Duration(seconds: tone == AppToastTone.error ? 5 : 4),
+      backgroundColor: palette.background,
+      border: ShadBorder.all(color: palette.border),
       description: Text(message),
+      descriptionStyle: theme.textTheme.muted.copyWith(
+        color: palette.foreground,
+      ),
       action: hasAction
-          ? ShadButton.link(onPressed: onAction, child: Text(actionLabel))
+          ? ShadButton.link(
+              onPressed: onAction,
+              foregroundColor: palette.foreground,
+              hoverForegroundColor: palette.foreground,
+              child: Text(actionLabel),
+            )
           : null,
     ),
   );
