@@ -689,9 +689,14 @@ class SpeechController extends Notifier<SpeechState> {
         _noticeVoice(VoiceInputFailure.empty);
         return;
       }
+      // ZH
+      // 识别成功立即收起浮层，插入与自动发送在浮层消失后进行（`speech.md` §2.2）。
+      //
+      // EN
+      // Once recognized, dismiss the overlay at once; insert and auto-send follow (§2.2).
+      state = state.copyWith(phase: SpeechPhase.idle);
       final failure = await _insertAndMaybeSend(callback, trimmed);
       if (abort.isCompleted || _disposed || token != _token) return;
-      state = state.copyWith(phase: SpeechPhase.idle);
       if (failure != null) _noticeVoice(failure);
     } on EmptyRecordingException {
       if (abort.isCompleted || _disposed || token != _token) return;
