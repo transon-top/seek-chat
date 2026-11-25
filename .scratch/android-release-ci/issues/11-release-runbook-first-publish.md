@@ -26,5 +26,8 @@
 - 2026-11-25：GitHub 侧已完成：`release` environment（仅 `v*` tag）、两个 secret、
   Actions 默认只读、immutable releases。规则集与分支保护在私有 Free 仓库不可用
   （API 403，需 GitHub Pro 或公开仓库）；已写入手册，公开后补上。
-- 待办（用户执行）：仓库公开后配置 main / tag 规则集；测试 tag 演练；
-  `v1.0.0` 发布与发布后验证。
+- 2026-11-25：测试 tag 演练完成（run `45562861470`），构建、签名、artifact、
+  draft 创建与校验和均通过；测试 draft 与 tag 已删除。仓库无 `v1-dev` 远端分支，
+  演练直接基于 main。
+- 待办（用户执行）：仓库公开后配置 main / tag 规则集；`v1.0.0` 说明润色、
+  publish 与发布后验证。

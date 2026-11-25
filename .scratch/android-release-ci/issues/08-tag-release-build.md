@@ -32,5 +32,9 @@
 - 2026-11-25：`release` environment 已建，部署策略只允许 `v*` tag；
   `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 两个 environment secret
   已写入；Actions 默认权限设为只读；immutable releases 已开启。
-- 待办（用户执行）：workflow 合并推送后，在 `v1-dev` 打测试 tag 实跑并确认
-  `on_main=false`、未创建 Release，然后删除测试 tag。
+- 2026-11-25：测试 tag `v0.5.0` 在 main 合并提交实跑成功（run `45562861470`）：
+  NDK、analyze、test、签名构建、artifact 上传、draft Release 全部通过；三个 APK
+  的 `SHA256SUMS` 校验一致，arm64 APK 指纹为 `12042e1e...caf38b`。
+  仓库已无 `v1-dev` 远端分支，测试 tag 直接打在 main，因此 release job 会创建
+  draft；验证后已删除 draft 与测试 tag。
+- 待办（用户执行）：仓库公开后补 tag 规则集，再按 `v1.0.0` 流程发布。
