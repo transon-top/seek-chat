@@ -3,6 +3,7 @@ import 'dart:ui' show Locale;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:seek_chat/shared/error_text.dart';
+import 'package:seek_chat/shared/toast.dart';
 
 void main() {
   final zh = lookupAppLocalizations(const Locale('zh'));
@@ -27,6 +28,34 @@ void main() {
     expect(
       voiceInputErrorText(zh, VoiceInputFailure.noApiKey),
       '未设置 API Key，请先在设置中填写。',
+    );
+  });
+
+  test('maps voice failures to toast tones', () {
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.micGrantedRetry),
+      AppToastTone.success,
+    );
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.limitReached),
+      AppToastTone.warning,
+    );
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.interrupted),
+      AppToastTone.warning,
+    );
+    expect(voiceInputFailureTone(VoiceInputFailure.empty), AppToastTone.info);
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.insertedNotSent),
+      AppToastTone.info,
+    );
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.permissionDenied),
+      AppToastTone.error,
+    );
+    expect(
+      voiceInputFailureTone(VoiceInputFailure.sendFailedInserted),
+      AppToastTone.error,
     );
   });
 
