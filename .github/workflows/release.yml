@@ -1,6 +1,6 @@
 name: Release
 
-# 只有 tag push 触发。tag 不在 main 祖先链上时只构建、不发布（供 v1-dev 自测）。
+# 只有 tag push 触发。tag 不在 main 祖先链上时只构建、不发布（供发版演练）。
 on:
   push:
     tags:

@@ -6,7 +6,7 @@
 
 **Status:** claimed
 
-- [ ] 新增 `docs/runbooks/release.md`：前置检查（签名指纹、secrets、旧 tag 已清、测试 tag 已删）、在 `v1-dev` 最后一次提交把 `pubspec` bump 到 `1.0.0+1`、以 merge commit 合入 `main`、在 merge commit 打 `v1.0.0`、push tag、核对 draft、安装验证、publish、发布后验证、回滚与补丁发版。
+- [ ] 新增 `docs/runbooks/release.md`：前置检查（签名指纹、secrets、旧 tag 已清、测试 tag 已删）、在发布分支最后一次提交把 `pubspec` bump 到 `1.0.0+1`、以 merge commit 合入 `main`、在 merge commit 打 `v1.0.0`、push tag、核对 draft、安装验证、publish、发布后验证、回滚与补丁发版。
 - [ ] 手册写明失败处置：tag 与版本不一致、`+n` 未递增、签名材料缺失、draft 不出现。
 - [ ] 手册提示：清空旧 tag 后 `v1.0.0` 的 git-cliff 初稿覆盖全部历史，需按 10 条以内人工精选；已装 debug 签名包需卸载后才能安装正式签名包。
 - [ ] GitHub 设置完成：`main` 规则集禁止强推与删除；`refs/tags/v*` 规则集禁止更新与删除；`release` environment 只允许 `v*` tag；secrets 仅环境级；开启 immutable releases。
@@ -27,7 +27,7 @@
   Actions 默认只读、immutable releases。规则集与分支保护在私有 Free 仓库不可用
   （API 403，需 GitHub Pro 或公开仓库）；已写入手册，公开后补上。
 - 2026-11-25：测试 tag 演练完成（run `45562861470`），构建、签名、artifact、
-  draft 创建与校验和均通过；测试 draft 与 tag 已删除。仓库无 `v1-dev` 远端分支，
+  draft 创建与校验和均通过；测试 draft 与 tag 已删除。仓库无独立开发分支，
   演练直接基于 main。
 - 待办（用户执行）：仓库公开后配置 main / tag 规则集；`v1.0.0` 说明润色、
   publish 与发布后验证。

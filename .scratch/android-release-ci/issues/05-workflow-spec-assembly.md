@@ -11,7 +11,7 @@ Blocked by: 01, 02, 03, 04
 需要覆盖：
 
 1. 触发：`main` 上的 `v*` tag；祖先校验的具体步骤与失败行为（失败 / 跳过）。
-2. 与既有 S6 计划的关系：`v1-dev` 上运行 `build_runner`、`gen-l10n`、`analyze`、`test` 的测试线，是与发版共用一条 workflow，还是拆成两条；两条的触发条件。
+2. 与既有 S6 计划的关系：开发分支上运行 `build_runner`、`gen-l10n`、`analyze`、`test` 的测试线，是与发版共用一条 workflow，还是拆成两条；两条的触发条件。
 3. 构建前检查：依赖安装、生成物是否要求无 diff、`flutter analyze`、`flutter test` 的范围（是否含 `integration_test`）。
 4. 构建：JDK / Flutter / Android SDK / NDK 的固定方式；Gradle 与 pub 缓存；`flutter build apk --release --split-per-abi`。
 5. 签名：从 secrets 还原 keystore、生成 `key.properties`、权限与清理；构建日志不得出现密码。

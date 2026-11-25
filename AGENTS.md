@@ -55,7 +55,7 @@ flutter drive --profile -d <device> \
 # 输入区端到端集成测试（需模拟器/真机）
 flutter test integration_test/composer_test.dart -d <device>
 
-# CI：ci.yml 在分支 push/PR 跑生成物漂移检查 + analyze + test（Flutter 3.50.0）
+# CI：ci.yml 在 main push 与 PR 跑生成物漂移检查 + analyze + test（Flutter 3.50.0）
 # 发版：release.yml 在 v* tag 上校验、签名构建、创建 draft Release
 # 本地 act 镜像构建命令见 .github/act/Dockerfile
 ```

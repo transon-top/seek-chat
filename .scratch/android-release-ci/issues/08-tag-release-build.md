@@ -1,6 +1,6 @@
 # 08: tag 触发的签名构建与产物
 
-**What to build:** 向仓库 push `v*` tag 时，在固定工具链上校验 tag 来源与版本一致性，用 `release` environment 的 secrets 还原 keystore，构建三个已签名 split APK 并上传为 artifact。不在 `main` 祖先链上的 tag 只构建、不发布，供 `v1-dev` 测试使用。
+**What to build:** 向仓库 push `v*` tag 时，在固定工具链上校验 tag 来源与版本一致性，用 `release` environment 的 secrets 还原 keystore，构建三个已签名 split APK 并上传为 artifact。不在 `main` 祖先链上的 tag 只构建、不发布，供发版演练使用。
 
 **Blocked by:** 07。
 
@@ -16,7 +16,7 @@
 - [ ] 日志、artifact 与 shell 输出不出现密码、keystore、`key.properties`；不开启 xtrace。
 - [ ] `flutter analyze` 与 `flutter test` 在构建前通过；`flutter build apk --release --split-per-abi` 产出三个 APK 并上传为 artifact。
 - [ ] 同一 tag 的并发运行互斥，并设合理超时（如 60 分钟）；workflow 默认权限 `contents: read`。
-- [ ] 用 `v1-dev` 上的测试 tag 实跑一次：校验通过、三个 APK 构建并上传、发布被跳过；验证后删除测试 tag。
+- [ ] 用非 `main` 分支上的测试 tag 实跑一次：校验通过、三个 APK 构建并上传、发布被跳过；验证后删除测试 tag。
 
 ## Comments
 
@@ -35,6 +35,6 @@
 - 2026-11-25：测试 tag `v0.5.0` 在 main 合并提交实跑成功（run `45562861470`）：
   NDK、analyze、test、签名构建、artifact 上传、draft Release 全部通过；三个 APK
   的 `SHA256SUMS` 校验一致，arm64 APK 指纹为 `12042e1e...caf38b`。
-  仓库已无 `v1-dev` 远端分支，测试 tag 直接打在 main，因此 release job 会创建
+  仓库无独立开发分支，测试 tag 直接打在 main，因此 release job 会创建
   draft；验证后已删除 draft 与测试 tag。
 - 待办（用户执行）：仓库公开后补 tag 规则集，再按 `v1.0.0` 流程发布。
