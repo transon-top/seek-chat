@@ -26,3 +26,11 @@
   临时 keystore 与 `key.properties` 已删除，未产生真实签名身份。
 - 待办（用户执行）：按 `docs/runbooks/release.md` 生成正式 keystore、两份离线备份、
   恢复演练并记录真实证书指纹；本机写 `key.properties`。
+- 2026-11-25：正式 keystore 已生成：`~/keystores/seekchat-release.p12`（PKCS12、
+  RSA 4096、SHA256withRSA、10000 天、alias `seekchat`，权限 600）；密码生成在
+  `~/keystores/seekchat-release.password`（600，待用户导入密码管理器后删除）。
+  本机 `android/key.properties` 已指向主副本。
+- 恢复演练通过：用 keystore 副本构建三个 split APK，`apksigner` 输出
+  `CN=SeekChat, OU=Android, O=Transon Top, C=CN`。
+- 证书指纹（apksigner）：`12042e1e58594c4eef6c71e51c8656a91aff2097e86ec43afc1ed9e596caf38b`
+- 仍待用户执行：两份离线介质备份、密码管理器与离线恢复码、GitHub secrets。
