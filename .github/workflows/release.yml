@@ -77,7 +77,14 @@ jobs:
           set -euo pipefail
           ndk_version="28.2.13676358"
           if [ ! -d "$ANDROID_HOME/ndk/$ndk_version" ]; then
-            yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk_version" > /dev/null
+            # sdkmanager 读完输入后 yes 会收到 SIGPIPE，这段不启用 pipefail。
+            set +o pipefail
+            yes 2>/dev/null | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk_version" > /dev/null
+            set -o pipefail
+            if [ ! -d "$ANDROID_HOME/ndk/$ndk_version" ]; then
+              echo "::error::NDK $ndk_version 安装失败"
+              exit 1
+            fi
           fi
           echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
 
