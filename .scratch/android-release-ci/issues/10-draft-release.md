@@ -21,4 +21,6 @@
   `--current` 生成说明、`gh release create --draft` 附三个 APK 与 `SHA256SUMS`；
   Release 已存在时只在仍为 draft 时 `--clobber` 更新资产，已发布则跳过；
   构建失败不创建 Release；release job 独占 `contents: write`。
-- 待办：随 11 的首次全流程验证 draft 与资产。
+- 2026-11-25：测试 run 已验证 draft 创建：`v0.5.0` draft 含三个 split APK 与
+  `SHA256SUMS`，资产下载后校验一致；验证后删除测试 draft 与 tag。
+- 待办：随 11 的 `v1.0.0` 首次正式流程验证人工润色与 publish。
