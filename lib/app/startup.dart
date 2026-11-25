@@ -7,7 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../dev/mock_seed.dart';
+import '../dev/mock_speech.dart';
 import '../dev/mock_stream_client.dart';
+import '../features/chat/speech/speech_controller.dart';
 import '../shared/api/client.dart';
 import '../shared/data/attachment_store.dart';
 import '../shared/data/chat_repository.dart';
@@ -264,6 +266,27 @@ Widget appRoot(BootstrapResult result) => ProviderScope(
         ref.onDispose(client.close);
         return client;
       }),
+    // ZH
+    // 语音替身：固定转写文本与 Key，用来观察识别后浮层与自动发送的时序。
+    //
+    // EN
+    // Voice stand-in: fixed transcript and key, to watch overlay and auto-send timing.
+    if (kDebugMode && const bool.fromEnvironment('SEEK_CHAT_MOCK_SPEECH')) ...[
+      speechApiProvider.overrideWith((ref) {
+        final api = MockSpeechApi(
+          delay: Duration(
+            milliseconds: const int.fromEnvironment(
+              'SEEK_CHAT_MOCK_SPEECH_DELAY_MS',
+              defaultValue: 800,
+            ),
+          ),
+        );
+        ref.onDispose(api.close);
+        return api;
+      }),
+      apiKeyStoreProvider.overrideWith((ref) => MockApiKeyStore()),
+      speechRecorderProvider.overrideWith((ref) => MockSpeechRecorder()),
+    ],
   ],
   child: const SeekChatApp(),
 );

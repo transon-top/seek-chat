@@ -316,6 +316,27 @@ void main() {
     }
   });
 
+  test('the overlay dismisses before the transcript is inserted', () async {
+    final container = makeContainer();
+    addTearDown(container.dispose);
+    final notifier = container.read(speechControllerProvider.notifier);
+    SpeechPhase? phaseAtInsert;
+
+    await notifier.startFromPress(
+      onTranscript: (_) async {
+        phaseAtInsert = container.read(speechControllerProvider).phase;
+        return VoiceAutoSendOutcome.sent;
+      },
+    );
+    await pump();
+    notifier.finishFromRelease();
+    await pump();
+    api.completeAsr('hi');
+    await pump();
+
+    expect(phaseAtInsert, SpeechPhase.idle);
+  });
+
   test('a sent transcript never shows a notice', () async {
     final container = makeContainer();
     addTearDown(container.dispose);
