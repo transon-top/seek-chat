@@ -39,8 +39,13 @@ dart run build_runner build --delete-conflicting-outputs   # drift
 flutter gen-l10n                                           # ARB
 
 # 构建：只打 Android，按 ABI 分包，产物重命名为 SeekChat-<abi>-release.apk
+# release 需要 android/key.properties + 正式 keystore，缺失时立即失败
 ./tool/build_android_apk.sh
 # 产物：build/app/outputs/flutter-apk/SeekChat-{arm64-v8a,armeabi-v7a,x86_64}-release.apk
+
+# 发版：main 上打 v* tag 触发 .github/workflows/release.yml；详见 docs/runbooks/release.md
+./tool/ci/check_release_version.sh v1.0.0                 # 本地预检 tag 与 pubspec
+git cliff --config cliff.toml --unreleased --tag v1.0.0   # 生成 Release 说明初稿（需 git-cliff）
 
 # 性能基线（需模拟器/真机，不属默认测试）
 flutter drive --profile -d <device> \
@@ -50,7 +55,8 @@ flutter drive --profile -d <device> \
 # 输入区端到端集成测试（需模拟器/真机）
 flutter test integration_test/composer_test.dart -d <device>
 
-# CI：.github/workflows/ci.yml 在 push/PR 跑 analyze + test（Flutter 3.50.0）
+# CI：ci.yml 在分支 push/PR 跑生成物漂移检查 + analyze + test（Flutter 3.50.0）
+# 发版：release.yml 在 v* tag 上校验、签名构建、创建 draft Release
 # 本地 act 镜像构建命令见 .github/act/Dockerfile
 ```
 

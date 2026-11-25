@@ -1,0 +1,50 @@
+# git-cliff 配置：只用于生成 GitHub Release 说明初稿，不生成仓库内 CHANGELOG.md。
+# 本地用法见 docs/runbooks/release.md。
+
+[changelog]
+header = ""
+body = """
+{% if version %}## {{ version }}{% endif %}
+
+{%- for entry in commits | commit_groups(groups=commit_parsers_groups) %}
+{%- set nonBreakingCommits = entry.commits | filter(attribute="breaking", value=false) %}
+{%- if nonBreakingCommits | length > 0 %}
+
+### {{ entry.group }}
+
+{%- for commit in nonBreakingCommits %}
+- {{ commit.message | upper_first }}
+{%- endfor %}
+{%- endif %}
+{%- endfor %}
+
+{%- set breaking = commits | filter(attribute="breaking", value=true) %}
+{%- if breaking | length > 0 %}
+
+### 破坏性变更
+
+{%- for commit in breaking %}
+- {{ commit.message | upper_first }}
+{%- endfor %}
+{%- endif %}
+"""
+footer = ""
+
+[git]
+conventional_commits = true
+# 非 Conventional Commits（如 merge commit）不进说明初稿。
+filter_unconventional = true
+# 现有提交是 emoji 前缀（如 `✨ feat(chat): ...`），先剥掉前导非字母再解析；
+# 第二条去掉正文里的 emoji，保留 type/scope 与 `!` 破坏性标记。
+commit_preprocessors = [
+  { pattern = '^[^a-zA-Z]+', replace = '' },
+  { pattern = ' *(:\w+:|[\p{Emoji_Presentation}\p{Extended_Pictographic}](?:\u{FE0F})?\u{200D}?) *', replace = '' },
+]
+commit_parsers = [
+  { message = '^feat', group = "新增" },
+  { message = '^fix', group = "修复" },
+  { message = '^perf', group = "改进" },
+  { message = '^refactor', group = "改进" },
+  { message = '^revert', group = "修复" },
+  { message = '.*', skip = true },
+]
