@@ -14,6 +14,13 @@ import '../../shared/widgets/app_dialogs.dart';
 const settingsMaxWidth = 640.0;
 
 /// ZH
+/// 设置卡片的圆角；卡片内的行按下时水波纹沿用同一圆角。
+///
+/// EN
+/// Corner radius of settings cards; rows reuse it for their press ink.
+const settingsCardRadius = 14.0;
+
+/// ZH
 /// 设置页的三层颜色：偏灰背景、更亮的卡片、再亮一档的按钮；不使用描边。
 ///
 /// EN
@@ -172,7 +179,7 @@ class SettingsSection extends StatelessWidget {
           clipBehavior: Clip.antiAlias,
           decoration: BoxDecoration(
             color: palette.card,
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(settingsCardRadius),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -221,8 +228,14 @@ class SettingsRow extends StatelessWidget {
     final colors = ShadTheme.of(context).colorScheme;
     final icon = this.icon;
     final value = this.value;
+    // ZH
+    // 水波纹跟随卡片圆角，否则按下时在卡片四角露出直角。
+    //
+    // EN
+    // The ink follows the card's corner radius; otherwise the press shows square corners.
     return InkWell(
       onTap: onTap,
+      borderRadius: BorderRadius.circular(settingsCardRadius),
       child: SizedBox(
         height: 56,
         child: Padding(

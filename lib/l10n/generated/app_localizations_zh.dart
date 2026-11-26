@@ -144,7 +144,7 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsSectionApp => '应用';
 
   @override
-  String get settingsAccount => '账户管理';
+  String get settingsAccount => 'API Key';
 
   @override
   String get settingsAppearance => '外观';

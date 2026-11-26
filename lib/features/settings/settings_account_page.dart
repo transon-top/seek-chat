@@ -10,7 +10,7 @@ import '../../shared/providers.dart';
 import 'settings_widgets.dart';
 
 /// ZH
-/// 账户管理：API Key 的录入、校验、保存与清除（原「数据管理」上半部分）。
+/// API Key 页：录入、校验、保存与清除（原「数据管理」上半部分）。
 ///
 /// EN
 /// Account: enter, validate, save and clear the API Key (formerly the top of Data).
