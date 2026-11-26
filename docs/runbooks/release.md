@@ -132,13 +132,15 @@ git push origin chore/release-1.0.0
 ### 2. 生成版本说明初稿（可选，发布后也可在 draft 里改）
 
 ```bash
-git cliff --config cliff.toml --unreleased --tag v1.0.0 > /tmp/release-notes-v1.0.0.md
+./tool/ci/release_notes.sh --unreleased --tag v1.0.0 > /tmp/release-notes-v1.0.0.md
 ```
 
 未安装 git-cliff：`brew install git-cliff`，或从
 <https://github.com/orhun/git-cliff/releases> 下载 2.14.2。
 初稿只给结构与技术条目；最终说明按下面约定人工改写：面向用户、中英双语、
-中文在前、分「新增 / 修复 / 改进 / 破坏性变更」、每版 10 条以内。
+中文在前、分「新增 / 修复 / 改进 / 破坏性变更」、每版 10 条以内。初稿会为每条
+变更附 PR 链接与 `by @user` 归属（git-cliff 经 `GITHUB_TOKEN` 查询 GitHub API
+生成），改写时保留。
 
 ### 3. 合并到 main 并打 tag
 

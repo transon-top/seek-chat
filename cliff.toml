@@ -13,7 +13,7 @@ body = """
 ### {{ entry.group }}
 
 {%- for commit in nonBreakingCommits %}
-- {{ commit.message | upper_first }}
+- {{ commit.message | upper_first }}{% if commit.remote.username %} by [@{{ commit.remote.username | replace(from="[bot]", to="") }}](https://github.com/{{ commit.remote.username | replace(from="[bot]", to="") }}){% endif %}
 {%- endfor %}
 {%- endif %}
 {%- endfor %}
@@ -24,7 +24,7 @@ body = """
 ### 破坏性变更
 
 {%- for commit in breaking %}
-- {{ commit.message | upper_first }}
+- {{ commit.message | upper_first }}{% if commit.remote.username %} by [@{{ commit.remote.username | replace(from="[bot]", to="") }}](https://github.com/{{ commit.remote.username | replace(from="[bot]", to="") }}){% endif %}
 {%- endfor %}
 {%- endif %}
 """
@@ -50,3 +50,9 @@ commit_parsers = [
   { message = '^revert', group = "修复" },
   { message = '.*', skip = true },
 ]
+
+# 从 GitHub API 取每个提交的作者账号，用于在说明里附 by @user。
+# token 走 GITHUB_TOKEN 环境变量（见 release.yml）；本地未设置时退回未认证请求。
+[remote.github]
+owner = "transon-top"
+repo = "seek-chat"
