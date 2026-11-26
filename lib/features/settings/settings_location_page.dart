@@ -58,7 +58,6 @@ class LocationSettingsPage extends ConsumerWidget {
                           value: selected?.province ?? '',
                           displayText: province?.name,
                           placeholder: l10n.settingsProvincePlaceholder,
-                          align: Alignment.bottomLeft,
                           options: [
                             ('', l10n.settingsLocationNone),
                             for (final item in provinces)
@@ -77,7 +76,6 @@ class LocationSettingsPage extends ConsumerWidget {
                           key: const Key('settings-city'),
                           value: selected?.city ?? '',
                           placeholder: l10n.settingsCityPlaceholder,
-                          align: Alignment.bottomRight,
                           options: [
                             ('', l10n.settingsLocationNone),
                             for (final city
@@ -103,7 +101,6 @@ class LocationSettingsPage extends ConsumerWidget {
                           key: const Key('settings-region'),
                           value: location?.region ?? '',
                           placeholder: l10n.settingsLocationNone,
-                          align: Alignment.bottomLeft,
                           options: _regionOptions(metadata.locale, l10n),
                           onChanged: (value) => notifier.setLocation(
                             value.isEmpty ? null : UserLocation(region: value),
@@ -160,7 +157,15 @@ class _LocationRow extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 12),
-            Flexible(child: child),
+            // ZH
+            // 固定上限而不是 Flexible：胶囊贴齐右边缘，长地区名截断。
+            //
+            // EN
+            // A fixed cap instead of Flexible: the pill pins to the right edge; long region names truncate.
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 200),
+              child: child,
+            ),
           ],
         ),
       ),
@@ -181,7 +186,6 @@ class _SettingsSelect<T> extends StatefulWidget {
     required this.onChanged,
     this.displayText,
     this.placeholder,
-    this.align = Alignment.bottomRight,
   });
 
   final T value;
@@ -189,7 +193,6 @@ class _SettingsSelect<T> extends StatefulWidget {
   final ValueChanged<T> onChanged;
   final String? displayText;
   final String? placeholder;
-  final Alignment align;
 
   @override
   State<_SettingsSelect<T>> createState() => _SettingsSelectState<T>();
@@ -218,18 +221,24 @@ class _SettingsSelectState<T> extends State<_SettingsSelect<T>> {
     );
     return ShadPopover(
       controller: _controller,
+      // ZH
+      // 弹层右缘与胶囊右缘对齐。shadcn_ui 的 ShadPositionDelegate 最终调用
+      // Flutter 的 positionDependentBox，它总是把弹层水平居中在锚点上，并忽略
+      // followerAnchor.x；所以 follower.x = -1 才能让居中后的右缘落在锚点 x 上。
+      //
+      // EN
+      // The popover's right edge aligns with the pill's right edge. shadcn_ui's
+      // ShadPositionDelegate ends in Flutter's positionDependentBox, which always
+      // centers the popover on the anchor point and ignores followerAnchor.x; so
+      // follower.x = -1 is what lands the centered right edge on the anchor x.
       anchor: ShadAnchorAuto(
         offset: const Offset(0, 6),
-        targetAnchor: widget.align,
-        followerAnchor: widget.align,
+        targetAnchor: Alignment.bottomRight,
+        followerAnchor: Alignment.bottomLeft,
         fallback: ShadAnchorAuto(
           offset: const Offset(0, -6),
-          targetAnchor: widget.align == Alignment.bottomLeft
-              ? Alignment.topLeft
-              : Alignment.topRight,
-          followerAnchor: widget.align == Alignment.bottomLeft
-              ? Alignment.bottomLeft
-              : Alignment.bottomRight,
+          targetAnchor: Alignment.topRight,
+          followerAnchor: Alignment.bottomLeft,
         ),
       ),
       padding: const EdgeInsets.all(6),
