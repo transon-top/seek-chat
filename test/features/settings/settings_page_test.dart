@@ -14,6 +14,7 @@ import 'package:seek_chat/features/settings/settings_data_page.dart';
 import 'package:seek_chat/features/settings/settings_font_size_page.dart';
 import 'package:seek_chat/features/settings/settings_location_page.dart';
 import 'package:seek_chat/features/settings/settings_page.dart';
+import 'package:seek_chat/features/settings/settings_widgets.dart';
 import 'package:seek_chat/shared/api/client.dart';
 import 'package:seek_chat/shared/prefs/preferences_provider.dart';
 import 'package:seek_chat/shared/providers.dart';
@@ -334,6 +335,64 @@ void main() {
     await tester.tap(find.text('不指定').last);
     await tester.pumpAndSettle();
     expect(prefs.getString('user.location'), isNull);
+  });
+
+  testWidgets('rounds the row press ink like the card', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    final ink = tester.widget<InkWell>(
+      find
+          .descendant(
+            of: find.byKey(const Key('settings-account')),
+            matching: find.byType(InkWell),
+          )
+          .first,
+    );
+    expect(ink.borderRadius, BorderRadius.circular(settingsCardRadius));
+  });
+
+  testWidgets('pins the location value pills to the right edge', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await tester.tap(find.byKey(const Key('settings-location')));
+    await tester.pumpAndSettle();
+
+    for (final key in ['settings-province', 'settings-city']) {
+      final pill = tester.getRect(find.byKey(Key(key)));
+      final row = tester.getRect(
+        find
+            .ancestor(of: find.byKey(Key(key)), matching: find.byType(Row))
+            .first,
+      );
+      expect(pill.right, moreOrLessEquals(row.right));
+    }
+  });
+
+  testWidgets('right-aligns the location popover with the pill', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await tester.tap(find.byKey(const Key('settings-location')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-province')));
+    await tester.pumpAndSettle();
+
+    final pill = tester.getRect(find.byKey(const Key('settings-province')));
+    // The list sits 6 inside the popover box (ShadPopover padding) plus its 1px
+    // border.
+    final list = tester.getRect(find.byType(ListView));
+    expect(list.right + 7, moreOrLessEquals(pill.right));
   });
 
   testWidgets('uses a country list when the system language is not Chinese', (

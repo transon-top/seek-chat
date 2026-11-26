@@ -336,7 +336,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsAccount.
   ///
   /// In en, this message translates to:
-  /// **'Account'**
+  /// **'API Key'**
   String get settingsAccount;
 
   /// No description provided for @settingsAppearance.
