@@ -138,6 +138,30 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsGeneral => '通用设置';
 
   @override
+  String get settingsSectionAccount => '账户';
+
+  @override
+  String get settingsSectionApp => '应用';
+
+  @override
+  String get settingsAccount => '账户管理';
+
+  @override
+  String get settingsAppearance => '外观';
+
+  @override
+  String get settingsSystemShort => '系统';
+
+  @override
+  String get settingsFontSizePreview => '预览文字大小';
+
+  @override
+  String get settingsFontSizeDescription => '你可以拖动滑块来调整字体大小。';
+
+  @override
+  String get confirm => '确认';
+
+  @override
   String get settingsTheme => '主题';
 
   @override
@@ -198,10 +222,19 @@ class AppLocalizationsZh extends AppLocalizations {
   String get settingsLanguageSystem => '跟随系统';
 
   @override
-  String get settingsLanguageZh => '简体中文';
+  String get settingsLanguageZh => '中文（简体中文）';
 
   @override
   String get settingsLanguageEn => 'English';
+
+  @override
+  String get settingsProvince => '省份';
+
+  @override
+  String get settingsCity => '城市';
+
+  @override
+  String get settingsRegion => '国家 / 地区';
 
   @override
   String get settingsProvincePlaceholder => '请选择省份';

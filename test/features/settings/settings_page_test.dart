@@ -2,19 +2,24 @@ import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:go_router/go_router.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:seek_chat/app/localization.dart';
 import 'package:seek_chat/app/theme.dart';
-import 'package:seek_chat/shared/providers.dart';
+import 'package:seek_chat/features/settings/settings_account_page.dart';
+import 'package:seek_chat/features/settings/settings_data_page.dart';
+import 'package:seek_chat/features/settings/settings_font_size_page.dart';
+import 'package:seek_chat/features/settings/settings_location_page.dart';
 import 'package:seek_chat/features/settings/settings_page.dart';
-import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:seek_chat/shared/api/client.dart';
 import 'package:seek_chat/shared/prefs/preferences_provider.dart';
+import 'package:seek_chat/shared/providers.dart';
 import 'package:seek_chat/shared/security/api_key_store.dart';
 import 'package:seek_chat/shared/speech/permissions.dart';
+import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../../support/fake_api_key_store.dart';
@@ -44,14 +49,41 @@ void main() {
     ),
   );
 
+  GoRouter testRouter(String initialLocation) => GoRouter(
+    initialLocation: initialLocation,
+    routes: [
+      GoRoute(path: '/', builder: (_, _) => const SizedBox.shrink()),
+      GoRoute(
+        path: SettingsRoutes.root,
+        builder: (_, _) => const SettingsPage(),
+        routes: [
+          GoRoute(
+            path: 'account',
+            builder: (_, state) => AccountSettingsPage(
+              focusApiKey: state.uri.queryParameters['focus'] == '1',
+            ),
+          ),
+          GoRoute(path: 'data', builder: (_, _) => const DataSettingsPage()),
+          GoRoute(
+            path: 'font-size',
+            builder: (_, _) => const FontSizeSettingsPage(),
+          ),
+          GoRoute(
+            path: 'location',
+            builder: (_, _) => const LocationSettingsPage(),
+          ),
+        ],
+      ),
+    ],
+  );
+
   Future<void> pumpSettings(
     WidgetTester tester, {
     required DeepSeekApiClient client,
     required ApiKeyStore store,
     Locale locale = const Locale('zh'),
     FakeMicrophonePermissions? permissions,
-    SettingsView initialView = SettingsView.general,
-    bool focusApiKey = false,
+    String initialLocation = SettingsRoutes.root,
   }) async {
     await tester.pumpWidget(
       ProviderScope(
@@ -63,40 +95,19 @@ void main() {
             permissions ?? FakeMicrophonePermissions(),
           ),
         ],
-        child: MaterialApp(
-          locale: locale,
-          localizationsDelegates: appLocalizationDelegates,
-          supportedLocales: AppLocalizations.supportedLocales,
-          home: ShadTheme(
-            data: buildShadTheme(
-              brightness: Brightness.light,
-              chinese: locale.languageCode == 'zh',
-            ),
-            child: ShadToaster(
-              child: Scaffold(
-                body: SettingsSheet(
-                  initialView: initialView,
-                  focusApiKey: focusApiKey,
-                ),
-              ),
-            ),
+        child: ShadTheme(
+          data: buildShadTheme(
+            brightness: Brightness.light,
+            chinese: locale.languageCode == 'zh',
+          ),
+          child: MaterialApp.router(
+            routerConfig: testRouter(initialLocation),
+            locale: locale,
+            localizationsDelegates: appLocalizationDelegates,
+            supportedLocales: AppLocalizations.supportedLocales,
           ),
         ),
       ),
-    );
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> openData(WidgetTester tester) async {
-    await tester.tap(find.byKey(const Key('settings-nav-data')));
-    await tester.pumpAndSettle();
-  }
-
-  Future<void> reveal(WidgetTester tester, Finder finder) async {
-    await tester.scrollUntilVisible(
-      finder,
-      200,
-      scrollable: find.byType(Scrollable).first,
     );
     await tester.pumpAndSettle();
   }
@@ -110,13 +121,14 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('opens the data view with the key field focused', (tester) async {
+  testWidgets('opens the account page with the key field focused', (
+    tester,
+  ) async {
     await pumpSettings(
       tester,
       client: clientResponding(200),
       store: FakeApiKeyStore(),
-      initialView: SettingsView.data,
-      focusApiKey: true,
+      initialLocation: SettingsRoutes.accountFocus,
     );
 
     final input = find.byKey(const Key('settings-api-key-input'));
@@ -127,7 +139,8 @@ void main() {
   testWidgets('validates and stores a working key', (tester) async {
     final store = FakeApiKeyStore();
     await pumpSettings(tester, client: clientResponding(200), store: store);
-    await openData(tester);
+    await tester.tap(find.byKey(const Key('settings-account')));
+    await tester.pumpAndSettle();
 
     await submitKey(tester, 'sk-good');
 
@@ -144,8 +157,12 @@ void main() {
 
   testWidgets('shows an error and keeps the old key on 401', (tester) async {
     final store = FakeApiKeyStore()..value = 'sk-old';
-    await pumpSettings(tester, client: clientResponding(401), store: store);
-    await openData(tester);
+    await pumpSettings(
+      tester,
+      client: clientResponding(401),
+      store: store,
+      initialLocation: SettingsRoutes.account,
+    );
 
     await tester.tap(find.byKey(const Key('settings-edit-key')));
     await tester.pumpAndSettle();
@@ -157,8 +174,12 @@ void main() {
 
   testWidgets('leaves edit mode when the input is empty', (tester) async {
     final store = FakeApiKeyStore()..value = 'sk-old';
-    await pumpSettings(tester, client: clientResponding(200), store: store);
-    await openData(tester);
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: store,
+      initialLocation: SettingsRoutes.account,
+    );
 
     await tester.tap(find.byKey(const Key('settings-edit-key')));
     await tester.pumpAndSettle();
@@ -173,8 +194,12 @@ void main() {
 
   testWidgets('clears the saved key', (tester) async {
     final store = FakeApiKeyStore()..value = 'sk-old';
-    await pumpSettings(tester, client: clientResponding(200), store: store);
-    await openData(tester);
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: store,
+      initialLocation: SettingsRoutes.account,
+    );
 
     await tester.tap(find.byKey(const Key('settings-clear-key')));
     await tester.pumpAndSettle();
@@ -183,44 +208,43 @@ void main() {
     expect(find.text('输入 API Key 开始使用'), findsOneWidget);
   });
 
-  testWidgets('stores the selected language and location', (tester) async {
-    final store = FakeApiKeyStore();
-    await pumpSettings(tester, client: clientResponding(200), store: store);
+  testWidgets('stores the selected language after confirmation', (
+    tester,
+  ) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
 
-    await reveal(tester, find.byKey(const Key('settings-language')));
     await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('English').last);
     await tester.pumpAndSettle();
+    expect(prefs.getString('user.locale'), isNull);
+
+    await tester.tap(find.byKey(const Key('settings-choice-confirm')));
+    await tester.pumpAndSettle();
     expect(prefs.getString('user.locale'), 'en');
+  });
 
-    await reveal(tester, find.byKey(const Key('settings-province')));
-    await tester.tap(find.byKey(const Key('settings-province')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('北京市').last);
-    await tester.pumpAndSettle();
-    expect(jsonDecode(prefs.getString('user.location')!), {
-      'region': 'CN',
-      'province': '110000',
-    });
+  testWidgets('tapping the barrier cancels the language dialog', (
+    tester,
+  ) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
 
-    await reveal(tester, find.byKey(const Key('settings-city')));
-    await tester.tap(find.byKey(const Key('settings-city')));
+    await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('北京市').last);
+    await tester.tap(find.text('English').last);
     await tester.pumpAndSettle();
-    expect(jsonDecode(prefs.getString('user.location')!), {
-      'region': 'CN',
-      'province': '110000',
-      'city': '110100',
-    });
+    await tester.tapAt(const Offset(10, 10));
+    await tester.pumpAndSettle();
 
-    await reveal(tester, find.byKey(const Key('settings-province')));
-    await tester.tap(find.byKey(const Key('settings-province')));
-    await tester.pumpAndSettle();
-    await tester.tap(find.text('不指定').last);
-    await tester.pumpAndSettle();
-    expect(prefs.getString('user.location'), isNull);
+    expect(prefs.getString('user.locale'), isNull);
   });
 
   testWidgets('follows the system language when selected', (tester) async {
@@ -231,29 +255,34 @@ void main() {
       store: FakeApiKeyStore(),
     );
 
-    await reveal(tester, find.byKey(const Key('settings-language')));
     await tester.tap(find.byKey(const Key('settings-language')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('跟随系统').last);
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-choice-confirm')));
     await tester.pumpAndSettle();
 
     expect(prefs.getString('user.locale'), isNull);
   });
 
-  testWidgets('stores the selected theme', (tester) async {
+  testWidgets('stores the selected theme after confirmation', (tester) async {
     await pumpSettings(
       tester,
       client: clientResponding(200),
       store: FakeApiKeyStore(),
     );
 
+    await tester.tap(find.byKey(const Key('settings-appearance')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('settings-theme-dark')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-choice-confirm')));
     await tester.pumpAndSettle();
 
     expect(prefs.getString('ui.themeMode'), 'dark');
   });
 
-  testWidgets('renders the settings sheet in English', (tester) async {
+  testWidgets('renders the settings pages in English', (tester) async {
     await pumpSettings(
       tester,
       client: clientResponding(200),
@@ -262,13 +291,49 @@ void main() {
     );
 
     expect(find.text('Settings'), findsOneWidget);
-    expect(find.text('Theme'), findsOneWidget);
-    expect(find.text('Language'), findsOneWidget);
-    expect(find.text('Dark'), findsOneWidget);
+    expect(find.text('Account'), findsWidgets);
+    expect(find.text('App'), findsOneWidget);
+    expect(find.text('Appearance'), findsOneWidget);
 
-    await openData(tester);
+    await tester.tap(find.byKey(const Key('settings-account')));
+    await tester.pumpAndSettle();
     expect(find.text('Enter an API key to get started'), findsOneWidget);
-    expect(find.text('Data'), findsOneWidget);
+  });
+
+  testWidgets('stores the selected province and city', (tester) async {
+    await pumpSettings(
+      tester,
+      client: clientResponding(200),
+      store: FakeApiKeyStore(),
+    );
+
+    await tester.tap(find.byKey(const Key('settings-location')));
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.byKey(const Key('settings-province')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('北京市').last);
+    await tester.pumpAndSettle();
+    expect(jsonDecode(prefs.getString('user.location')!), {
+      'region': 'CN',
+      'province': '110000',
+    });
+
+    await tester.tap(find.byKey(const Key('settings-city')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('北京市').last);
+    await tester.pumpAndSettle();
+    expect(jsonDecode(prefs.getString('user.location')!), {
+      'region': 'CN',
+      'province': '110000',
+      'city': '110100',
+    });
+
+    await tester.tap(find.byKey(const Key('settings-province')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('不指定').last);
+    await tester.pumpAndSettle();
+    expect(prefs.getString('user.location'), isNull);
   });
 
   testWidgets('uses a country list when the system language is not Chinese', (
@@ -281,8 +346,9 @@ void main() {
       store: FakeApiKeyStore(),
     );
 
+    await tester.tap(find.byKey(const Key('settings-location')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('settings-province')), findsNothing);
-    await reveal(tester, find.byKey(const Key('settings-region')));
     await tester.tap(find.byKey(const Key('settings-region')));
     await tester.pumpAndSettle();
     await tester.tap(find.text('Afghanistan').last);
@@ -301,24 +367,31 @@ void main() {
       permissions: permissions,
     );
 
-    await reveal(tester, find.byKey(const Key('settings-mic-status')));
     expect(find.text('已拒绝'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('settings-open-settings')));
+    final openSettings = find.byKey(const Key('settings-open-settings'));
+    await tester.ensureVisible(openSettings);
+    await tester.pumpAndSettle();
+    await tester.tap(openSettings);
     await tester.pumpAndSettle();
     expect(permissions.openedSettings, isTrue);
   });
 
-  testWidgets('persists the read-aloud voice', (tester) async {
+  testWidgets('persists the read-aloud voice after confirmation', (
+    tester,
+  ) async {
     await pumpSettings(
       tester,
       client: clientResponding(200),
       store: FakeApiKeyStore(),
     );
 
-    await reveal(tester, find.byKey(const Key('settings-tts-voice')));
     await tester.tap(find.byKey(const Key('settings-tts-voice')));
     await tester.pumpAndSettle();
-    await tester.tap(find.text('Tide · 男声').last);
+    await tester.tap(find.byKey(const Key('settings-voice-tide')));
+    await tester.pumpAndSettle();
+    expect(prefs.getString('tts.voice'), isNull);
+
+    await tester.tap(find.byKey(const Key('settings-voice-confirm')));
     await tester.pumpAndSettle();
 
     expect(prefs.getString('tts.voice'), 'tide');
@@ -332,8 +405,12 @@ void main() {
         throw http.ClientException('no route');
       }),
     );
-    await pumpSettings(tester, client: client, store: store);
-    await openData(tester);
+    await pumpSettings(
+      tester,
+      client: client,
+      store: store,
+      initialLocation: SettingsRoutes.account,
+    );
 
     await submitKey(tester, 'sk-good');
 
