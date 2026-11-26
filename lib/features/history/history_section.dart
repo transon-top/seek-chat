@@ -198,31 +198,34 @@ class _HistorySectionState extends ConsumerState<HistorySection> {
     final l10n = AppLocalizations.of(context)!;
     final colors = ShadTheme.of(context).colorScheme;
     final divider = Divider(height: 1, thickness: 1, color: colors.border);
+    // ZH
+    // 操作按钮用浅色填充区分，不再描边。
+    //
+    // EN
+    // Action buttons use a filled surface instead of an outline.
     Widget pillButton({
       required String label,
       required VoidCallback? onPressed,
       required bool destructive,
-    }) => ShadTheme(
-      data: ShadTheme.of(context).copyWith(
-        radius: const BorderRadius.all(Radius.circular(999)),
-      ),
-      child: ShadButton.outline(
-        onPressed: onPressed,
-        height: 36,
-        padding: const EdgeInsets.symmetric(horizontal: 18),
-        foregroundColor: destructive ? colors.destructive : colors.foreground,
-        textStyle: const TextStyle(fontSize: 14, height: 20 / 14),
-        decoration: ShadDecoration(
-          border: ShadBorder.fromBorderSide(
-            ShadBorderSide(
-              width: 1,
-              color: destructive ? colors.destructive : colors.border,
-            ),
-            radius: const BorderRadius.all(Radius.circular(999)),
-          ),
+    }) => ShadButton(
+      onPressed: onPressed,
+      height: 36,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      backgroundColor: colors.muted,
+      foregroundColor: destructive ? colors.destructive : colors.foreground,
+      textStyle: const TextStyle(fontSize: 14, height: 20 / 14),
+      // ZH
+      // 透明描边只用来带出药丸圆角，不显示线条。
+      //
+      // EN
+      // A transparent border only carries the pill radius; no line is drawn.
+      decoration: ShadDecoration(
+        border: ShadBorder.all(
+          color: const Color(0x00000000),
+          radius: BorderRadius.circular(999),
         ),
-        child: Text(label),
       ),
+      child: Text(label),
     );
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,

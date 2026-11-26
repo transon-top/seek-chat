@@ -321,6 +321,54 @@ abstract class AppLocalizations {
   /// **'General'**
   String get settingsGeneral;
 
+  /// No description provided for @settingsSectionAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsSectionAccount;
+
+  /// No description provided for @settingsSectionApp.
+  ///
+  /// In en, this message translates to:
+  /// **'App'**
+  String get settingsSectionApp;
+
+  /// No description provided for @settingsAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get settingsAccount;
+
+  /// No description provided for @settingsAppearance.
+  ///
+  /// In en, this message translates to:
+  /// **'Appearance'**
+  String get settingsAppearance;
+
+  /// No description provided for @settingsSystemShort.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get settingsSystemShort;
+
+  /// No description provided for @settingsFontSizePreview.
+  ///
+  /// In en, this message translates to:
+  /// **'Preview text size'**
+  String get settingsFontSizePreview;
+
+  /// No description provided for @settingsFontSizeDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'Drag the slider to adjust the text size.'**
+  String get settingsFontSizeDescription;
+
+  /// No description provided for @confirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm'**
+  String get confirm;
+
   /// No description provided for @settingsTheme.
   ///
   /// In en, this message translates to:
@@ -444,7 +492,7 @@ abstract class AppLocalizations {
   /// No description provided for @settingsLanguageZh.
   ///
   /// In en, this message translates to:
-  /// **'Simplified Chinese'**
+  /// **'Chinese (Simplified)'**
   String get settingsLanguageZh;
 
   /// No description provided for @settingsLanguageEn.
@@ -452,6 +500,24 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'English'**
   String get settingsLanguageEn;
+
+  /// No description provided for @settingsProvince.
+  ///
+  /// In en, this message translates to:
+  /// **'Province'**
+  String get settingsProvince;
+
+  /// No description provided for @settingsCity.
+  ///
+  /// In en, this message translates to:
+  /// **'City'**
+  String get settingsCity;
+
+  /// No description provided for @settingsRegion.
+  ///
+  /// In en, this message translates to:
+  /// **'Country / region'**
+  String get settingsRegion;
 
   /// No description provided for @settingsProvincePlaceholder.
   ///

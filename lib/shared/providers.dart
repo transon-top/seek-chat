@@ -48,3 +48,20 @@ final hasApiKeyProvider = FutureProvider<bool>((ref) async {
 final attachmentStoreProvider = Provider<AttachmentStore>(
   (ref) => AttachmentStore(),
 );
+
+/// ZH
+/// 历史导入完成事件的计数；数据管理页递增，聊天页据此丢弃旧会话界面状态。
+///
+/// EN
+/// Counter for completed history imports; the Data page bumps it and the chat page
+/// drops stale session UI state.
+final historyReloadProvider = NotifierProvider<HistoryReloadController, int>(
+  HistoryReloadController.new,
+);
+
+class HistoryReloadController extends Notifier<int> {
+  @override
+  int build() => 0;
+
+  void bump() => state++;
+}
