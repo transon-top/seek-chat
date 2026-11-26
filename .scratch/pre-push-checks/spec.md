@@ -65,6 +65,7 @@ Status: resolved
 - 脚本不执行 `flutter pub get`；依赖未安装时由 flutter/dart 自身报错。
 - lefthook 通过 Homebrew 安装（`brew install lefthook`），`lefthook install` 写入 `.git/hooks`。最低版本要求在安装时验证并写入文档。
 - 钩子可用 `git push --no-verify` 绕过；不加服务端强制。
+- 未安装钩子的 clone 用机器级 git 模板兜底：`tool/ci/install_git_hooks.sh` 写入全局 `init.templateDir`，新 clone 自动带通用 `pre-push`，仓库根有 `lefthook.yml` 时执行 `lefthook run pre-push`，lefthook 缺失时报错提示安装。每台机器跑一次；已有 clone 由脚本顺带执行 `lefthook install`。
 
 ### 文档
 
