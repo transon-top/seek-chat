@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) and other agents whe
 
 Issues and in-progress specs live as markdown files under `.scratch/<feature>/` in this repo. Implemented feature specs live in `docs/features/` and are authoritative. See `docs/agents/issue-tracker.md`.
 
+### Triage labels
+
+Triage state uses the five canonical role strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line. See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
