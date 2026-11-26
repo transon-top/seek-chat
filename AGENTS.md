@@ -108,6 +108,11 @@ WHATWG SSE 解析（`api/sse.dart`）、事件类型化（`api/stream_events.dar
 `Scaffold.drawer`（ADR-0001）。全局滚动行为 `appScrollBehavior` 在
 `lib/app/app.dart`。
 
+**路由**：`go_router`（ADR-0002），路由树在 `lib/app/router.dart`，由
+`ShadApp.router` 承载。设置是独立路由：`/settings` 根页加账户、数据管理、
+字体大小、位置信息子页；语言与外观是页内确认弹窗，朗读音色是底部 Sheet。
+设置路径常量在 `SettingsRoutes`（`features/settings/settings_page.dart`）。
+
 **i18n**：`gen_l10n` + `lib/l10n/app_en.arb`（模板）/`app_zh.arb`，生成物
 `lib/l10n/generated/` 入库。`l10n.yaml` 的 header 是必要的：
 `AppLocalizations` 改用 `material_ui` 的 Material 委托（见

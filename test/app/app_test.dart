@@ -18,7 +18,8 @@ import 'package:seek_chat/features/chat/speech/recorder.dart';
 import 'package:seek_chat/features/chat/speech/speech_api.dart';
 import 'package:seek_chat/features/chat/speech/speech_controller.dart';
 import 'package:seek_chat/features/sessions/session_drawer.dart';
-import 'package:seek_chat/features/settings/settings_page.dart';
+import 'package:seek_chat/features/settings/settings_account_page.dart';
+import 'package:seek_chat/features/settings/settings_font_size_page.dart';
 import 'package:seek_chat/shared/api/client.dart';
 import 'package:seek_chat/shared/data/attachment_store.dart';
 import 'package:seek_chat/shared/data/chat_repository.dart';
@@ -677,7 +678,11 @@ void main() {
     await tester.pumpAndSettle();
 
     await openSettings(tester);
+    await tester.tap(find.byKey(const Key('settings-appearance')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('settings-theme-dark')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-choice-confirm')));
     await tester.pumpAndSettle();
 
     final context = tester.element(find.text('设置'));
@@ -699,9 +704,11 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('English').last);
     await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-choice-confirm')));
+    await tester.pumpAndSettle();
 
     expect(find.text('Settings'), findsOneWidget);
-    await tester.tap(find.byKey(const Key('settings-close')));
+    await tester.tap(find.byKey(const Key('settings-back')));
     await tester.pumpAndSettle();
     expect(find.text('How can I help you?'), findsOneWidget);
     expect(prefs.getString('user.locale'), 'en');
@@ -746,7 +753,7 @@ void main() {
     await tester.tap(find.byKey(const Key('key-prompt')));
     await tester.pumpAndSettle();
 
-    expect(find.byType(SettingsSheet), findsOneWidget);
+    expect(find.byType(AccountSettingsPage), findsOneWidget);
     final input = find.byKey(const Key('settings-api-key-input'));
     expect(input, findsOneWidget);
     expect(tester.widget<ShadInput>(input).focusNode!.hasFocus, isTrue);
@@ -769,14 +776,19 @@ void main() {
     await tester.testTextInput.receiveAction(TextInputAction.done);
     await tester.pumpAndSettle();
 
-    expect(find.byType(SettingsSheet), findsOneWidget);
+    expect(find.byType(AccountSettingsPage), findsOneWidget);
+    await tester.tap(find.byKey(const Key('settings-back')));
+    await tester.pumpAndSettle();
     expect(find.byKey(const Key('key-prompt')), findsNothing);
 
+    await openSettings(tester);
+    await tester.tap(find.byKey(const Key('settings-account')));
+    await tester.pumpAndSettle();
     await tester.tap(find.byKey(const Key('settings-clear-key')));
     await tester.pumpAndSettle();
-    expect(find.byKey(const Key('key-prompt')), findsOneWidget);
-
-    await tester.tap(find.byKey(const Key('settings-close')));
+    await tester.tap(find.byKey(const Key('settings-back')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('settings-back')));
     await tester.pumpAndSettle();
     expect(find.byKey(const Key('key-prompt')), findsOneWidget);
 
@@ -794,7 +806,7 @@ void main() {
     await tester.tap(find.byTooltip('发送'));
     await tester.pumpAndSettle();
 
-    expect(find.byType(SettingsSheet), findsOneWidget);
+    expect(find.byType(AccountSettingsPage), findsOneWidget);
     final input = find.byKey(const Key('settings-api-key-input'));
     expect(input, findsOneWidget);
     expect(tester.widget<ShadInput>(input).focusNode!.hasFocus, isTrue);
@@ -803,6 +815,8 @@ void main() {
     //
     // EN
     // Keep the composer text when sending fails, matching chat-demo.
+    await tester.tap(find.byKey(const Key('settings-back')));
+    await tester.pumpAndSettle();
     expect(find.text('Hello'), findsOneWidget);
     // ZH
     // 首条消息未发出，不留下空会话。
@@ -1712,6 +1726,8 @@ void main() {
     await tester.pumpWidget(appWith(apiKey: null));
     await tester.pumpAndSettle();
     await openSettings(tester);
+    await tester.tap(find.byKey(const Key('settings-font-size')));
+    await tester.pumpAndSettle();
 
     final tick = find.byKey(const Key('settings-font-tick-6'));
     await tester.ensureVisible(tick);
@@ -1721,11 +1737,9 @@ void main() {
 
     expect(prefs.getBool(FontScaleStore.followKey), isFalse);
     expect(prefs.getInt(FontScaleStore.levelKey), 6);
-    final sheet = tester.element(find.byType(SettingsSheet));
-    expect(MediaQuery.textScalerOf(sheet).scale(16), 21.6);
+    final page = tester.element(find.byType(FontSizeSettingsPage));
+    expect(MediaQuery.textScalerOf(page).scale(16), 21.6);
 
-    await tester.tap(find.byKey(const Key('settings-close')));
-    await tester.pumpAndSettle();
     await unmountApp(tester);
   });
 }

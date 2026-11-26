@@ -4,7 +4,7 @@ import 'package:material_ui/material_ui.dart';
 import 'package:shadcn_ui/shadcn_ui.dart';
 import 'package:seek_chat/app/localization.dart';
 import 'package:seek_chat/app/theme.dart';
-import 'package:seek_chat/features/settings/settings_page.dart';
+import 'package:seek_chat/features/settings/settings_font_size_page.dart';
 import 'package:seek_chat/l10n/generated/app_localizations.dart';
 import 'package:seek_chat/shared/prefs/font_scale_store.dart';
 import 'package:seek_chat/shared/prefs/preferences_provider.dart';
@@ -53,9 +53,7 @@ void main() {
                     brightness: Brightness.light,
                     chinese: true,
                   ),
-                  child: ShadToaster(
-                    child: Scaffold(body: const SettingsSheet()),
-                  ),
+                  child: ShadToaster(child: const FontSizeSettingsPage()),
                 ),
               );
             },

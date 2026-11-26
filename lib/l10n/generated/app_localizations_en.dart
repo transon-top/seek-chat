@@ -141,6 +141,31 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsGeneral => 'General';
 
   @override
+  String get settingsSectionAccount => 'Account';
+
+  @override
+  String get settingsSectionApp => 'App';
+
+  @override
+  String get settingsAccount => 'Account';
+
+  @override
+  String get settingsAppearance => 'Appearance';
+
+  @override
+  String get settingsSystemShort => 'System';
+
+  @override
+  String get settingsFontSizePreview => 'Preview text size';
+
+  @override
+  String get settingsFontSizeDescription =>
+      'Drag the slider to adjust the text size.';
+
+  @override
+  String get confirm => 'Confirm';
+
+  @override
   String get settingsTheme => 'Theme';
 
   @override
@@ -201,10 +226,19 @@ class AppLocalizationsEn extends AppLocalizations {
   String get settingsLanguageSystem => 'System';
 
   @override
-  String get settingsLanguageZh => 'Simplified Chinese';
+  String get settingsLanguageZh => 'Chinese (Simplified)';
 
   @override
   String get settingsLanguageEn => 'English';
+
+  @override
+  String get settingsProvince => 'Province';
+
+  @override
+  String get settingsCity => 'City';
+
+  @override
+  String get settingsRegion => 'Country / region';
 
   @override
   String get settingsProvincePlaceholder => 'Select province';
