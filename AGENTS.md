@@ -8,6 +8,10 @@ This file provides guidance to Claude Code (claude.ai/code) and other agents whe
 
 Issues and in-progress specs live as markdown files under `.scratch/<feature>/` in this repo. Implemented feature specs live in `docs/features/` and are authoritative. See `docs/agents/issue-tracker.md`.
 
+### Triage labels
+
+Triage state uses the five canonical role strings (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`), recorded as a `Status:` line. See `docs/agents/triage-labels.md`.
+
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` plus `docs/adr/` at the repo root. See `docs/agents/domain.md`.
@@ -55,8 +59,11 @@ flutter drive --profile -d <device> \
 # 输入区端到端集成测试（需模拟器/真机）
 flutter test integration_test/composer_test.dart -d <device>
 
-# CI：ci.yml 在 main push 与 PR 跑生成物漂移检查 + analyze + test（Flutter 3.50.0）
-# 发版：release.yml 在 v* tag 上校验、签名构建、创建 draft Release
+# 本地检查：./tool/ci/local_checks.sh 跑生成物漂移 + analyze + test（lefthook pre-push 自动调用）
+# 钩子：brew install lefthook，再每台机器跑一次 ./tool/ci/install_git_hooks.sh
+#（写 git 全局模板：新 clone 自动带钩子，lefthook 缺失时 push 报错；需 >= 2.2.4；Flutter 3.50.0 与发版一致）
+# 绕过：git push --no-verify 可跳过钩子；发版工作流仍是最后门禁
+# 云端：只有 release.yml 在 v* tag 上校验、签名构建、创建 draft Release
 # 本地 act 镜像构建命令见 .github/act/Dockerfile
 ```
 

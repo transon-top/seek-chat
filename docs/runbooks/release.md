@@ -83,7 +83,7 @@ keystore 与密码另存一份到密码管理器。
   或仓库公开）。仓库公开后立即补上；开启顺序仍是先删测试 tag、再开 tag 保护。
 - 开启 **immutable releases**（Settings → General 或 Releases 设置）。
 - Actions 默认权限设为只读；workflow 已按 job 最小化声明。
-- 第三方 action 全部固定完整 commit SHA；升级时同时改版本注释并重跑 CI。
+- 第三方 action 全部固定完整 commit SHA；升级时同时改版本注释并重跑发版工作流。
 
 ## 版本号与 tag 规则
 
@@ -126,7 +126,7 @@ git push origin chore/release-1.0.0
 ```
 
 只改 `pubspec.yaml`，不提交 `CHANGELOG.md`（本仓库不维护该文件）。合并前在本地跑
-`flutter analyze` 与 `flutter test`，或开 PR 等 CI 为绿。本地版本校验依赖完整 tag
+`./tool/ci/local_checks.sh`（推送前钩子也会自动执行）。本地版本校验依赖完整 tag
 历史，换过 clone 时先 `git fetch --tags`。
 
 ### 2. 生成版本说明初稿（可选，发布后也可在 draft 里改）
