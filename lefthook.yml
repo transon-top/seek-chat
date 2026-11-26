@@ -1,0 +1,10 @@
+# 推送前在本地跑生成物漂移、静态检查与测试。
+# 安装：brew install lefthook && lefthook install
+# 云端只在 v* tag 上由发版工作流重复同一套检查。
+min_version: 2.2.4
+
+pre-push:
+  parallel: false
+  commands:
+    local-checks:
+      run: ./tool/ci/local_checks.sh

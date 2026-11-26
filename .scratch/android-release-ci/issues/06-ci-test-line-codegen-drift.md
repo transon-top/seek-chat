@@ -4,7 +4,7 @@
 
 **Blocked by:** 无（可立即开始）。
 
-**Status:** claimed
+**Status:** resolved
 
 - [x] push 到任意分支与开 PR 都会触发；push tag 不触发。
 - [x] runner 固定 `ubuntu-24.04`，Flutter 固定 3.50.0 stable，不再用 `ubuntu-latest` / 浮动版本。
@@ -20,3 +20,10 @@
   `flutter analyze` / `flutter test` 保留；`integration_test` 不进 CI；两个 action
   固定完整 SHA。
 - 待验证：推送分支后看 CI 为绿（本地无法替代 runner 环境）。
+
+## Answer
+
+已被 `.scratch/pre-push-checks/spec.md` 取代：分支与 PR 的云端测试线已删除，生成物漂移、
+`flutter analyze` 与 `flutter test` 改由 lefthook `pre-push` 调用
+`tool/ci/local_checks.sh` 在本地执行；发版工作流复用同一脚本。原验收中"干净 clone 上
+job 为绿"一项随工作流删除失效。
