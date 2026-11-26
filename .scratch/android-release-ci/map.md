@@ -25,6 +25,7 @@
 - [发布签名与应用身份](issues/03-signing-and-app-identity.md): PKCS12 + RSA 4096 + 10000 天 + alias `seekchat`；本机 `android/key.properties`、两份加密离线备份、单一密码；CI 只存 `ANDROID_KEYSTORE_BASE64` 与 `ANDROID_KEYSTORE_PASSWORD` 于 `release` environment；release 缺 keystore 即失败；首次公开发版前做一次备份恢复演练。
 - [版本说明形态与版本号流程](issues/04-release-notes-and-versioning.md): git-cliff + `CHANGELOG.md` 同源（emoji 预处理）；面向用户、中英双语、四类、10 条以内；tag↔pubspec 硬校验且 `+n` 递增；bump 在发布分支最后一次提交；发布分支→`main` merge commit，tag 打 main；draft Release；最小保护集（main 规则集 + `refs/tags/v*` + release environment）；暂不引入 rc；现有 tag 清空，从 `v1.0.0+1` 起。
 - [git-cliff 生成 Release 说明](issues/09-release-notes-git-cliff.md): `cliff.toml` 四类分组、emoji 预处理；不落库 `CHANGELOG.md`（覆盖票 04 第 8 条），只生成 Release 说明初稿，发布前人工改写。
+- [分支测试线：生成物无漂移 + 固定环境](issues/06-ci-test-line-codegen-drift.md): 云端分支/PR 测试线已删除；检查改由本地 lefthook `pre-push`（`tool/ci/local_checks.sh`）与发版工作流执行，见 `.scratch/pre-push-checks/spec.md`。
 
 ## Not yet specified
 
