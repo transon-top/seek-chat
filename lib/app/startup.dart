@@ -9,6 +9,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../dev/mock_seed.dart';
 import '../dev/mock_speech.dart';
 import '../dev/mock_stream_client.dart';
+import '../dev/screenshot_samples.dart';
 import '../features/chat/speech/speech_controller.dart';
 import '../shared/api/client.dart';
 import '../shared/data/attachment_store.dart';
@@ -151,6 +152,10 @@ Future<void> _seedDevData(
   SharedPreferences preferences,
 ) async {
   if (!kDebugMode) return;
+  if (const bool.fromEnvironment('SEEK_CHAT_SCREENSHOT_SEED')) {
+    await seedScreenshotSamples(database, preferences);
+    return;
+  }
   if (const bool.fromEnvironment('SEEK_CHAT_STRESS_SEED')) {
     await seedStressSamples(database, preferences);
   }
