@@ -4,7 +4,7 @@
 负责校验、签名构建三个 split APK、生成版本说明初稿并创建 **draft** Release；
 人工核对并 publish。非 `main` 分支上的 tag 只构建、不发布。
 
-工作流细节与决策见 `.scratch/android-release-ci/`。
+工作流细节与决策见本地 `.scratch/android-release-ci/`（不入库）。
 
 ## 一次性准备
 

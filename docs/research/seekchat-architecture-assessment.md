@@ -2,7 +2,7 @@
 
 > 评估日期：2026-11-24
 > 基准：`docs/research/dart-flutter-architecture-best-practices.md`；官方引文与完整来源列表见该文档，本文只记录 SeekChat 的对照结论，引用保留官方 URL。
-> 范围：SeekChat 当前代码、`.scratch/reply-run/spec.md` 与 issues、`.scratch/session-lifecycle/spec.md` 与 issues
+> 范围：SeekChat 当前代码、本地（不入库）`.scratch/reply-run/` 与 `.scratch/session-lifecycle/` 的 spec 与 issues
 
 ## 1. 结论摘要
 

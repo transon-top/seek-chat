@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) and other agents whe
 
 ### Issue tracker
 
-Issues and in-progress specs live as markdown files under `.scratch/<feature>/` in this repo. Implemented feature specs live in `docs/features/` and are authoritative. See `docs/agents/issue-tracker.md`.
+Issues and in-progress specs live as markdown files under `.scratch/<feature>/` in this repo (local only; the directory is gitignored). Implemented feature specs live in `docs/features/` and are authoritative. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 
@@ -23,8 +23,8 @@ API 源默认 `https://api.deepseek.com`，可用
 `--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
 
 已实现功能的行为规格在 `docs/features/`（权威，迭代时同步更新）；未实现或
-进行中的决策与票在 `.scratch/<feature>/`（`spec.md` 或 wayfinder 的
-`map.md`，加 `issues/NN-*.md`）。
+进行中的决策与票在本地 `.scratch/<feature>/`（不入库；`spec.md` 或 wayfinder
+的 `map.md`，加 `issues/NN-*.md`）。
 领域术语见根目录 `GLOSSARY.md`，架构决策见 `docs/adr/`。写票、命名领域概念时
 先读 `GLOSSARY.md` 并沿用其中词汇。
 
