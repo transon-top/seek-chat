@@ -1,0 +1,8 @@
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+# gen_l10n 模板固定引用 flutter_localizations 的委托；本项目改用 material_ui 的
+# 委托（见 lib/app/localization.dart），生成物中的弃用提示无需修复。
+header: "// ignore_for_file: deprecated_member_use"

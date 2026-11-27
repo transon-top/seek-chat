@@ -1,0 +1,178 @@
+import 'dart:math' as math;
+
+import 'package:material_ui/material_ui.dart';
+import 'package:shadcn_ui/shadcn_ui.dart';
+
+import '../../../l10n/generated/app_localizations.dart';
+import 'speech_controller.dart';
+
+/// ZH
+/// 助手消息操作条里的朗读按钮：空闲、加载扫光、播放起伏（`speech.md` §2.2）。
+///
+/// 启用与否由聊天页按 `canReadAloud` 与语音互斥判断；减少动画时竖条静止。
+///
+/// EN
+/// Assistant action bar read-aloud button: idle, loading sweep, playback pulse (`speech.md` §2.2).
+///
+/// Chat page enables it via `canReadAloud`, exclusive with voice; bars freeze under reduced motion.
+class ReadAloudButton extends StatefulWidget {
+  const ReadAloudButton({
+    super.key,
+    required this.phase,
+    required this.active,
+    required this.enabled,
+    required this.onPressed,
+  });
+
+  /// ZH
+  /// 全局语音阶段，用于区分 `loading` 与 `playing`。
+  ///
+  /// EN
+  /// Global speech phase, used to distinguish `loading` from `playing`.
+  final SpeechPhase phase;
+
+  /// ZH
+  /// 当前朗读的是这条回复。
+  ///
+  /// EN
+  /// Whether this reply is the one being read aloud.
+  final bool active;
+
+  final bool enabled;
+  final VoidCallback onPressed;
+
+  @override
+  State<ReadAloudButton> createState() => _ReadAloudButtonState();
+}
+
+class _ReadAloudButtonState extends State<ReadAloudButton>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _animation = AnimationController(
+    vsync: this,
+    duration: const Duration(milliseconds: 900),
+  );
+  bool _animate = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _sync();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    _animate = !(MediaQuery.maybeOf(context)?.disableAnimations ?? false);
+    _sync();
+  }
+
+  @override
+  void didUpdateWidget(ReadAloudButton oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    _sync();
+  }
+
+  void _sync() {
+    final running = widget.active && _animate;
+    if (running && !_animation.isAnimating) {
+      _animation.repeat();
+    } else if (!running && _animation.isAnimating) {
+      _animation.stop();
+      _animation.value = 0;
+    }
+  }
+
+  @override
+  void dispose() {
+    _animation.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final colors = ShadTheme.of(context).colorScheme;
+    final active = widget.active;
+    return Tooltip(
+      message: active ? l10n.ttsStop : l10n.ttsPlay,
+      child: ShadIconButton.ghost(
+        key: const Key('read-aloud-button'),
+        onPressed: widget.enabled ? widget.onPressed : null,
+        icon: active
+            ? _ReadingBars(
+                animation: _animation,
+                playing: widget.phase == SpeechPhase.playing,
+                animate: _animate,
+              )
+            : const Icon(LucideIcons.volume2),
+        iconSize: 18,
+        width: 44,
+        height: 44,
+        padding: EdgeInsets.zero,
+        foregroundColor: colors.mutedForeground,
+      ),
+    );
+  }
+}
+
+class _ReadingBars extends StatelessWidget {
+  const _ReadingBars({
+    required this.animation,
+    required this.playing,
+    required this.animate,
+  });
+
+  static const _idleHeights = [8.0, 12.0, 10.0, 8.0];
+
+  final Animation<double> animation;
+  final bool playing;
+  final bool animate;
+
+  @override
+  Widget build(BuildContext context) {
+    final colors = Theme.of(context).colorScheme;
+    return SizedBox(
+      width: 18,
+      height: 18,
+      child: AnimatedBuilder(
+        animation: animation,
+        builder: (context, child) {
+          return Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              for (var index = 0; index < 4; index++)
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 1),
+                  child: Container(
+                    width: 2.5,
+                    height: _height(index),
+                    decoration: BoxDecoration(
+                      color: colors.onSurface,
+                      borderRadius: BorderRadius.circular(1.5),
+                    ),
+                  ),
+                ),
+            ],
+          );
+        },
+      ),
+    );
+  }
+
+  double _height(int index) {
+    if (!animate) return _idleHeights[index];
+    final t = animation.value;
+    if (playing) {
+      final wave = math.sin(2 * math.pi * (t + index * 0.15)).abs();
+      return 5 + wave * 10;
+    }
+    // ZH
+    // 加载态：一道扫光依次抬升每根竖条。
+    //
+    // EN
+    // Loading state: a light sweep lifts each bar in turn.
+    final phase = (t * 4 - index) % 4;
+    return phase < 1 ? 14.0 : 6.0;
+  }
+}

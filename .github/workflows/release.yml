@@ -1,0 +1,187 @@
+name: Release
+
+# 只有 tag push 触发。tag 不在 main 祖先链上时只构建、不发布（供发版演练）。
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: read
+
+# 同一 tag 的运行互斥，但不取消已在跑的构建。
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: 校验、签名构建与产物上传
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    # secrets 只存在 release environment；环境规则只允许 v* tag 使用。
+    environment: release
+    outputs:
+      on_main: ${{ steps.tag-source.outputs.on_main }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Setup JDK
+        uses: actions/setup-java@d1374f8ac74474200d16ef8ecee22c7ae7a51880 # v6.3.0
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Flutter
+        uses: subosito/flutter-action@1a449444c387b1966244ae4d4f8c696479add0b2 # v2.23.0
+        with:
+          channel: stable
+          flutter-version: 3.50.0
+          architecture: x64
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: 校验 tag 是否来自 main
+        id: tag-source
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin +refs/heads/main:refs/remotes/origin/main
+          set +e
+          git merge-base --is-ancestor "$GITHUB_SHA" refs/remotes/origin/main
+          code=$?
+          set -e
+          case "$code" in
+            0)
+              echo "on_main=true" >> "$GITHUB_OUTPUT"
+              ;;
+            1)
+              echo "on_main=false" >> "$GITHUB_OUTPUT"
+              echo "::warning::tag $GITHUB_REF_NAME 不在 main 祖先链上，只构建、不发布。"
+              ;;
+            *)
+              echo "::error::git merge-base 失败，退出码 $code"
+              exit "$code"
+              ;;
+          esac
+
+      - name: 校验 tag 与版本号
+        run: ./tool/ci/check_release_version.sh "$GITHUB_REF_NAME"
+
+      - name: 准备 Android NDK
+        run: |
+          set -euo pipefail
+          ndk_version="28.2.13676358"
+          if [ ! -d "$ANDROID_HOME/ndk/$ndk_version" ]; then
+            # sdkmanager 读完输入后 yes 会收到 SIGPIPE，这段不启用 pipefail。
+            set +o pipefail
+            yes 2>/dev/null | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" --install "ndk;$ndk_version" > /dev/null
+            set -o pipefail
+            if [ ! -d "$ANDROID_HOME/ndk/$ndk_version" ]; then
+              echo "::error::NDK $ndk_version 安装失败"
+              exit 1
+            fi
+          fi
+          echo "ANDROID_NDK_HOME=$ANDROID_HOME/ndk/$ndk_version" >> "$GITHUB_ENV"
+
+      - name: 安装依赖
+        run: flutter pub get
+
+      - name: 生成物漂移、静态检查与测试
+        run: ./tool/ci/local_checks.sh
+
+      - name: 还原签名材料
+        env:
+          ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$ANDROID_KEYSTORE_BASE64" ] || [ -z "$ANDROID_KEYSTORE_PASSWORD" ]; then
+            echo "::error::release environment 缺少 ANDROID_KEYSTORE_BASE64 或 ANDROID_KEYSTORE_PASSWORD。"
+            exit 1
+          fi
+          keystore="$RUNNER_TEMP/seekchat-release.p12"
+          printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          chmod 600 "$keystore"
+          cat > android/key.properties <<EOF
+          storeFile=$keystore
+          storePassword=$ANDROID_KEYSTORE_PASSWORD
+          keyAlias=seekchat
+          keyPassword=$ANDROID_KEYSTORE_PASSWORD
+          EOF
+
+      - name: 构建 APK 并计算校验和
+        run: |
+          set -euo pipefail
+          ./tool/build_android_apk.sh
+          cd build/app/outputs/flutter-apk
+          sha256sum SeekChat-*-release.apk | tee SHA256SUMS
+
+      - name: 上传构建产物
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: apks
+          path: |
+            build/app/outputs/flutter-apk/SeekChat-*-release.apk
+            build/app/outputs/flutter-apk/SHA256SUMS
+          if-no-files-found: error
+          retention-days: 7
+
+      - name: 清理签名材料
+        if: always()
+        run: rm -f "$RUNNER_TEMP/seekchat-release.p12" android/key.properties
+
+  release:
+    name: 创建 draft Release
+    needs: build
+    if: needs.build.outputs.on_main == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: 下载构建产物
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: apks
+          path: dist
+
+      - name: 生成版本说明初稿
+        id: cliff
+        uses: orhun/git-cliff-action@a9a95522b26fe6403f7bb24031f21fb573d0f5ff # v4.9.1
+        with:
+          config: cliff.toml
+          version: v2.14.2
+          args: --current
+        env:
+          OUTPUT: release-notes.md
+          GITHUB_TOKEN: ${{ github.token }}
+
+      - name: 创建或更新 draft Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          tag="$GITHUB_REF_NAME"
+          assets=(dist/SeekChat-*-release.apk dist/SHA256SUMS)
+          if gh release view "$tag" > /dev/null 2>&1; then
+            if [ "$(gh release view "$tag" --json isDraft --jq .isDraft)" = "true" ]; then
+              gh release upload "$tag" "${assets[@]}" --clobber
+              echo "draft Release 已存在，只更新资产；说明保留人工编辑后的版本。"
+            else
+              echo "Release 已发布，跳过（immutable release 不允许改资产）。"
+            fi
+          else
+            gh release create "$tag" --draft --title "$tag" --notes-file release-notes.md "${assets[@]}"
+          fi
