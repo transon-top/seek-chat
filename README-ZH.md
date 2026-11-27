@@ -33,7 +33,7 @@ Flutter 版 DeepSeek 聊天应用（Android）。v1 固定模型
 
 ## 环境要求
 
-- Flutter 3.50.0（与发版工作流一致）
+- Flutter 3.50.1（与发版工作流一致）
 - Dart SDK `^3.14.0`
 
 ## 快速开始

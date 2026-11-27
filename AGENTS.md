@@ -61,7 +61,7 @@ flutter test integration_test/composer_test.dart -d <device>
 
 # 本地检查：./tool/ci/local_checks.sh 跑生成物漂移 + analyze + test（lefthook pre-push 自动调用）
 # 钩子：brew install lefthook，再每台机器跑一次 ./tool/ci/install_git_hooks.sh
-#（写 git 全局模板：新 clone 自动带钩子，lefthook 缺失时 push 报错；需 >= 2.2.4；Flutter 3.50.0 与发版一致）
+#（写 git 全局模板：新 clone 自动带钩子，lefthook 缺失时 push 报错；需 >= 2.2.4；Flutter 3.50.1 与发版一致）
 # 绕过：git push --no-verify 可跳过钩子；发版工作流仍是最后门禁
 # 云端：只有 release.yml 在 v* tag 上校验、签名构建、创建 draft Release
 # 本地 act 镜像构建命令见 .github/act/Dockerfile

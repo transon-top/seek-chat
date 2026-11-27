@@ -39,7 +39,7 @@ A Flutter DeepSeek chat client for Android. v1 uses the fixed model
 
 ## Requirements
 
-- Flutter 3.50.0 (matches the release workflow)
+- Flutter 3.50.1 (matches the release workflow)
 - Dart SDK `^3.14.0`
 
 ## Getting started
