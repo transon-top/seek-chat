@@ -12,10 +12,10 @@ dependencies:
   flutter_localizations:
     sdk: flutter
   material_ui: ^1.1.0
-  shadcn_ui: ^0.60.0
+  shadcn_ui: ^0.61.2
   http: ^1.6.0
   drift: ^2.35.4
-  sqlite3: ^3.9.1
+  sqlite3: ^3.9.2
   path_provider: ^2.1.6
   path: ^1.9.1
   uuid: ^4.6.0
@@ -24,10 +24,10 @@ dependencies:
   shared_preferences: ^2.5.6
   intl: ^0.20.2
   gpt_markdown: ^1.4.1
-  mermaid_flutter: ^0.3.2
-  mermaid_core: ^0.3.2
+  mermaid_flutter: ^0.5.0
+  mermaid_core: ^0.5.0
   url_launcher: ^6.3.3
-  file_picker: ^13.4.0
+  file_picker: ^13.4.1
   archive: ^3.6.1
   record: ^7.2.0
   flutter_soloud: ^5.3.0

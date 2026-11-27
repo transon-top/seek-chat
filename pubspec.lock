@@ -237,10 +237,10 @@ packages:
     dependency: transitive
     description:
       name: elk
-      sha256: "6b3a87c6405508e171a9182b6e4c3a5cac2eb49188139883b568fcd87f05e7f7"
+      sha256: "053a4d7a9783e8a1feabc05a6dda32903ba85159dfa1bff65ef78996f635c9a1"
       url: "https://pub.dev"
     source: hosted
-    version: "0.2.1"
+    version: "0.3.0"
   extended_image:
     dependency: transitive
     description:
@@ -293,10 +293,10 @@ packages:
     dependency: "direct main"
     description:
       name: file_picker
-      sha256: c3780977700b8962c3b9b6a9aa4e2c988956893d70d4a4fa2d7adf4ec9b9eaee
+      sha256: "5b99250437a4d34ee2cdc0686924452103540eaa1c248094b63f07f9d7216f6c"
       url: "https://pub.dev"
     source: hosted
-    version: "13.4.0"
+    version: "13.4.1"
   file_picker_darwin:
     dependency: transitive
     description:
@@ -309,10 +309,10 @@ packages:
     dependency: transitive
     description:
       name: file_picker_linux
-      sha256: "9215ee8c672508cdd9a325202669f849e1baac883658626b3abed5d7777e6a4b"
+      sha256: cf3889644e8e54551f5c3a4f98b6b6ef5f0ef85c07d2a0c1a969538983be2f9b
       url: "https://pub.dev"
     source: hosted
-    version: "2.0.4"
+    version: "2.0.5"
   file_picker_platform_interface:
     dependency: transitive
     description:
@@ -792,18 +792,18 @@ packages:
     dependency: "direct main"
     description:
       name: mermaid_core
-      sha256: "25b9a9c90dd8b9dd09d6fc020cadd42e8c0d07ba9541beb14f52924a51ac95e7"
+      sha256: "24d45e68d6a93bad9992e4e6952bbc13e1f3f3c4e4cb7347d380ac0805ec0261"
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.2"
+    version: "0.5.0"
   mermaid_flutter:
     dependency: "direct main"
     description:
       name: mermaid_flutter
-      sha256: "9fc75a47903dde1d8837e72efd7556ba915697f9a95dd890dd554fbd5f4e722c"
+      sha256: eab23ffadf2ec15c5df4ce0254bdb4d0c0196b903d3247da72d324a906567baa
       url: "https://pub.dev"
     source: hosted
-    version: "0.3.2"
+    version: "0.5.0"
   meta:
     dependency: transitive
     description:
@@ -1112,10 +1112,10 @@ packages:
     dependency: "direct main"
     description:
       name: shadcn_ui
-      sha256: "1a448d6e6daea775283d72c96d2d22765a52273af8b9f4fd8edc1be544829238"
+      sha256: "8e0797241e264c057a4008dd5b9cf560af1e453ed3256233b3dc0fdd84f07dbe"
       url: "https://pub.dev"
     source: hosted
-    version: "0.60.0"
+    version: "0.61.2"
   shared_preferences:
     dependency: "direct main"
     description:
@@ -1229,10 +1229,10 @@ packages:
     dependency: "direct main"
     description:
       name: sqlite3
-      sha256: "8765980411f9b6733534efe9d014fad0750fa649590598772c04692deb34886b"
+      sha256: "1ae2e821614e7b69628ecb64273e8bc5401b14ab166ee7ea0035c35bb136cbd7"
       url: "https://pub.dev"
     source: hosted
-    version: "3.9.1"
+    version: "3.9.2"
   sqlparser:
     dependency: transitive
     description:
