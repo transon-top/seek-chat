@@ -7,8 +7,7 @@
 English · [中文](README-ZH.md)
 
 A Flutter DeepSeek chat client for Android. v1 uses the fixed model
-`deepseek-flash`; the API origin defaults to `https://api.deepseek.com` and can
-be overridden with `--dart-define=SEEK_CHAT_API_ORIGIN=<origin>`.
+`deepseek-flash`.
 
 ## Screenshots
 

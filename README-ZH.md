@@ -7,8 +7,7 @@
 [English](README.md) · 中文
 
 Flutter 版 DeepSeek 聊天应用（Android）。v1 固定模型
-`deepseek-flash`，API 源默认 `https://api.deepseek.com`，可用
-`--dart-define=SEEK_CHAT_API_ORIGIN=<origin>` 覆盖。
+`deepseek-flash`。
 
 ## 截图
 
